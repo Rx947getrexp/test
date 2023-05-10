@@ -1,0 +1,34 @@
+kind: reverse
+name: test
+source:
+  database: mysql
+  conn_str: 'root:123456@tcp(localhost:3306)/speed?parseTime=true&charset=utf8'
+targets:
+  - type: codes
+    include_tables: # 包含的表，以下可以用 **
+      #- "t_user"
+    exclude_tables: # 排除的表，以下可以用 **
+    table_mapper: snake # 表名到代码类或结构体的映射关系
+    column_mapper: snake # 字段名到代码或结构体成员的映射关系
+    table_prefix: "" # 表前缀
+    multiple_files: true # 是否生成多个文件
+    language: golang
+    template_path: ./template/goxorm.tmpl # 生成的模板的路径，优先级比 template 低，但比 language 中的默认模板高
+    output_dir: ./model # 代码生成目录
+    template: | # 生成模板，如果这里定义了，优先级比 template_path 高
+      package model
+
+      {{$ilen := len .Imports}}
+      {{if gt $ilen 0}}
+      import (
+        {{range .Imports}}"{{.}}"{{end}}
+      )
+      {{end}}
+
+      {{range .Tables}}
+      type {{TableMapper .Name}} struct {
+      {{$table := .}}
+      {{range .ColumnsSeq}}{{$col := $table.GetColumn .}}	{{ColumnMapper $col.Name}}	{{Type $col}} `{{Tag $table $col}}`
+      {{end}}
+      }
+      {{end}}

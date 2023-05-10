@@ -1,0 +1,33 @@
+system:
+  env: debug
+  addr: 13005
+  show-sql: true
+db:
+  host: localhost
+  user: root
+  password: 123456
+  db-name: speed
+  port: 3306
+  log:
+    level: err
+    adapter: console
+    path: ./logs/go-upload.log
+    reverse-days: 7
+log:
+  level: info
+  adapter: console
+  path: ./logs/go-upload.log
+  reverse-days: 7
+redis:
+  addr: localhost:6379
+  password: 269423f39abf0d0ac
+  db: 1
+kafka:
+  addr:
+    - localhost:9092
+ip_white_list:
+  - 192.168.0.5
+  - 127.0.0.1
+  - ::1
+
+
