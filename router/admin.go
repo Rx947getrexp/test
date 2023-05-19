@@ -2,12 +2,21 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
+	"go-speed/api"
 	"go-speed/api/admin"
 )
 
 func AdminRoute(group *gin.RouterGroup) {
 	group.POST("login", admin.LoginAdmin)
 	group.POST("upload", admin.Upload)
+
+	nodeReportGroup := group.Group("node_report")
+	nodeReportGroup.Use(admin.NodeReportAuth())
+	{
+		nodeReportGroup.GET("test", api.Test)
+		nodeReportGroup.POST("heartbeat", admin.Heartbeat) //5s一个心跳包
+		nodeReportGroup.POST("data", admin.Data)           //30s上报一次数据
+	}
 
 	group.Use(admin.JWTAuth())
 	{

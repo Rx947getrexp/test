@@ -4,7 +4,7 @@ system:
   show-sql: true
   file_link: "http://localhost:13005"
   fs_site: "http://localhost:16002"
-  admin_address: "http://localhost:13001"
+  admin_address: "http://10.10.10.222:13001"
 db:
   host: localhost
   user: root

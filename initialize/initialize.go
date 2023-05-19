@@ -22,3 +22,10 @@ func InitComponents() {
 	global.HttpClient = initClient()
 
 }
+
+func InitComponentsV2() {
+	// 日志打印的时间格式
+	zerolog.TimeFieldFormat = time.RFC3339
+	global.Viper = initViper()
+	global.Logger = initLog()
+}

@@ -50,6 +50,48 @@ func HttpClientPost(url string, bodyParam interface{}, response interface{}) err
 	return nil
 }
 
+func HttpClientPostV2(url string, headerParam map[string]string, bodyParam interface{}, response interface{}) error {
+	paramBytes, err := json.Marshal(bodyParam)
+	if err != nil {
+		global.Logger.Err(err).Msg("json解析出错")
+		return err
+	}
+	body := bytes.NewReader(paramBytes)
+	httpReq, err := http.NewRequest("POST", url, body)
+	if err != nil {
+		global.Logger.Err(err).Msg("创建http请求失败")
+		return err
+	}
+	httpReq.Header.Add("Content-Type", "application/json")
+	for k, v := range headerParam {
+		httpReq.Header.Add(k, v)
+	}
+	httpReq.Close = true
+	respData, err := http.DefaultClient.Do(httpReq)
+	if err != nil {
+		global.Logger.Err(err).Msg("发送http请求失败")
+		return err
+	}
+	respBytes, err := ioutil.ReadAll(respData.Body)
+	if err != nil {
+		global.Logger.Err(err).Msg("读取响应数据失败")
+		return err
+	}
+	//fmt.Println("res响应：", string(respBytes))
+	defer respData.Body.Close()
+	switch response.(type) {
+	case string:
+		response = string(respBytes)
+		fmt.Println("res---kkk响应：", response)
+	default:
+		if err = json.Unmarshal(respBytes, response); err != nil {
+			global.Logger.Err(err).Msg("解析数据")
+			return err
+		}
+	}
+	return nil
+}
+
 func HttpClientPostReturnStr(url string, bodyParam interface{}) (string, error) {
 	paramBytes, err := json.Marshal(bodyParam)
 	if err != nil {

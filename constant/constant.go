@@ -8,3 +8,9 @@ const (
 
 	MaxPageSize = 1000
 )
+
+const (
+	NodeVersion     = "v1.0.0"
+	AccessTokenSalt = "2023@win"
+	HeartbeatTime   = 3
+)
