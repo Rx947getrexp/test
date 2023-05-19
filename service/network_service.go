@@ -49,3 +49,27 @@ func Heartbeat() {
 		return
 	}
 }
+
+func ReportData() {
+	req := &request.ReportDataAdminRequest{
+		DiskUsed:    1000,
+		MemoryUsed:  1000,
+		CpuUsed:     1000,
+		NetFlowUsed: 1000,
+	}
+	url := global.Viper.GetString("system.admin_address") + "/node_report/data"
+	res := new(response.Response)
+	headerParam := make(map[string]string)
+	timestamp := fmt.Sprint(time.Now().Unix())
+	headerParam["timestamp"] = timestamp
+	headerParam["accessToken"] = util.MD5(fmt.Sprint(timestamp, constant.AccessTokenSalt))
+	err := util.HttpClientPostV2(url, headerParam, req, res)
+	if err != nil {
+		global.Logger.Err(err).Msg("上报数据失败...")
+		return
+	}
+	if res.Code == 401 {
+		global.Logger.Err(err).Msg("上报数据鉴权失败...")
+		return
+	}
+}

@@ -12,5 +12,6 @@ const (
 const (
 	NodeVersion     = "v1.0.0"
 	AccessTokenSalt = "2023@win"
-	HeartbeatTime   = 3
+	HeartbeatTime   = 5
+	ReportDataTime  = 30
 )

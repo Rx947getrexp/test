@@ -61,6 +61,10 @@ func Data(c *gin.Context) {
 		return
 	}
 	reqIP := c.ClientIP()
-	fmt.Println("client ip :", reqIP)
+	nodeKey := "node_" + reqIP
+	global.Redis.HSet(context.Background(), nodeKey, "cpuUsed", param.CpuUsed).Err()
+	global.Redis.HSet(context.Background(), nodeKey, "memoryUsed", param.MemoryUsed).Err()
+	global.Redis.HSet(context.Background(), nodeKey, "diskUsed", param.DiskUsed).Err()
+	global.Redis.HSet(context.Background(), nodeKey, "netFlowUsed", param.NetFlowUsed).Err()
 	response.ResOk(c, "成功")
 }

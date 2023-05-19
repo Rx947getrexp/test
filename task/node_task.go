@@ -15,3 +15,12 @@ func NodeHeartbeatTask() {
 		time.Sleep(time.Second * constant.HeartbeatTime)
 	}
 }
+
+func NodeReportDataTask() {
+	global.Recovery()
+	global.Logger.Info().Msg("NodeReportDataTask start...")
+	for {
+		service.ReportData()
+		time.Sleep(time.Second * constant.ReportDataTime)
+	}
+}
