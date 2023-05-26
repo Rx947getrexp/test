@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"github.com/mssola/user_agent"
+	"go-speed/constant"
 	"go-speed/service"
 	"go-speed/service/email"
+	"go-speed/util"
 	"testing"
 )
 
@@ -42,10 +44,13 @@ func TestUserAgent(t *testing.T) {
 }
 
 func TestEmail(t *testing.T) {
-	address := []string{"aaa@qq.com", "aaa@163.com"}
-	subject := "test mail"
-	body :=
-		`<br>hello!</br>
-  <br>this is a test email, pls ignore it.</br>`
-	email.SendMail(address, subject, body)
+	address := []string{"angelicbecwarqhk88@gmail.com", "aaa@163.com"}
+	//subject := "Speed密码找回"
+	//body :=
+	//	`<br>hello!</br>
+	//<br>this is a test email, pls ignore it.</br>` + fmt.Sprintf(constant.SmsMsg, util.EncodeToString(6))
+	////email.SendMail(address, subject, body)
+	subject := constant.ForgetSubject
+	body := fmt.Sprintf(constant.ForgetBody, util.EncodeToString(6))
+	email.SendEmail(subject, body, address)
 }

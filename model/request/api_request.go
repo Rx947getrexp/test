@@ -28,3 +28,17 @@ type ChangePasswdRequest struct {
 	Passwd      string `form:"passwd" binding:"required" json:"passwd"`
 	EnterPasswd string `form:"enter_passwd" binding:"required" json:"enter_passwd"`
 }
+
+type TeamListRequest struct {
+	Page int `form:"page" binding:"required" json:"page"`
+	Size int `form:"size" binding:"required" json:"size"`
+}
+
+type NoticeListRequest struct {
+	Page int `form:"page" binding:"required" json:"page"`
+	Size int `form:"size" binding:"required" json:"size"`
+}
+
+type NoticeDetailRequest struct {
+	Id int64 `form:"id" binding:"required" json:"id"`
+}

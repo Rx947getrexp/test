@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/mssola/user_agent"
 	"go-speed/global"
@@ -210,6 +211,114 @@ func ForgetPasswd(c *gin.Context) {
 		return
 	}
 	response.ResOk(c, "成功")
+}
+
+func UserInfo(c *gin.Context) {
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("修改密码失败")
+		response.ResFail(c, "修改密码失败！")
+		return
+	}
+	res := response.UserInfoResponse{
+		Id:          user.Id,
+		Uname:       user.Uname,
+		MemberType:  user.Level,
+		ExpiredTime: user.ExpiredTime,
+		SurplusFlow: 0,
+	}
+	response.RespOk(c, "成功", res)
+}
+
+func TeamList(c *gin.Context) {
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("修改密码失败")
+		response.ResFail(c, "修改密码失败！")
+		return
+	}
+	fmt.Println(user)
+	res := response.UserInfoResponse{
+		Id:          user.Id,
+		Uname:       user.Uname,
+		MemberType:  user.Level,
+		ExpiredTime: user.ExpiredTime,
+		SurplusFlow: 0,
+	}
+	response.RespOk(c, "成功", res)
+}
+
+func TeamInfo(c *gin.Context) {
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("修改密码失败")
+		response.ResFail(c, "修改密码失败！")
+		return
+	}
+	fmt.Println(user)
+	res := response.UserInfoResponse{
+		Id:          user.Id,
+		Uname:       user.Uname,
+		MemberType:  user.Level,
+		ExpiredTime: user.ExpiredTime,
+		SurplusFlow: 0,
+	}
+	response.RespOk(c, "成功", res)
+}
+
+func NoticeList(c *gin.Context) {
+
+}
+
+func NoticeDetail(c *gin.Context) {
+
+}
+
+func ReceiveFree(c *gin.Context) {
+
+}
+
+func ReceiveFreeSummary(c *gin.Context) {
+
+}
+
+func NodeList(c *gin.Context) {
+
+}
+
+func UploadLog(c *gin.Context) {
+
+}
+
+func ComboList(c *gin.Context) {
+
+}
+
+func CreateOrder(c *gin.Context) {
+
+}
+
+func OrderList(c *gin.Context) {
+
+}
+
+func DevList(c *gin.Context) {
+
+}
+
+func BanDev(c *gin.Context) {
+
+}
+
+func ChangeNetwork(c *gin.Context) {
+
+}
+
+func SwitchButtonStatus(c *gin.Context) {
+
 }
 
 // JWTAuth 验证token

@@ -6,14 +6,14 @@ import (
 )
 
 const (
-	// 邮件服务器地址
-	SMTP_MAIL_HOST = "smtp.qq.com"
+	// 邮件服务器地址  smtp-mail.outlook.com  smtp.office365.com
+	SMTP_MAIL_HOST = "smtp.office365.com"
 	// 端口
 	SMTP_MAIL_PORT = "587"
 	// 发送邮件用户账号
-	SMTP_MAIL_USER = "aaa"
+	SMTP_MAIL_USER = "ispeedbar@outlook.com"
 	// 授权密码
-	SMTP_MAIL_PWD = "aaa"
+	SMTP_MAIL_PWD = "ispeed@bar"
 	// 发送邮件昵称
 	SMTP_MAIL_NICKNAME = "testMY"
 )
@@ -35,4 +35,9 @@ func SendMail(address []string, subject, body string) (err error) {
 		}
 	}
 	return err
+}
+
+func SendMailV2(address []string, subject, body string) error {
+
+	return nil
 }

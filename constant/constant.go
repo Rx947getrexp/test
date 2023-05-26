@@ -14,4 +14,7 @@ const (
 	AccessTokenSalt = "2023@win"
 	HeartbeatTime   = 5
 	ReportDataTime  = 30
+
+	ForgetSubject = "Speed找回密码"
+	ForgetBody    = "<br>hello!</br>您本次的验证码是:<font color='red'>%s</font>"
 )

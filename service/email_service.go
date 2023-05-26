@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"go-speed/constant"
 	"go-speed/global"
+	"go-speed/service/email"
 	"go-speed/util"
 	"time"
 )
@@ -39,7 +40,7 @@ func sendSms(mobile string) error {
 		return errors.New("短信限制，请稍后再试！")
 	}
 	msgCode := util.EncodeToString(6)
-	content := fmt.Sprintf(constant.SmsMsg, msgCode)
+	//content := fmt.Sprintf(constant.SmsMsg, msgCode)
 	err := global.Redis.Set(context.Background(), telKey, msgCode, time.Minute*5).Err()
 	if err != nil {
 		global.Logger.Err(err).Msg("redis错误")
@@ -50,8 +51,7 @@ func sendSms(mobile string) error {
 		global.Logger.Err(err).Msg("redis错误")
 		return errors.New("短信发送失败")
 	}
-	fmt.Sprint(content)
-	return nil
+	return email.SendEmail(constant.ForgetSubject, fmt.Sprintf(constant.ForgetBody, msgCode), []string{mobile})
 	//return smsService.SendMsgByKeTong(content, mobile)
 }
 
