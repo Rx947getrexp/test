@@ -4,6 +4,7 @@ type RegRequest struct {
 	Account     string `form:"account" binding:"required" json:"account"`
 	Passwd      string `form:"passwd" binding:"required" json:"passwd"`
 	EnterPasswd string `form:"enter_passwd" binding:"required" json:"enter_passwd"`
+	InviteCode  string `form:"invite_code" json:"invite_code"`
 }
 
 type LoginRequest struct {
@@ -41,4 +42,35 @@ type NoticeListRequest struct {
 
 type NoticeDetailRequest struct {
 	Id int64 `form:"id" binding:"required" json:"id"`
+}
+
+type UploadLogRequest struct {
+	Content string `form:"content" binding:"required" json:"content"`
+}
+
+type DevListRequest struct {
+	Page int `form:"page" binding:"required" json:"page"`
+	Size int `form:"size" binding:"required" json:"size"`
+}
+
+type BanDevRequest struct {
+	DevId int64 `form:"dev_id" binding:"required" json:"dev_id"`
+}
+
+type ChangeNetworkRequest struct {
+	WorkMode int   `form:"work_mode" binding:"required" json:"work_mode"` //1-智能；2-手选IP
+	NodeLine int64 `form:"node_line" json:"node_line"`                    //工作线路
+}
+
+type SwitchButtonStatusRequest struct {
+	Status int `form:"status" binding:"required" json:"status"` //1-开启；2-关闭
+}
+
+type CreateOrderRequest struct {
+	GoodsId int64 `form:"goods_id" binding:"required" json:"goods_id"`
+}
+
+type OrderListRequest struct {
+	Page int `form:"page" binding:"required" json:"page"`
+	Size int `form:"size" binding:"required" json:"size"`
 }

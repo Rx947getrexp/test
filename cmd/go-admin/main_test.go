@@ -7,7 +7,9 @@ import (
 	"go-speed/service"
 	"go-speed/service/email"
 	"go-speed/util"
+	"math/rand"
 	"testing"
+	"time"
 )
 
 func TestNetworkDelay(t *testing.T) {
@@ -53,4 +55,12 @@ func TestEmail(t *testing.T) {
 	subject := constant.ForgetSubject
 	body := fmt.Sprintf(constant.ForgetBody, util.EncodeToString(6))
 	email.SendEmail(subject, body, address)
+}
+
+func TestRand(t *testing.T) {
+	rand.Seed(time.Now().UnixNano())
+	for i := 0; i < 10; i++ {
+		println(rand.Intn(100))
+	}
+
 }

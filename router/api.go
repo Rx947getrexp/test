@@ -14,6 +14,9 @@ func ApiRoute(group *gin.RouterGroup) {
 
 	group.GET("notice_list", api.NoticeList)
 	group.GET("notice_detail", api.NoticeDetail)
+	group.GET("node_list", api.NodeList)
+	group.GET("combo_list", api.ComboList)
+	group.GET("ad_list", api.AdList)
 
 	group.Use(api.JWTAuth())
 	{
@@ -26,11 +29,8 @@ func ApiRoute(group *gin.RouterGroup) {
 		group.POST("receive_free", api.ReceiveFree)
 		group.GET("receive_free_summary", api.ReceiveFreeSummary)
 
-		group.GET("node_list", api.NodeList)
-
 		group.POST("upload_log", api.UploadLog)
 
-		group.GET("combo_list", api.ComboList)
 		group.POST("create_order", api.CreateOrder)
 		group.GET("order_list", api.OrderList)
 
@@ -38,6 +38,6 @@ func ApiRoute(group *gin.RouterGroup) {
 		group.GET("ban_dev", api.BanDev)
 
 		group.POST("change_network", api.ChangeNetwork)
-		group.POST("switch_button_status", api.SwitchButtonStatus)
+		//group.POST("switch_button_status", api.SwitchButtonStatus)
 	}
 }

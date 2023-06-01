@@ -15,13 +15,29 @@ type UserInfoResponse struct {
 }
 
 type TeamListResponse struct {
+	Uname       string `json:"uname"`
+	MemberType  int    `json:"member_type"`
+	CreatedTime string `json:"created_time"`
 }
 
 type TeamInfoResponse struct {
+	Fans       int64       `json:"fans"`
+	AwardHour  string      `json:"award_hour"`
+	AwardMoney string      `json:"award_money"`
+	AwardList  []AwardInfo `json:"award_list"`
 }
 
-type NoticeListResponse struct {
+type AwardInfo struct {
+	Uname   string `json:"uname"`
+	Title   string `json:"title"`
+	GiftSec int    `json:"gift_sec"`
+	TimeStr string `json:"time_str"`
 }
 
-type NoticeDetailResponse struct {
+type ComboListResponse struct {
+	MType     int         `json:"m_type"`
+	ComboList []ComboInfo `json:"combo_list"`
+}
+
+type ComboInfo struct {
 }
