@@ -57,14 +57,12 @@ func AdminRoute(group *gin.RouterGroup) {
 		comboGroup.GET("combo_list", admin.ComboList)
 		comboGroup.POST("add_combo", admin.AddCombo)
 		comboGroup.POST("edit_combo", admin.EditCombo)
-		comboGroup.POST("del_combo", admin.DelCombo)
 
 		//通知消息
 		noticeGroup := group.Group("notice")
 		noticeGroup.GET("notice_list", admin.NoticeList)
 		noticeGroup.POST("add_notice", admin.AddNotice)
 		noticeGroup.POST("edit_notice", admin.EditNotice)
-		noticeGroup.POST("del_notice", admin.DelNotice)
 
 		//订单管理
 		orderGroup := group.Group("order")
@@ -76,7 +74,6 @@ func AdminRoute(group *gin.RouterGroup) {
 		adGroup.GET("ad_list", admin.AdList)
 		adGroup.POST("add_ad", admin.AddAd)
 		adGroup.POST("edit_ad", admin.EditAd)
-		adGroup.POST("del_ad", admin.DelAd)
 		adGroup.GET("ad_summary", admin.AdSummary)
 
 		//监控管理
@@ -84,7 +81,6 @@ func AdminRoute(group *gin.RouterGroup) {
 		monitorGroup.GET("node_list", admin.NodeList)
 		monitorGroup.POST("add_node", admin.AddNode)
 		monitorGroup.POST("edit_node", admin.EditNode)
-		monitorGroup.POST("del_node", admin.DelNode)
 
 		//站点管理
 		siteGroup := group.Group("site")

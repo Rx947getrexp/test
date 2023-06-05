@@ -138,3 +138,113 @@ type ReportDataAdminRequest struct {
 	CpuUsed     int64 `form:"cpu_used" binding:"required" json:"cpu_used"`
 	NetFlowUsed int64 `form:"net_flow_used" binding:"required" json:"net_flow_used"`
 }
+
+type AddAdAdminRequest struct {
+	Name    string `form:"name" binding:"required" json:"name"`
+	Logo    string `form:"logo" binding:"required" json:"logo"`
+	Link    string `form:"link" binding:"required" json:"link"`
+	Tag     string `form:"tag" binding:"required" json:"tag"`
+	Content string `form:"content" binding:"required" json:"content"`
+	AdType  int    `form:"ad_type" binding:"required" json:"ad_type"`
+}
+
+type EditAdAdminRequest struct {
+	Id      int64  `form:"id" binding:"required" json:"id"`
+	Name    string `form:"name" json:"name"`
+	Logo    string `form:"logo" json:"logo"`
+	Link    string `form:"link" json:"link"`
+	Tag     string `form:"tag" json:"tag"`
+	Content string `form:"content" json:"content"`
+	AdType  int    `form:"ad_type" json:"ad_type"`
+	Status  int    `form:"status" json:"status"`
+}
+
+type AdListAdminRequest struct {
+	Name string `form:"name" json:"name"`
+	Tag  string `form:"tag" json:"tag"`
+	Page int    `form:"page" binding:"required" json:"page"`
+	Size int    `form:"size" binding:"required" json:"size"`
+}
+
+type AddNoticeAdminRequest struct {
+	Title   string `form:"title" binding:"required" json:"title"`
+	Tag     string `form:"tag" binding:"required" json:"tag"`
+	Content string `form:"content" binding:"required" json:"content"`
+}
+
+type EditNoticeAdminRequest struct {
+	Id      int64  `form:"id" binding:"required" json:"id"`
+	Title   string `form:"title" json:"title"`
+	Tag     string `form:"tag" json:"tag"`
+	Content string `form:"content" json:"content"`
+	Status  int    `form:"status" json:"status"`
+}
+
+type NoticeListAdminRequest struct {
+	Title string `form:"title" json:"title"`
+	Tag   string `form:"tag" json:"tag"`
+	Page  int    `form:"page" binding:"required" json:"page"`
+	Size  int    `form:"size" binding:"required" json:"size"`
+}
+
+type AddGoodsAdminRequest struct {
+	Title     string  `form:"title" binding:"required" json:"title"`
+	MType     int     `form:"m_type" binding:"required" json:"m_type"`
+	DevLimit  int     `form:"dev_limit" binding:"required" json:"dev_limit"`
+	FlowLimit int64   `form:"flow_limit" binding:"required" json:"flow_limit"`
+	Period    int     `form:"period" binding:"required" json:"period"`
+	Price     float64 `form:"price" binding:"required" json:"price"`
+}
+
+type EditGoodsAdminRequest struct {
+	Id        int64   `form:"id" binding:"required" json:"id"`
+	Title     string  `form:"title" json:"title"`
+	MType     int     `form:"m_type" json:"m_type"`
+	DevLimit  int     `form:"dev_limit" json:"dev_limit"`
+	FlowLimit int64   `form:"flow_limit" json:"flow_limit"`
+	Period    int     `form:"period" json:"period"`
+	Price     float64 `form:"price" json:"price"`
+	Status    int     `form:"status" json:"status"`
+}
+
+type GoodsListAdminRequest struct {
+	Title string `form:"title" json:"title"`
+	Page  int    `form:"page" binding:"required" json:"page"`
+	Size  int    `form:"size" binding:"required" json:"size"`
+}
+
+type AddNodeAdminRequest struct {
+	Title   string `form:"title" binding:"required" json:"title"`
+	Name    string `form:"name" binding:"required" json:"name"`
+	Country string `form:"country" binding:"required" json:"country"`
+	Ip      string `form:"ip" binding:"required" json:"ip"`
+	Server  string `form:"server" binding:"required" json:"server"`
+	Port    int    `form:"port" binding:"required" json:"port"`
+	Cpu     int    `form:"cpu" binding:"required" json:"cpu"`
+	Flow    int64  `form:"flow" binding:"required" json:"flow"`
+	Disk    int64  `form:"disk" binding:"required" json:"disk"`
+	Memory  int64  `form:"memory" binding:"required" json:"memory"`
+}
+
+type EditNodeAdminRequest struct {
+	Id      int64  `form:"id" binding:"required" json:"id"`
+	Title   string `form:"title" json:"title"`
+	Name    string `form:"name" json:"name"`
+	Country string `form:"country" json:"country"`
+	Ip      string `form:"ip" json:"ip"`
+	Server  string `form:"server" json:"server"`
+	Port    int    `form:"port" json:"port"`
+	Cpu     int    `form:"cpu" json:"cpu"`
+	Flow    int64  `form:"flow" json:"flow"`
+	Disk    int64  `form:"disk" json:"disk"`
+	Memory  int64  `form:"memory" json:"memory"`
+	Status  int    `form:"status" json:"status"`
+}
+
+type NodeListAdminRequest struct {
+	Title   string `form:"title" json:"title"`
+	Name    string `form:"name" json:"name"`
+	Country string `form:"country" json:"country"`
+	Page    int    `form:"page" binding:"required" json:"page"`
+	Size    int    `form:"size" binding:"required" json:"size"`
+}
