@@ -248,3 +248,72 @@ type NodeListAdminRequest struct {
 	Page    int    `form:"page" binding:"required" json:"page"`
 	Size    int    `form:"size" binding:"required" json:"size"`
 }
+
+type OrderListAdminRequest struct {
+	Id     int64 `form:"id" json:"id"`
+	UserId int64 `form:"user_id" json:"user_id"`
+	Page   int   `form:"page" binding:"required" json:"page"`
+	Size   int   `form:"size" binding:"required" json:"size"`
+}
+
+type SiteListAdminRequest struct {
+	Site string `form:"site" json:"site"`
+	Ip   string `form:"ip" json:"ip"`
+	Page int    `form:"page" binding:"required" json:"page"`
+	Size int    `form:"size" binding:"required" json:"size"`
+}
+
+type AddSiteAdminRequest struct {
+	Site string `form:"site" binding:"required" json:"site"`
+	Ip   string `form:"ip" binding:"required" json:"ip"`
+}
+
+type EditSiteAdminRequest struct {
+	Id     int64  `form:"id" binding:"required" json:"id"`
+	Site   string `form:"site" json:"site"`
+	Ip     string `form:"ip" json:"ip"`
+	Status int    `form:"status" json:"status"`
+}
+
+type DictDetailAdminRequest struct {
+	Key string `form:"key" binding:"required" json:"key"`
+}
+
+type DictEditAdminRequest struct {
+	Key   string `form:"key" binding:"required" json:"key"`
+	Value string `form:"value" binding:"required" json:"value"`
+}
+
+type GiftListAdminRequest struct {
+	UserId int64  `form:"user_id" json:"user_id"`
+	Uname  string `form:"uname" json:"uname"`
+	GType  int    `form:"g_type" json:"g_type"`
+	Page   int    `form:"page" binding:"required" json:"page"`
+	Size   int    `form:"size" binding:"required" json:"size"`
+}
+
+type ActivityListAdminRequest struct {
+	UserId int64  `form:"user_id" json:"user_id"`
+	Uname  string `form:"uname" json:"uname"`
+	Page   int    `form:"page" binding:"required" json:"page"`
+	Size   int    `form:"size" binding:"required" json:"size"`
+}
+
+type MemberListAdminRequest struct {
+	UserId     int64  `form:"user_id" json:"user_id"`         //用户ID
+	Uname      string `form:"uname" json:"uname"`             //用户名
+	DirectId   int64  `form:"direct_id" json:"direct_id"`     //上级ID
+	DirectName string `form:"direct_name" json:"direct_name"` //上级用户名
+	TeamId     int64  `form:"team_id" json:"team_id"`         //团队长ID
+	TeamName   string `form:"team_name" json:"team_name"`     //团队长用户名
+	Page       int    `form:"page" binding:"required" json:"page"`
+	Size       int    `form:"size" binding:"required" json:"size"`
+}
+
+type MemberDevListAdminRequest struct {
+	UserId int64  `form:"user_id" json:"user_id"`
+	Uname  string `form:"uname" json:"uname"`
+	DevId  int64  `form:"dev_id" json:"dev_id"`
+	Page   int    `form:"page" binding:"required" json:"page"`
+	Size   int    `form:"size" binding:"required" json:"size"`
+}

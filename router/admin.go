@@ -74,7 +74,6 @@ func AdminRoute(group *gin.RouterGroup) {
 		adGroup.GET("ad_list", admin.AdList)
 		adGroup.POST("add_ad", admin.AddAd)
 		adGroup.POST("edit_ad", admin.EditAd)
-		adGroup.GET("ad_summary", admin.AdSummary)
 
 		//监控管理
 		monitorGroup := group.Group("monitor")
@@ -89,17 +88,16 @@ func AdminRoute(group *gin.RouterGroup) {
 		siteGroup.GET("site_list", admin.SiteList)
 		siteGroup.POST("add_site", admin.AddSite)
 		siteGroup.POST("edit_site", admin.EditSite)
-		siteGroup.POST("del_site", admin.DelSite)
 
 		//奖励管理
 		giveGroup := group.Group("give")
-		giveGroup.GET("give_team", admin.GiveTeam)
-		giveGroup.GET("give_activity", admin.GiveActivity)
-		giveGroup.GET("give_combo", admin.GiveCombo)
-		giveGroup.GET("give_summary", admin.GiveSummary)
+		giveGroup.GET("gift_list", admin.GiftList)
+		giveGroup.POST("activity_list", admin.ActivityList) // 免费领会员
 
 		//平台报表
 		plantGroup := group.Group("plant")
+		giveGroup.GET("give_summary", admin.GiveSummary)
+		adGroup.GET("ad_summary", admin.AdSummary)
 		plantGroup.GET("plant_day_summary", admin.PlantDaySummary)
 		plantGroup.GET("plant_month_summary", admin.PlantMonthSummary)
 

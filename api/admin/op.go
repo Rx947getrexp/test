@@ -12,11 +12,72 @@ import (
 )
 
 func MemberList(c *gin.Context) {
-
+	param := new(request.MemberListAdminRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	if param.TeamName != "" {
+		teamU := new(model.TUser)
+		has, err := global.Db.Where("uname = ?", param.TeamName).Get(teamU)
+		if err != nil || !has {
+			global.Logger.Err(err).Msg("团队长不存在！")
+			response.ResFail(c, "查询出错！")
+			return
+		}
+		param.TeamId = teamU.Id
+	}
+	session := service.MemberAdminList(param, user)
+	count, err := service.MemberAdminList(param, user).Count()
+	if err != nil {
+		global.Logger.Err(err).Msg("查询出错！")
+		response.ResFail(c, "查询出错！")
+		return
+	}
+	cols := "u1.id as uid1,u1.uname as uname1,u1.created_at,u1.level,u1.expired_time as time1," +
+		"u2.id as uid2,u2.uname as uname2,u2.level,u2.expired_time as time2"
+	session.Cols(cols)
+	session.OrderBy("t.id desc")
+	dataList, _ := commonPageListV2(param.Page, param.Size, count, session)
+	response.RespOk(c, "成功", dataList)
 }
 
 func MemberDevList(c *gin.Context) {
-
+	param := new(request.MemberDevListAdminRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	session := service.MemberDevAdminList(param, user)
+	count, err := service.MemberDevAdminList(param, user).Count()
+	if err != nil {
+		global.Logger.Err(err).Msg("查询出错！")
+		response.ResFail(c, "查询出错！")
+		return
+	}
+	cols := "ud.*," +
+		"u.uname," +
+		"d.os,d.network"
+	session.Cols(cols)
+	session.OrderBy("ud.id desc")
+	dataList, _ := commonPageListV2(param.Page, param.Size, count, session)
+	response.RespOk(c, "成功", dataList)
 }
 
 func ComboList(c *gin.Context) {
@@ -245,7 +306,31 @@ func EditNotice(c *gin.Context) {
 }
 
 func OrderList(c *gin.Context) {
-
+	param := new(request.OrderListAdminRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	session := service.OrderAdminList(param, user)
+	count, err := service.OrderAdminList(param, user).Count()
+	if err != nil {
+		global.Logger.Err(err).Msg("查询出错！")
+		response.ResFail(c, "查询出错！")
+		return
+	}
+	cols := "o.*"
+	session.Cols(cols)
+	session.OrderBy("o.id desc")
+	dataList, _ := commonPageListV2(param.Page, param.Size, count, session)
+	response.RespOk(c, "成功", dataList)
 }
 
 func OrderSummary(c *gin.Context) {
@@ -515,39 +600,208 @@ func EditNode(c *gin.Context) {
 }
 
 func LinkDetail(c *gin.Context) {
-
+	param := new(request.DictDetailAdminRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	_, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	bean := new(model.TDict)
+	has, err := global.Db.Where("key = ?", param.Key).Get(bean)
+	if err != nil || !has {
+		global.Logger.Err(err).Msg("key不存在！")
+		response.ResFail(c, "失败！")
+		return
+	}
+	response.RespOk(c, "成功", bean.Value)
 }
 
 func EditLink(c *gin.Context) {
-
+	param := new(request.DictEditAdminRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	_, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	bean := new(model.TDict)
+	bean.UpdatedAt = time.Now()
+	bean.Value = param.Value
+	rows, err := global.Db.Where("key = ?", param.Key).Update(bean)
+	if err != nil || rows != 1 {
+		global.Logger.Err(err).Msg("操作失败！")
+		response.ResFail(c, "操作失败！")
+		return
+	}
+	response.ResOk(c, "成功")
 }
 
 func SiteList(c *gin.Context) {
-
+	param := new(request.SiteListAdminRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	session := service.SiteAdminList(param, user)
+	count, err := service.SiteAdminList(param, user).Count()
+	if err != nil {
+		global.Logger.Err(err).Msg("查询出错！")
+		response.ResFail(c, "查询出错！")
+		return
+	}
+	cols := "s.*"
+	session.Cols(cols)
+	session.OrderBy("s.id desc")
+	dataList, _ := commonPageListV2(param.Page, param.Size, count, session)
+	response.RespOk(c, "成功", dataList)
 }
 
 func AddSite(c *gin.Context) {
-
+	param := new(request.AddSiteAdminRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	bean := &model.TSite{
+		Site:      param.Site,
+		Ip:        param.Ip,
+		Status:    1,
+		Author:    user.Uname,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		Comment:   "",
+	}
+	rows, err := global.Db.Insert(bean)
+	if err != nil || rows != 1 {
+		global.Logger.Err(err).Msg("操作失败！")
+		response.ResFail(c, "操作失败！")
+		return
+	}
+	response.ResOk(c, "成功")
 }
 
 func EditSite(c *gin.Context) {
-
+	param := new(request.EditSiteAdminRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	bean := new(model.TNode)
+	bean.UpdatedAt = time.Now()
+	bean.Author = user.Uname
+	cols := []string{"updated_at", "author"}
+	if param.Site != "" {
+		cols = append(cols, "site")
+		bean.Server = param.Site
+	}
+	if param.Ip != "" {
+		cols = append(cols, "ip")
+		bean.Ip = param.Ip
+	}
+	if param.Status > 0 {
+		cols = append(cols, "status")
+		bean.Status = param.Status
+	}
+	rows, err := global.Db.Cols(cols...).Where("id = ?", param.Id).Update(bean)
+	if err != nil || rows != 1 {
+		global.Logger.Err(err).Msg("操作失败！")
+		response.ResFail(c, "操作失败！")
+		return
+	}
+	response.ResOk(c, "成功")
 }
 
-func DelSite(c *gin.Context) {
-
+func GiftList(c *gin.Context) {
+	param := new(request.GiftListAdminRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	session := service.GiftAdminList(param, user)
+	count, err := service.GiftAdminList(param, user).Count()
+	if err != nil {
+		global.Logger.Err(err).Msg("查询出错！")
+		response.ResFail(c, "查询出错！")
+		return
+	}
+	cols := "g.*,u.uname"
+	session.Cols(cols)
+	session.OrderBy("g.id desc")
+	dataList, _ := commonPageListV2(param.Page, param.Size, count, session)
+	response.RespOk(c, "成功", dataList)
 }
 
-func GiveTeam(c *gin.Context) {
-
-}
-
-func GiveActivity(c *gin.Context) {
-
-}
-
-func GiveCombo(c *gin.Context) {
-
+func ActivityList(c *gin.Context) {
+	param := new(request.ActivityListAdminRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	session := service.ActivityAdminList(param, user)
+	count, err := service.ActivityAdminList(param, user).Count()
+	if err != nil {
+		global.Logger.Err(err).Msg("查询出错！")
+		response.ResFail(c, "查询出错！")
+		return
+	}
+	cols := "a.*,u.uname"
+	session.Cols(cols)
+	session.OrderBy("a.id desc")
+	dataList, _ := commonPageListV2(param.Page, param.Size, count, session)
+	response.RespOk(c, "成功", dataList)
 }
 
 func GiveSummary(c *gin.Context) {
