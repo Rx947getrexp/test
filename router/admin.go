@@ -67,7 +67,6 @@ func AdminRoute(group *gin.RouterGroup) {
 		//订单管理
 		orderGroup := group.Group("order")
 		orderGroup.GET("order_list", admin.OrderList)
-		orderGroup.GET("order_summary", admin.OrderSummary)
 
 		//广告管理
 		adGroup := group.Group("ad")
@@ -92,7 +91,7 @@ func AdminRoute(group *gin.RouterGroup) {
 		//奖励管理
 		giveGroup := group.Group("give")
 		giveGroup.GET("gift_list", admin.GiftList)
-		giveGroup.POST("activity_list", admin.ActivityList) // 免费领会员
+		giveGroup.GET("activity_list", admin.ActivityList) // 免费领会员
 
 		//平台报表
 		plantGroup := group.Group("plant")
@@ -100,6 +99,7 @@ func AdminRoute(group *gin.RouterGroup) {
 		adGroup.GET("ad_summary", admin.AdSummary)
 		plantGroup.GET("plant_day_summary", admin.PlantDaySummary)
 		plantGroup.GET("plant_month_summary", admin.PlantMonthSummary)
+		orderGroup.GET("order_summary", admin.OrderSummary)
 
 	}
 }

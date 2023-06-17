@@ -198,6 +198,7 @@ func EditCombo(c *gin.Context) {
 		return
 	}
 	response.ResOk(c, "成功")
+
 }
 
 func NoticeList(c *gin.Context) {
@@ -424,6 +425,10 @@ func EditAd(c *gin.Context) {
 		cols = append(cols, "status")
 		ad.Status = param.Status
 	}
+	if param.Name != "" {
+		cols = append(cols, "name")
+		ad.Name = param.Name
+	}
 	if param.Tag != "" {
 		cols = append(cols, "tag")
 		ad.Tag = param.Tag
@@ -614,7 +619,7 @@ func LinkDetail(c *gin.Context) {
 		return
 	}
 	bean := new(model.TDict)
-	has, err := global.Db.Where("key = ?", param.Key).Get(bean)
+	has, err := global.Db.Where("key_id = ?", param.Key).Get(bean)
 	if err != nil || !has {
 		global.Logger.Err(err).Msg("key不存在！")
 		response.ResFail(c, "失败！")
@@ -640,7 +645,7 @@ func EditLink(c *gin.Context) {
 	bean := new(model.TDict)
 	bean.UpdatedAt = time.Now()
 	bean.Value = param.Value
-	rows, err := global.Db.Where("key = ?", param.Key).Update(bean)
+	rows, err := global.Db.Where("key_id = ?", param.Key).Update(bean)
 	if err != nil || rows != 1 {
 		global.Logger.Err(err).Msg("操作失败！")
 		response.ResFail(c, "操作失败！")
@@ -723,13 +728,13 @@ func EditSite(c *gin.Context) {
 		response.ResFail(c, "不合法！")
 		return
 	}
-	bean := new(model.TNode)
+	bean := new(model.TSite)
 	bean.UpdatedAt = time.Now()
 	bean.Author = user.Uname
 	cols := []string{"updated_at", "author"}
 	if param.Site != "" {
 		cols = append(cols, "site")
-		bean.Server = param.Site
+		bean.Site = param.Site
 	}
 	if param.Ip != "" {
 		cols = append(cols, "ip")

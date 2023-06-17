@@ -160,10 +160,11 @@ type EditAdAdminRequest struct {
 }
 
 type AdListAdminRequest struct {
-	Name string `form:"name" json:"name"`
-	Tag  string `form:"tag" json:"tag"`
-	Page int    `form:"page" binding:"required" json:"page"`
-	Size int    `form:"size" binding:"required" json:"size"`
+	Name   string `form:"name" json:"name"`
+	Tag    string `form:"tag" json:"tag"`
+	AdType int    `form:"ad_type" json:"ad_type"`
+	Page   int    `form:"page" binding:"required" json:"page"`
+	Size   int    `form:"size" binding:"required" json:"size"`
 }
 
 type AddNoticeAdminRequest struct {

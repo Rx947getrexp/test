@@ -17,6 +17,9 @@ func AdAdminList(param *request.AdListAdminRequest, user *model.AdminUser) *xorm
 	if param.Tag != "" {
 		session.Where("ad.tag like ?", "%"+param.Tag+"%")
 	}
+	if param.AdType > 0 {
+		session.Where("ad.ad_type = ?", param.AdType)
+	}
 	return session
 }
 
@@ -69,7 +72,7 @@ func OrderAdminList(param *request.OrderListAdminRequest, user *model.AdminUser)
 
 func SiteAdminList(param *request.SiteListAdminRequest, user *model.AdminUser) *xorm.Session {
 	session := global.Db.Table("t_site as s")
-	session.Where("ad.status = 1")
+	session.Where("s.status = 1")
 	if param.Site != "" {
 		session.Where("s.site = ?", param.Site)
 	}
