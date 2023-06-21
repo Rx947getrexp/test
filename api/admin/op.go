@@ -327,7 +327,7 @@ func OrderList(c *gin.Context) {
 		response.ResFail(c, "查询出错！")
 		return
 	}
-	cols := "o.*"
+	cols := "o.*,u.uname"
 	session.Cols(cols)
 	session.OrderBy("o.id desc")
 	dataList, _ := commonPageListV2(param.Page, param.Size, count, session)
@@ -805,6 +805,62 @@ func ActivityList(c *gin.Context) {
 	cols := "a.*,u.uname"
 	session.Cols(cols)
 	session.OrderBy("a.id desc")
+	dataList, _ := commonPageListV2(param.Page, param.Size, count, session)
+	response.RespOk(c, "成功", dataList)
+}
+
+func SpeedLogs(c *gin.Context) {
+	param := new(request.SpeedLogsAdminRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	session := service.SpeedLogsAdminList(param, user)
+	count, err := service.SpeedLogsAdminList(param, user).Count()
+	if err != nil {
+		global.Logger.Err(err).Msg("查询出错！")
+		response.ResFail(c, "查询出错！")
+		return
+	}
+	cols := "w.*,u.uname,dev.os,dev.network,node.name"
+	session.Cols(cols)
+	session.OrderBy("w.id desc")
+	dataList, _ := commonPageListV2(param.Page, param.Size, count, session)
+	response.RespOk(c, "成功", dataList)
+}
+
+func DevLogs(c *gin.Context) {
+	param := new(request.DevLogsAdminRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	session := service.DevLogsAdminList(param, user)
+	count, err := service.DevLogsAdminList(param, user).Count()
+	if err != nil {
+		global.Logger.Err(err).Msg("查询出错！")
+		response.ResFail(c, "查询出错！")
+		return
+	}
+	cols := "up.*,u.uname,dev.os,dev.network"
+	session.Cols(cols)
+	session.OrderBy("up.id desc")
 	dataList, _ := commonPageListV2(param.Page, param.Size, count, session)
 	response.RespOk(c, "成功", dataList)
 }

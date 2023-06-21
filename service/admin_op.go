@@ -61,11 +61,21 @@ func NodeAdminList(param *request.NodeListAdminRequest, user *model.AdminUser) *
 
 func OrderAdminList(param *request.OrderListAdminRequest, user *model.AdminUser) *xorm.Session {
 	session := global.Db.Table("t_order as o")
+	session.Join("LEFT", "t_user as u", "u.id = o.user_id")
 	if param.Id > 0 {
 		session.Where("o.id = ?", param.Id)
 	}
 	if param.UserId > 0 {
 		session.Where("o.user_id = ?", param.UserId)
+	}
+	if param.Uname != "" {
+		session.Where("u.uname = ?", param.Uname)
+	}
+	if param.StartTime != "" {
+		session.Where("w.created_at >= ?", param.StartTime)
+	}
+	if param.EndTime != "" {
+		session.Where("w.created_at < ?", param.EndTime)
 	}
 	return session
 }
@@ -105,6 +115,51 @@ func ActivityAdminList(param *request.ActivityListAdminRequest, user *model.Admi
 	}
 	if param.Uname != "" {
 		session.Where("u.uname = ?", param.Uname)
+	}
+	return session
+}
+
+func SpeedLogsAdminList(param *request.SpeedLogsAdminRequest, user *model.AdminUser) *xorm.Session {
+	session := global.Db.Table("t_work_log as w")
+	session.Join("LEFT", "t_user as u", "u.id = w.user_id")
+	session.Join("LEFT", "t_dev as dev", "dev.id = w.dev_id")
+	session.Join("LEFT", "t_node as node", "node.id = w.node_id")
+	if param.UserId > 0 {
+		session.Where("w.user_id = ?", param.UserId)
+	}
+	if param.DevId > 0 {
+		session.Where("w.dev_id = ?", param.DevId)
+	}
+	if param.Uname != "" {
+		session.Where("u.uname = ?", param.Uname)
+	}
+	if param.StartTime != "" {
+		session.Where("w.created_at >= ?", param.StartTime)
+	}
+	if param.EndTime != "" {
+		session.Where("w.created_at < ?", param.EndTime)
+	}
+	return session
+}
+
+func DevLogsAdminList(param *request.DevLogsAdminRequest, user *model.AdminUser) *xorm.Session {
+	session := global.Db.Table("t_upload_log as up")
+	session.Join("LEFT", "t_user as u", "u.id = up.user_id")
+	session.Join("LEFT", "t_dev as dev", "dev.id = up.dev_id")
+	if param.UserId > 0 {
+		session.Where("up.user_id = ?", param.UserId)
+	}
+	if param.DevId > 0 {
+		session.Where("up.dev_id = ?", param.DevId)
+	}
+	if param.Uname != "" {
+		session.Where("u.uname = ?", param.Uname)
+	}
+	if param.StartTime != "" {
+		session.Where("up.created_at >= ?", param.StartTime)
+	}
+	if param.EndTime != "" {
+		session.Where("up.created_at < ?", param.EndTime)
 	}
 	return session
 }

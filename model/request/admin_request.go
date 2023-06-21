@@ -251,10 +251,13 @@ type NodeListAdminRequest struct {
 }
 
 type OrderListAdminRequest struct {
-	Id     int64 `form:"id" json:"id"`
-	UserId int64 `form:"user_id" json:"user_id"`
-	Page   int   `form:"page" binding:"required" json:"page"`
-	Size   int   `form:"size" binding:"required" json:"size"`
+	Id        int64  `form:"id" json:"id"`
+	UserId    int64  `form:"user_id" json:"user_id"`
+	Uname     string `form:"uname" json:"uname"`
+	StartTime string `form:"start_time" json:"start_time"`
+	EndTime   string `form:"end_time" json:"end_time"`
+	Page      int    `form:"page" binding:"required" json:"page"`
+	Size      int    `form:"size" binding:"required" json:"size"`
 }
 
 type SiteListAdminRequest struct {
@@ -298,6 +301,26 @@ type ActivityListAdminRequest struct {
 	Uname  string `form:"uname" json:"uname"`
 	Page   int    `form:"page" binding:"required" json:"page"`
 	Size   int    `form:"size" binding:"required" json:"size"`
+}
+
+type SpeedLogsAdminRequest struct {
+	UserId    int64  `form:"user_id" json:"user_id"`
+	Uname     string `form:"uname" json:"uname"`
+	DevId     int64  `form:"dev_id" json:"dev_id"`
+	StartTime string `form:"start_time" json:"start_time"`
+	EndTime   string `form:"end_time" json:"end_time"`
+	Page      int    `form:"page" binding:"required" json:"page"`
+	Size      int    `form:"size" binding:"required" json:"size"`
+}
+
+type DevLogsAdminRequest struct {
+	UserId    int64  `form:"user_id" json:"user_id"`
+	Uname     string `form:"uname" json:"uname"`
+	DevId     int64  `form:"dev_id" json:"dev_id"`
+	StartTime string `form:"start_time" json:"start_time"`
+	EndTime   string `form:"end_time" json:"end_time"`
+	Page      int    `form:"page" binding:"required" json:"page"`
+	Size      int    `form:"size" binding:"required" json:"size"`
 }
 
 type MemberListAdminRequest struct {

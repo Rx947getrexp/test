@@ -93,6 +93,11 @@ func AdminRoute(group *gin.RouterGroup) {
 		giveGroup.GET("gift_list", admin.GiftList)
 		giveGroup.GET("activity_list", admin.ActivityList) // 免费领会员
 
+		//日志信息
+		logGroup := group.Group("log")
+		logGroup.GET("speed_logs", admin.SpeedLogs) //加速日志
+		logGroup.GET("dev_logs", admin.DevLogs)     // 设备日志
+
 		//平台报表
 		plantGroup := group.Group("plant")
 		giveGroup.GET("give_summary", admin.GiveSummary)
