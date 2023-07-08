@@ -24,7 +24,6 @@ type SendEmailRequest struct {
 }
 
 type ChangePasswdRequest struct {
-	Account     string `form:"account" binding:"required" json:"account"`
 	OldPasswd   string `form:"old_passwd" binding:"required" json:"old_passwd"`
 	Passwd      string `form:"passwd" binding:"required" json:"passwd"`
 	EnterPasswd string `form:"enter_passwd" binding:"required" json:"enter_passwd"`

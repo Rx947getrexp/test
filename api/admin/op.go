@@ -8,6 +8,7 @@ import (
 	"go-speed/model/request"
 	"go-speed/model/response"
 	"go-speed/service"
+	"strconv"
 	"time"
 )
 
@@ -78,6 +79,37 @@ func MemberDevList(c *gin.Context) {
 	session.OrderBy("ud.id desc")
 	dataList, _ := commonPageListV2(param.Page, param.Size, count, session)
 	response.RespOk(c, "成功", dataList)
+}
+
+func EditMember(c *gin.Context) {
+	param := new(request.EditMemberAdminRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	bean := new(model.TGoods)
+	bean.UpdatedAt = time.Now()
+	bean.Author = user.Uname
+	cols := []string{"updated_at", "author"}
+	if param.Status != "" {
+		bean.Status, _ = strconv.Atoi(param.Status)
+		cols = append(cols, "status")
+	}
+	rows, err := global.Db.Cols(cols...).Where("id = ?", param.Id).Update(bean)
+	if err != nil || rows != 1 {
+		global.Logger.Err(err).Msg("操作失败！")
+		response.ResFail(c, "操作失败！")
+		return
+	}
+	response.ResOk(c, "成功")
 }
 
 func ComboList(c *gin.Context) {
@@ -604,7 +636,35 @@ func EditNode(c *gin.Context) {
 	response.ResOk(c, "成功")
 }
 
-func LinkDetail(c *gin.Context) {
+func NodeUuidList(c *gin.Context) {
+	param := new(request.NodeUuidListAdminRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	session := service.NodeUuidAdminList(param, user)
+	count, err := service.NodeUuidAdminList(param, user).Count()
+	if err != nil {
+		global.Logger.Err(err).Msg("查询出错！")
+		response.ResFail(c, "查询出错！")
+		return
+	}
+	cols := "nu.*,u.uname,n.name"
+	session.Cols(cols)
+	session.OrderBy("nu.id desc")
+	dataList, _ := commonPageListV2(param.Page, param.Size, count, session)
+	response.RespOk(c, "成功", dataList)
+}
+
+func AppInfo(c *gin.Context) {
 	param := new(request.DictDetailAdminRequest)
 	if err := c.ShouldBind(param); err != nil {
 		global.Logger.Err(err).Msg("绑定参数")
@@ -618,17 +678,24 @@ func LinkDetail(c *gin.Context) {
 		response.ResFail(c, "不合法！")
 		return
 	}
-	bean := new(model.TDict)
-	has, err := global.Db.Where("key_id = ?", param.Key).Get(bean)
-	if err != nil || !has {
+	var list []*model.TDict
+	err = global.Db.Where("key_id = ?", param.AppLink).
+		Or("key_id = ?", param.AppJsZip).
+		Or("key_id = ?", param.AppVersion).
+		Find(&list)
+	if err != nil {
 		global.Logger.Err(err).Msg("key不存在！")
 		response.ResFail(c, "失败！")
 		return
 	}
-	response.RespOk(c, "成功", bean.Value)
+	var result = make(map[string]interface{})
+	for _, item := range list {
+		result[item.KeyId] = item.Value
+	}
+	response.RespOk(c, "成功", result)
 }
 
-func EditLink(c *gin.Context) {
+func EditAppInfo(c *gin.Context) {
 	param := new(request.DictEditAdminRequest)
 	if err := c.ShouldBind(param); err != nil {
 		global.Logger.Err(err).Msg("绑定参数")
@@ -642,10 +709,32 @@ func EditLink(c *gin.Context) {
 		response.ResFail(c, "不合法！")
 		return
 	}
+	nowTime := time.Now()
+
 	bean := new(model.TDict)
-	bean.UpdatedAt = time.Now()
-	bean.Value = param.Value
-	rows, err := global.Db.Where("key_id = ?", param.Key).Update(bean)
+	bean.UpdatedAt = nowTime
+	bean.Value = param.AppLink
+	rows, err := global.Db.Cols("updated_at", "value").Where("key_id = ?", "app_link").Update(bean)
+	if err != nil || rows != 1 {
+		global.Logger.Err(err).Msg("操作失败！")
+		response.ResFail(c, "操作失败！")
+		return
+	}
+
+	bean = new(model.TDict)
+	bean.UpdatedAt = nowTime
+	bean.Value = param.AppVersion
+	rows, err = global.Db.Cols("updated_at", "value").Where("key_id = ?", "app_version").Update(bean)
+	if err != nil || rows != 1 {
+		global.Logger.Err(err).Msg("操作失败！")
+		response.ResFail(c, "操作失败！")
+		return
+	}
+
+	bean = new(model.TDict)
+	bean.UpdatedAt = nowTime
+	bean.Value = param.AppJsZip
+	rows, err = global.Db.Cols("updated_at", "value").Where("key_id = ?", "app_js_zip").Update(bean)
 	if err != nil || rows != 1 {
 		global.Logger.Err(err).Msg("操作失败！")
 		response.ResFail(c, "操作失败！")
@@ -863,6 +952,110 @@ func DevLogs(c *gin.Context) {
 	session.OrderBy("up.id desc")
 	dataList, _ := commonPageListV2(param.Page, param.Size, count, session)
 	response.RespOk(c, "成功", dataList)
+}
+
+func ChannelList(c *gin.Context) {
+	param := new(request.ChannelListAdminRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	session := service.ChannelAdminList(param, user)
+	count, err := service.ChannelAdminList(param, user).Count()
+	if err != nil {
+		global.Logger.Err(err).Msg("查询出错！")
+		response.ResFail(c, "查询出错！")
+		return
+	}
+	cols := "c.*"
+	session.Cols(cols)
+	session.OrderBy("c.id desc")
+	dataList, _ := commonPageListV2(param.Page, param.Size, count, session)
+	response.RespOk(c, "成功", dataList)
+}
+
+func AddChannel(c *gin.Context) {
+	param := new(request.AddChannelAdminRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	bean := &model.TChannel{
+		Name:      param.Name,
+		Code:      param.Code,
+		Link:      param.Link,
+		Status:    1,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		Author:    user.Uname,
+		Comment:   "",
+	}
+	rows, err := global.Db.Insert(bean)
+	if err != nil || rows != 1 {
+		global.Logger.Err(err).Msg("操作失败！")
+		response.ResFail(c, "操作失败！")
+		return
+	}
+	response.ResOk(c, "成功")
+}
+
+func EditChannel(c *gin.Context) {
+	param := new(request.EditChannelAdminRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	bean := new(model.TSite)
+	bean.UpdatedAt = time.Now()
+	bean.Author = user.Uname
+	cols := []string{"updated_at", "author"}
+	if param.Name != "" {
+		cols = append(cols, "name")
+		bean.Site = param.Name
+	}
+	if param.Code != "" {
+		cols = append(cols, "code")
+		bean.Ip = param.Code
+	}
+	if param.Link != "" {
+		cols = append(cols, "link")
+		bean.Ip = param.Link
+	}
+	if param.Status > 0 {
+		cols = append(cols, "status")
+		bean.Status = param.Status
+	}
+	rows, err := global.Db.Cols(cols...).Where("id = ?", param.Id).Update(bean)
+	if err != nil || rows != 1 {
+		global.Logger.Err(err).Msg("操作失败！")
+		response.ResFail(c, "操作失败！")
+		return
+	}
+	response.ResOk(c, "成功")
 }
 
 func GiveSummary(c *gin.Context) {

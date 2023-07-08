@@ -192,7 +192,7 @@ type AddGoodsAdminRequest struct {
 	Title     string  `form:"title" binding:"required" json:"title"`
 	MType     int     `form:"m_type" binding:"required" json:"m_type"`
 	DevLimit  int     `form:"dev_limit" binding:"required" json:"dev_limit"`
-	FlowLimit int64   `form:"flow_limit" binding:"required" json:"flow_limit"`
+	FlowLimit int64   `form:"flow_limit" json:"flow_limit"`
 	Period    int     `form:"period" binding:"required" json:"period"`
 	Price     float64 `form:"price" binding:"required" json:"price"`
 }
@@ -221,10 +221,10 @@ type AddNodeAdminRequest struct {
 	Ip      string `form:"ip" binding:"required" json:"ip"`
 	Server  string `form:"server" binding:"required" json:"server"`
 	Port    int    `form:"port" binding:"required" json:"port"`
-	Cpu     int    `form:"cpu" binding:"required" json:"cpu"`
-	Flow    int64  `form:"flow" binding:"required" json:"flow"`
-	Disk    int64  `form:"disk" binding:"required" json:"disk"`
-	Memory  int64  `form:"memory" binding:"required" json:"memory"`
+	Cpu     int    `form:"cpu" json:"cpu"`
+	Flow    int64  `form:"flow" json:"flow"`
+	Disk    int64  `form:"disk" json:"disk"`
+	Memory  int64  `form:"memory" json:"memory"`
 }
 
 type EditNodeAdminRequest struct {
@@ -243,11 +243,22 @@ type EditNodeAdminRequest struct {
 }
 
 type NodeListAdminRequest struct {
+	Id      int64  `form:"id" json:"id"`
 	Title   string `form:"title" json:"title"`
 	Name    string `form:"name" json:"name"`
 	Country string `form:"country" json:"country"`
 	Page    int    `form:"page" binding:"required" json:"page"`
 	Size    int    `form:"size" binding:"required" json:"size"`
+}
+
+type NodeUuidListAdminRequest struct {
+	Id       int64  `form:"id" json:"id"`
+	UName    string `form:"uname" json:"uname"`
+	NodeName string `form:"node_name" json:"node_name"`
+	NodeId   int64  `form:"node_id" json:"node_id"`
+	Uuid     string `form:"uuid" json:"uuid"`
+	Page     int    `form:"page" binding:"required" json:"page"`
+	Size     int    `form:"size" binding:"required" json:"size"`
 }
 
 type OrderListAdminRequest struct {
@@ -280,12 +291,15 @@ type EditSiteAdminRequest struct {
 }
 
 type DictDetailAdminRequest struct {
-	Key string `form:"key" binding:"required" json:"key"`
+	AppLink    string `form:"app_link" binding:"required" json:"app_link_key"`
+	AppJsZip   string `form:"app_js_zip" binding:"required" json:"app_js_zip"`
+	AppVersion string `form:"app_version" binding:"required" json:"app_version"`
 }
 
 type DictEditAdminRequest struct {
-	Key   string `form:"key" binding:"required" json:"key"`
-	Value string `form:"value" binding:"required" json:"value"`
+	AppLink    string `form:"app_link" binding:"required" json:"app_link_key"`
+	AppJsZip   string `form:"app_js_zip" binding:"required" json:"app_js_zip"`
+	AppVersion string `form:"app_version" binding:"required" json:"app_version"`
 }
 
 type GiftListAdminRequest struct {
@@ -340,4 +354,30 @@ type MemberDevListAdminRequest struct {
 	DevId  int64  `form:"dev_id" json:"dev_id"`
 	Page   int    `form:"page" binding:"required" json:"page"`
 	Size   int    `form:"size" binding:"required" json:"size"`
+}
+
+type EditMemberAdminRequest struct {
+	Id     int64  `form:"id" binding:"required" json:"id"` //用户ID
+	Status string `form:"status" json:"status"`            //状态
+}
+
+type ChannelListAdminRequest struct {
+	Name string `form:"name" json:"name"`
+	Code string `form:"code" json:"code"`
+	Page int    `form:"page" binding:"required" json:"page"`
+	Size int    `form:"size" binding:"required" json:"size"`
+}
+
+type AddChannelAdminRequest struct {
+	Name string `form:"name" binding:"required" json:"name"`
+	Code string `form:"code" binding:"required" json:"code"`
+	Link string `form:"link" binding:"required" json:"link"`
+}
+
+type EditChannelAdminRequest struct {
+	Id     int64  `form:"id" binding:"required" json:"id"` //用户ID
+	Name   string `form:"name" json:"name"`
+	Code   string `form:"code" json:"code"`
+	Link   string `form:"link" json:"link"`
+	Status int    `form:"status" json:"status"`
 }

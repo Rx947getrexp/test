@@ -25,9 +25,13 @@ func GenerateDevId(c *gin.Context) {
 	id, _ := service.GenSnowflake()
 	userAgent := c.GetHeader("User-Agent")
 	ua := user_agent.New(userAgent)
+	os := ua.OS()
+	if os == "" {
+		os = userAgent
+	}
 	dev := &model.TDev{
 		Id:        id,
-		Os:        ua.OS(),
+		Os:        os,
 		Network:   constant.NetworkAutoMode,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -40,7 +44,7 @@ func GenerateDevId(c *gin.Context) {
 		return
 	}
 	result := make(map[string]interface{})
-	result["dev_id"] = id
+	result["dev_id"] = fmt.Sprint(id)
 	response.RespOk(c, "成功", result)
 }
 
@@ -89,7 +93,6 @@ func Reg(c *gin.Context) {
 		return
 	}
 
-	id, _ := service.GenSnowflake()
 	uuid := util.GetUuid()
 	pwdDecode := util.AesDecrypt(param.Passwd)
 
@@ -99,7 +102,6 @@ func Reg(c *gin.Context) {
 	sess.Begin()
 
 	user := &model.TUser{
-		Id:          id,
 		Uname:       param.Account,
 		Passwd:      util.MD5(pwdDecode),
 		Email:       param.Account,
@@ -122,7 +124,6 @@ func Reg(c *gin.Context) {
 
 	//推荐关系
 	team := &model.TUserTeam{
-		Id:         0,
 		UserId:     user.Id,
 		DirectId:   0,
 		DirectTree: "",
@@ -177,10 +178,12 @@ func Login(c *gin.Context) {
 	if err != nil {
 		global.Logger.Err(err).Msgf("登录出错！%s", param.Account)
 		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		return
 	}
 	if !has {
 		global.Logger.Err(err).Msgf("用户名或密码不正确！%s", param.Account)
 		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		return
 	}
 	devId := c.Request.Header.Get("Dev-Id")
 	if devId != "" {
@@ -188,17 +191,19 @@ func Login(c *gin.Context) {
 		if err != nil {
 			global.Logger.Err(err).Msgf("登录出错！%s", param.Account)
 			response.RespFail(c, lang.Translate("cn", "fail"), nil)
+			return
 		}
 		err = service.UpdateUserDev(int64(dId), user)
 		if err != nil {
 			global.Logger.Err(err).Msgf("登录出错！%s", param.Account)
 			response.RespFail(c, lang.Translate("cn", "fail"), nil)
+			return
 		}
-		err = service.UpdateUserWorkMode(int64(dId), user)
-		if err != nil {
-			global.Logger.Err(err).Msgf("登录出错！%s", param.Account)
-			response.RespFail(c, lang.Translate("cn", "fail"), nil)
-		}
+		//err = service.UpdateUserWorkMode(int64(dId), user)
+		//if err != nil {
+		//	global.Logger.Err(err).Msgf("登录出错！%s", param.Account)
+		//	response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		//}
 	}
 	dataParam := response.LoginClientParam{
 		UserId: user.Id,
@@ -374,6 +379,24 @@ func TeamInfo(c *gin.Context) {
 	response.RespOk(c, "成功", res)
 }
 
+func AppInfo(c *gin.Context) {
+	var list []*model.TDict
+	err := global.Db.Where("key_id = ?", "app_link").
+		Or("key_id = ?", "app_js_zip").
+		Or("key_id = ?", "app_version").
+		Find(&list)
+	if err != nil {
+		global.Logger.Err(err).Msg("key不存在！")
+		response.ResFail(c, "失败！")
+		return
+	}
+	var result = make(map[string]interface{})
+	for _, item := range list {
+		result[item.KeyId] = item.Value
+	}
+	response.RespOk(c, "成功", result)
+}
+
 func NoticeList(c *gin.Context) {
 	param := new(request.NoticeListRequest)
 	if err := c.ShouldBind(param); err != nil {
@@ -388,9 +411,9 @@ func NoticeList(c *gin.Context) {
 		response.ResFail(c, "查询出错！")
 		return
 	}
-	cols := "u.id,u.title,u.content,u.created_at,u.author"
+	cols := "n.id,n.title,n.tag,n.created_at"
 	session.Cols(cols)
-	session.OrderBy("u.id desc")
+	session.OrderBy("n.id desc")
 	dataList, _ := commonPageListV2(param.Page, param.Size, count, session)
 	response.RespOk(c, "成功", dataList)
 }
@@ -413,7 +436,7 @@ func NoticeDetail(c *gin.Context) {
 	result["id"] = notice.Id
 	result["title"] = notice.Title
 	result["content"] = notice.Content
-	result["author"] = notice.Author
+	result["tag"] = notice.Tag
 	result["created_at"] = notice.CreatedAt
 	response.RespOk(c, "成功", result)
 }
@@ -492,9 +515,14 @@ func ReceiveFree(c *gin.Context) {
 }
 
 func ReceiveFreeSummary(c *gin.Context) {
-	var result map[string]interface{}
+	result := make(map[string]interface{})
 	dateStr := time.Now().Format("2006-01-02")
-	global.Db.Cols("count(id) as p,sum(gift_sec) as s").Table("t_activity").Where("created_at > ?", dateStr).Get(&result)
+	_, err := global.Db.SQL("select count(id) as nums,ROUND(IFNULL(sum(gift_sec)/3600,0),2) as hours from t_activity where created_at > ?", dateStr).Get(&result)
+	if err != nil {
+		fmt.Println(err)
+		response.ResFail(c, "查询出错")
+		return
+	}
 	response.RespOk(c, "成功", result)
 }
 
@@ -519,43 +547,45 @@ func NodeList(c *gin.Context) {
 func ComboList(c *gin.Context) {
 	var result = make(map[string]interface{})
 	var list []map[string]interface{}
-	cols := "*"
-	err := global.Db.Table("t_goods").Cols(cols).Where("status = 1").Find(&list)
+	cols := "g.id,g.m_type,g.title,g.price,g.period,g.dev_limit,g.flow_limit"
+	err := global.Db.Table("t_goods as g").Cols(cols).Where("status = 1").OrderBy("id desc").Find(&list)
 	if err != nil {
 		global.Logger.Err(err).Msg("数据库链接出错")
 		response.RespFail(c, lang.Translate("cn", "fail"), nil)
 		return
 	}
 
-	if len(list) == 0 {
-		result["list"] = []map[string]interface{}{}
-		response.RespOk(c, "成功", result)
-	}
-	var tmpMap = make(map[int]interface{})
-	for _, item := range list {
-		tmpMap[item["m_type"].(int)] = true
-	}
-	var rList []map[string]interface{}
-	for k, _ := range tmpMap {
-		var tMap = make(map[string]interface{})
-		var tmpList []map[string]interface{}
-		for _, item := range list {
-			if item["m_type"].(int) == k {
-				tmpList = append(tmpList, item)
-			}
-		}
-		tMap["m_type"] = k
-		tMap["arr"] = tmpList
-		rList = append(rList, tMap)
-	}
-	result["list"] = rList
+	//if len(list) == 0 {
+	//	result["list"] = []map[string]interface{}{}
+	//	response.RespOk(c, "成功", result)
+	//}
+	//var tmpMap = make(map[int]interface{})
+	//for _, item := range list {
+	//	tmpMap[item["m_type"].(int)] = true
+	//}
+	//var rList []map[string]interface{}
+	//for k, _ := range tmpMap {
+	//	var tMap = make(map[string]interface{})
+	//	var tmpList []map[string]interface{}
+	//	for _, item := range list {
+	//		if item["m_type"].(int) == k {
+	//			tmpList = append(tmpList, item)
+	//		}
+	//	}
+	//	tMap["m_type"] = k
+	//	tMap["arr"] = tmpList
+	//	rList = append(rList, tMap)
+	//}
+	result["list"] = list
 	response.RespOk(c, "成功", result)
 }
 
 func AdList(c *gin.Context) {
 	var list []map[string]interface{}
 	global.Db.Table("t_ad").Where("status = 1").Find(&list)
-	response.RespOk(c, "成功", list)
+	result := make(map[string]interface{})
+	result["list"] = list
+	response.RespOk(c, "成功", result)
 }
 
 func UploadLog(c *gin.Context) {
@@ -629,7 +659,7 @@ func CreateOrder(c *gin.Context) {
 		GoodsId:   param.GoodsId,
 		Title:     goods.Title,
 		Price:     goods.Price,
-		PriceCny:  "",
+		PriceCny:  goods.Price,
 		Status:    1,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),

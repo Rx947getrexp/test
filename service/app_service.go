@@ -39,6 +39,7 @@ func OrderList(param *request.OrderListRequest, user *model.TUser) *xorm.Session
 
 func NoticeList(param *request.NoticeListRequest) *xorm.Session {
 	session := global.Db.Table("t_notice as n")
+	session.Where("n.status = 1")
 	return session
 }
 

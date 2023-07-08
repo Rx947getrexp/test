@@ -37,7 +37,7 @@ func NoticeAdminList(param *request.NoticeListAdminRequest, user *model.AdminUse
 
 func GoodsAdminList(param *request.GoodsListAdminRequest, user *model.AdminUser) *xorm.Session {
 	session := global.Db.Table("t_goods as g")
-	session.Where("ad.status = 1")
+	session.Where("g.status = 1")
 	if param.Title != "" {
 		session.Where("g.title like ?", "%"+param.Title+"%")
 	}
@@ -47,6 +47,9 @@ func GoodsAdminList(param *request.GoodsListAdminRequest, user *model.AdminUser)
 func NodeAdminList(param *request.NodeListAdminRequest, user *model.AdminUser) *xorm.Session {
 	session := global.Db.Table("t_node as n")
 	session.Where("n.status = 1")
+	if param.Id > 0 {
+		session.Where("id = ?", param.Id)
+	}
 	if param.Name != "" {
 		session.Where("n.name like ?", "%"+param.Name+"%")
 	}
@@ -55,6 +58,29 @@ func NodeAdminList(param *request.NodeListAdminRequest, user *model.AdminUser) *
 	}
 	if param.Country != "" {
 		session.Where("n.country like ?", "%"+param.Country+"%")
+	}
+	return session
+}
+
+func NodeUuidAdminList(param *request.NodeUuidListAdminRequest, user *model.AdminUser) *xorm.Session {
+	session := global.Db.Table("t_node_uuid as nu")
+	session.Join("LEFT", "t_user as u", "u.id = nu.user_id")
+	session.Join("LEFT", "t_node as n", "n.id = nu.node_id")
+	session.Where("nu.status = 1")
+	if param.Id > 0 {
+		session.Where("nu.id = ?", param.Id)
+	}
+	if param.NodeId > 0 {
+		session.Where("nu.node_id = ?", param.NodeId)
+	}
+	if param.UName != "" {
+		session.Where("u.uname = ?", param.UName)
+	}
+	if param.NodeName != "" {
+		session.Where("n.name like ?", "%"+param.NodeName+"%")
+	}
+	if param.Uuid != "" {
+		session.Where("nu.uuid = ?", param.Uuid)
 	}
 	return session
 }
@@ -160,6 +186,15 @@ func DevLogsAdminList(param *request.DevLogsAdminRequest, user *model.AdminUser)
 	}
 	if param.EndTime != "" {
 		session.Where("up.created_at < ?", param.EndTime)
+	}
+	return session
+}
+
+func ChannelAdminList(param *request.ChannelListAdminRequest, user *model.AdminUser) *xorm.Session {
+	session := global.Db.Table("t_channel as c")
+	session.Where("c.status = 1")
+	if param.Name != "" {
+		session.Where("c.name = ?", param.Name)
 	}
 	return session
 }

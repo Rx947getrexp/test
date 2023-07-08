@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/mssola/user_agent"
 	"go-speed/constant"
 	"go-speed/service"
@@ -63,4 +64,18 @@ func TestRand(t *testing.T) {
 		println(rand.Intn(100))
 	}
 
+}
+
+func TestUuid(t *testing.T) {
+	nonce, err := uuid.NewUUID()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(nonce.String())
+}
+
+func TestPwd(t *testing.T) {
+	pwd := util.AesEncrypt("654321")
+	fmt.Println(pwd)
 }

@@ -51,6 +51,7 @@ func AdminRoute(group *gin.RouterGroup) {
 		memberGroup := group.Group("member")
 		memberGroup.GET("member_list", admin.MemberList)
 		memberGroup.GET("member_dev_list", admin.MemberDevList)
+		memberGroup.POST("edit_member", admin.EditMember)
 
 		//套餐管理
 		comboGroup := group.Group("combo")
@@ -79,11 +80,12 @@ func AdminRoute(group *gin.RouterGroup) {
 		monitorGroup.GET("node_list", admin.NodeList)
 		monitorGroup.POST("add_node", admin.AddNode)
 		monitorGroup.POST("edit_node", admin.EditNode)
+		monitorGroup.GET("node_uuid_list", admin.NodeUuidList)
 
 		//站点管理
 		siteGroup := group.Group("site")
-		siteGroup.GET("link_detail", admin.LinkDetail)
-		siteGroup.POST("edit_link", admin.EditLink)
+		siteGroup.GET("app_info", admin.AppInfo)
+		siteGroup.POST("edit_app_info", admin.EditAppInfo)
 		siteGroup.GET("site_list", admin.SiteList)
 		siteGroup.POST("add_site", admin.AddSite)
 		siteGroup.POST("edit_site", admin.EditSite)
@@ -97,6 +99,12 @@ func AdminRoute(group *gin.RouterGroup) {
 		logGroup := group.Group("log")
 		logGroup.GET("speed_logs", admin.SpeedLogs) //加速日志
 		logGroup.GET("dev_logs", admin.DevLogs)     // 设备日志
+
+		//渠道管理
+		channelGroup := group.Group("channel")
+		channelGroup.GET("channel_list", admin.ChannelList)
+		channelGroup.POST("add_channel", admin.AddChannel)
+		channelGroup.POST("edit_channel", admin.EditChannel)
 
 		//平台报表
 		plantGroup := group.Group("plant")
