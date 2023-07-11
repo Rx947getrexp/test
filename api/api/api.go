@@ -81,7 +81,7 @@ func Reg(c *gin.Context) {
 	param := new(request.RegRequest)
 	if err := c.ShouldBind(param); err != nil {
 		global.Logger.Err(err).Msg("绑定参数")
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, "参数错误，请检查", nil)
 		return
 	}
 	if param.Account == "" || param.Passwd == "" || param.EnterPasswd == "" {
@@ -89,7 +89,7 @@ func Reg(c *gin.Context) {
 		return
 	}
 	if param.Passwd != param.EnterPasswd {
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, "两次密码不一致，请检查", nil)
 		return
 	}
 
@@ -118,7 +118,7 @@ func Reg(c *gin.Context) {
 	if err != nil || rows != 1 {
 		global.Logger.Err(err).Msg("添加user出错")
 		sess.Rollback()
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, "用户名重复请检查", nil)
 		return
 	}
 
