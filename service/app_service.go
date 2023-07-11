@@ -77,17 +77,6 @@ func CheckUserDev(devId int64, user *model.TUser) bool {
 }
 
 func UpdateUserDev(devId int64, user *model.TUser) error {
-	var useCount int64
-	_, err := global.Db.SQL("select count(id) from t_user_dev where user_id = ? and status = 1", user.Id).Get(&useCount)
-	if err != nil {
-		global.Logger.Err(err).Msg("数据库链接出错")
-		return errors.New("数据库链接出错")
-	}
-	//根据等级判断，vip最多允许登录几台设备
-	if useCount >= 2 {
-		global.Logger.Err(err).Msg("设备数超限制")
-		return errors.New("设备数超限制")
-	}
 	if !HasDev(devId) {
 		return errors.New("该设备号不存在")
 	}
@@ -103,8 +92,19 @@ func UpdateUserDev(devId int64, user *model.TUser) error {
 		userDev.UpdatedAt = time.Now()
 		userDev.UserId = user.Id
 		userDev.Status = constant.UserDevNormalStatus
-		rows, err = global.Db.Cols("updated_at,user_id,status").Where("id = ?", userDev.Id).Update(userDev)
+		rows, err = global.Db.Cols("updated_at", "user_id", "status").Where("id = ?", userDev.Id).Update(userDev)
 	} else {
+		var useCount int64
+		_, err := global.Db.SQL("select count(id) from t_user_dev where user_id = ? and status = 1", user.Id).Get(&useCount)
+		if err != nil {
+			global.Logger.Err(err).Msg("数据库链接出错")
+			return errors.New("数据库链接出错")
+		}
+		//根据等级判断，vip最多允许登录几台设备
+		if useCount >= 2 {
+			global.Logger.Err(err).Msg("设备数超限制")
+			return errors.New("设备数超限制")
+		}
 		//添加
 		userDev.CreatedAt = time.Now()
 		userDev.UpdatedAt = time.Now()
