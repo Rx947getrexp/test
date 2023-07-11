@@ -78,7 +78,7 @@ func CheckUserDev(devId int64, user *model.TUser) bool {
 
 func UpdateUserDev(devId int64, user *model.TUser) error {
 	var useCount int64
-	_, err := global.Db.SQL("select sum(id) from t_user_dev where user_id = ? and status = 1", user.Id).Get(&useCount)
+	_, err := global.Db.SQL("select count(id) from t_user_dev where user_id = ? and status = 1", user.Id).Get(&useCount)
 	if err != nil {
 		global.Logger.Err(err).Msg("数据库链接出错")
 		return errors.New("数据库链接出错")
