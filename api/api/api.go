@@ -196,7 +196,7 @@ func Login(c *gin.Context) {
 		err = service.UpdateUserDev(int64(dId), user)
 		if err != nil {
 			global.Logger.Err(err).Msgf("登录出错！%s", param.Account)
-			response.RespFail(c, lang.Translate("cn", "fail"), nil)
+			response.RespFail(c, "设备数限制", nil)
 			return
 		}
 		//err = service.UpdateUserWorkMode(int64(dId), user)
