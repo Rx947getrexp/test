@@ -396,6 +396,7 @@ func AppInfo(c *gin.Context) {
 	for _, item := range list {
 		result[item.KeyId] = item.Value
 	}
+	result["app_zip_hash"] = "xxx"
 	response.RespOk(c, "成功", result)
 }
 
