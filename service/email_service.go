@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"go-speed/constant"
 	"go-speed/global"
-	"go-speed/service/email"
 	"go-speed/util"
 	"time"
 )
@@ -51,7 +50,8 @@ func sendSms(mobile string) error {
 		global.Logger.Err(err).Msg("redis错误")
 		return errors.New("短信发送失败")
 	}
-	return email.SendEmail(constant.ForgetSubject, fmt.Sprintf(constant.ForgetBody, msgCode), []string{mobile})
+	return nil
+	//return email.SendEmail(constant.ForgetSubject, fmt.Sprintf(constant.ForgetBody, msgCode), []string{mobile})
 	//return smsService.SendMsgByKeTong(content, mobile)
 }
 
