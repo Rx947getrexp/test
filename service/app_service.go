@@ -101,7 +101,7 @@ func UpdateUserDev(devId int64, user *model.TUser) error {
 			return errors.New("数据库链接出错")
 		}
 		//根据等级判断，vip最多允许登录几台设备
-		if useCount >= 2 {
+		if useCount >= 10 {
 			global.Logger.Err(err).Msg("设备数超限制")
 			return errors.New("设备数超限制")
 		}
