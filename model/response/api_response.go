@@ -9,6 +9,7 @@ type LoginClientParam struct {
 type UserInfoResponse struct {
 	Id          int64  `json:"id"`
 	Uname       string `json:"uname"`
+	Uuid        string `json:"uuid"`
 	MemberType  int    `json:"member_type"`
 	ExpiredTime int64  `json:"expired_time"`
 	SurplusFlow int64  `json:"surplus_flow"`

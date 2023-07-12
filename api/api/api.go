@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/mssola/user_agent"
 	"github.com/shopspring/decimal"
 	"go-speed/constant"
@@ -93,7 +94,7 @@ func Reg(c *gin.Context) {
 		return
 	}
 
-	uuid := util.GetUuid()
+	uuid, _ := uuid.NewUUID()
 	pwdDecode := util.AesDecrypt(param.Passwd)
 
 	//开启事务
@@ -108,7 +109,7 @@ func Reg(c *gin.Context) {
 		Phone:       "",
 		Level:       0,
 		ExpiredTime: 0,
-		V2rayUuid:   uuid,
+		V2rayUuid:   uuid.String(),
 		Status:      0,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
@@ -288,6 +289,7 @@ func UserInfo(c *gin.Context) {
 	res := response.UserInfoResponse{
 		Id:          user.Id,
 		Uname:       user.Uname,
+		Uuid:        user.V2rayUuid,
 		MemberType:  user.Level,
 		ExpiredTime: user.ExpiredTime,
 		SurplusFlow: 0,
