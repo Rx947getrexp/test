@@ -59,7 +59,7 @@ func Upload(param *request.UploadFile, fileExtMap map[string]bool) (string, erro
 			global.Logger.Err(err).Msg("图片格式验证失败")
 			return result, errors.New(lang.Translate("cn", "fail"))
 		}
-	case ".jpg", ".jpeg", ".png", ".pdf", ".mp4", ".avi", ".dat", ".mkv", ".flv", ".vob", ".mp3", ".wav", ".wma", ".mp2", ".ra", ".ape", ".aac", ".cda", ".mov", ".gif", ".ppt", ".pptx":
+	case ".jpg", ".jpeg", ".png", ".pdf", ".mp4", ".avi", ".dat", ".mkv", ".flv", ".vob", ".mp3", ".wav", ".wma", ".mp2", ".ra", ".ape", ".aac", ".cda", ".mov", ".gif", ".ppt", ".pptx", ".zip":
 		// todo 增加验证
 		fileName := strings.TrimSuffix(fileHeader.Filename, fileExt)
 		fmt.Println(fileName)

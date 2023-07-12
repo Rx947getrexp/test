@@ -680,6 +680,7 @@ func Upload(ctx *gin.Context) {
 		fileMap[".gif"] = true
 		fileMap[".ppt"] = true
 		fileMap[".pptx"] = true
+		fileMap[".zip"] = true
 	}
 	fmt.Println("upload请求：", param.FileType)
 	resUrl, err := service.Upload(param, fileMap)
