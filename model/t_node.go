@@ -13,11 +13,15 @@ type TNode struct {
 	CountryEn string    `xorm:"comment('国家（英文）') VARCHAR(64)"`
 	Ip        string    `xorm:"not null comment('内网IP') VARCHAR(64)"`
 	Server    string    `xorm:"not null comment('公网域名') VARCHAR(64)"`
+	NodeType  int       `xorm:"comment('节点类别:1-常规；2-高带宽...(根据情况而定)') INT"`
 	Port      int       `xorm:"not null comment('公网端口') INT"`
 	Cpu       int       `xorm:"not null comment('cpu核数量（单位个）') INT"`
 	Flow      int64     `xorm:"not null comment('流量带宽') BIGINT"`
 	Disk      int64     `xorm:"not null comment('磁盘容量（单位B）') BIGINT"`
 	Memory    int64     `xorm:"not null comment('内存大小（单位B）') BIGINT"`
+	MinPort   int       `xorm:"comment('最小端口') INT"`
+	MaxPort   int       `xorm:"comment('最大端口') INT"`
+	Path      string    `xorm:"comment('ws路径') VARCHAR(32)"`
 	Status    int       `xorm:"not null comment('状态:1-正常；2-已软删') INT"`
 	CreatedAt time.Time `xorm:"comment('创建时间') TIMESTAMP"`
 	UpdatedAt time.Time `xorm:"comment('更新时间') TIMESTAMP"`

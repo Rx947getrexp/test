@@ -15,6 +15,7 @@ func ApiRoute(group *gin.RouterGroup) {
 	group.GET("notice_list", api.NoticeList)
 	group.GET("notice_detail", api.NoticeDetail)
 	group.GET("node_list", api.NodeList)
+	group.GET("dns_list", api.DnsList)
 	group.GET("combo_list", api.ComboList)
 	group.GET("ad_list", api.AdList)
 	group.GET("app_info", api.AppInfo)

@@ -384,8 +384,8 @@ func TeamInfo(c *gin.Context) {
 func AppInfo(c *gin.Context) {
 	var list []*model.TDict
 	err := global.Db.Where("key_id = ?", "app_link").
-		Or("key_id = ?", "app_js_zip").
-		Or("key_id = ?", "app_version").
+		//Or("key_id = ?", "app_js_zip").
+		//Or("key_id = ?", "app_version").
 		Find(&list)
 	if err != nil {
 		global.Logger.Err(err).Msg("key不存在！")
@@ -396,6 +396,15 @@ func AppInfo(c *gin.Context) {
 	for _, item := range list {
 		result[item.KeyId] = item.Value
 	}
+	var version model.TAppVersion
+	has, err := global.Db.Where("status = 1 and app_type = 3").OrderBy("id desc").Limit(1).Get(&version)
+	if err != nil || !has {
+		global.Logger.Err(err).Msg("key不存在！")
+		response.ResFail(c, "失败！")
+		return
+	}
+	result["app_version"] = version.Version
+	result["app_js_zip"] = version.Link
 	result["app_zip_hash"] = "xxx"
 	response.RespOk(c, "成功", result)
 }
@@ -530,8 +539,27 @@ func ReceiveFreeSummary(c *gin.Context) {
 }
 
 func NodeList(c *gin.Context) {
+	//用户评级
+	level := 1 //默认1
+	token := c.Request.Header.Get("Authorization-Token")
+	if token != "" {
+		claims, err := service.ParseTokenByUser(token, service.CommonUserType)
+		if err != nil {
+			global.Logger.Err(err).Msg("token出错")
+			response.RespFail(c, lang.Translate("cn", "fail"), nil)
+			return
+		}
+		user, err := service.GetUserByClaims(claims)
+		if err != nil {
+			global.Logger.Err(err).Msg("用户token鉴权失败")
+			response.ResFail(c, "用户鉴权失败！")
+			return
+		}
+		level = service.RatingMemberLevel(user)
+	}
 	var list []map[string]interface{}
-	cols := "id,name,title,title_en,country,country_en,server,port"
+	cols := "id,name,title,title_en,country,country_en,server,port," +
+		"min_port as min,max_port as max,path"
 	err := global.Db.Where("status = 1").
 		Table("t_node").
 		Cols(cols).
@@ -541,6 +569,60 @@ func NodeList(c *gin.Context) {
 		global.Logger.Err(err).Msg("数据库链接出错")
 		response.RespFail(c, lang.Translate("cn", "fail"), nil)
 		return
+	}
+	for _, item := range list {
+		var dnsArray []map[string]interface{}
+		nodeId := item["id"].(int64)
+		dnsList, _ := service.FindNodeDnsByNodeId(nodeId, level)
+		for _, dns := range dnsList {
+			var dnsItem = make(map[string]interface{})
+			dnsItem["id"] = dns.Id
+			dnsItem["node_id"] = dns.NodeId
+			dnsItem["dns"] = util.AesEncrypt(dns.Dns)
+			//dnsItem["ip"] = dns.Ip
+			dnsItem["level"] = dns.Level
+			dnsArray = append(dnsArray, dnsItem)
+		}
+		item["dns_list"] = dnsArray
+	}
+	var result = make(map[string]interface{})
+	result["list"] = list
+	response.RespOk(c, "成功", result)
+}
+
+func DnsList(c *gin.Context) {
+	//用户评级
+	level := 1 //默认1
+	token := c.Request.Header.Get("Authorization-Token")
+	if token != "" {
+		claims, err := service.ParseTokenByUser(token, service.CommonUserType)
+		if err != nil {
+			global.Logger.Err(err).Msg("token出错")
+			response.RespFail(c, lang.Translate("cn", "fail"), nil)
+			return
+		}
+		user, err := service.GetUserByClaims(claims)
+		if err != nil {
+			global.Logger.Err(err).Msg("用户token鉴权失败")
+			response.ResFail(c, "用户鉴权失败！")
+			return
+		}
+		level = service.RatingMemberLevel(user)
+	}
+	var list []map[string]interface{}
+	cols := "id,site_type,dns"
+	err := global.Db.Where("status = 1 and level = ?", level).
+		Table("t_app_dns").
+		Cols(cols).
+		OrderBy("id desc").
+		Find(&list)
+	if err != nil {
+		global.Logger.Err(err).Msg("数据库链接出错")
+		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		return
+	}
+	for _, item := range list {
+		item["dns"] = util.AesEncrypt(item["dns"].(string))
 	}
 	var result = make(map[string]interface{})
 	result["list"] = list

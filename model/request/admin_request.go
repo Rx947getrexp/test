@@ -247,6 +247,7 @@ type NodeListAdminRequest struct {
 	Title   string `form:"title" json:"title"`
 	Name    string `form:"name" json:"name"`
 	Country string `form:"country" json:"country"`
+	Ip      string `form:"ip" json:"ip"`
 	Page    int    `form:"page" binding:"required" json:"page"`
 	Size    int    `form:"size" binding:"required" json:"size"`
 }
@@ -297,9 +298,9 @@ type DictDetailAdminRequest struct {
 }
 
 type DictEditAdminRequest struct {
-	AppLink    string `form:"app_link" binding:"required" json:"app_link_key"`
-	AppJsZip   string `form:"app_js_zip" binding:"required" json:"app_js_zip"`
-	AppVersion string `form:"app_version" binding:"required" json:"app_version"`
+	AppLink string `form:"app_link" binding:"required" json:"app_link_key"`
+	//AppJsZip   string `form:"app_js_zip" binding:"required" json:"app_js_zip"`
+	//AppVersion string `form:"app_version" binding:"required" json:"app_version"`
 }
 
 type GiftListAdminRequest struct {
@@ -379,5 +380,98 @@ type EditChannelAdminRequest struct {
 	Name   string `form:"name" json:"name"`
 	Code   string `form:"code" json:"code"`
 	Link   string `form:"link" json:"link"`
+	Status int    `form:"status" json:"status"`
+}
+
+type AppVersionListAdminRequest struct {
+	AppType int `form:"app_type" json:"app_type"`
+	Page    int `form:"page" binding:"required" json:"page"`
+	Size    int `form:"size" binding:"required" json:"size"`
+}
+
+type AddAppVersionAdminRequest struct {
+	AppType int    `form:"app_type" binding:"required" json:"app_type"`
+	Version string `form:"version" binding:"required" json:"version"`
+	Link    string `form:"link" binding:"required" json:"link"`
+}
+
+type EditAppVersionAdminRequest struct {
+	Id      int64  `form:"id" binding:"required" json:"id"` //编号ID
+	Version string `form:"version" json:"version"`
+	Link    string `form:"link" json:"link"`
+	Status  int    `form:"status" json:"status"`
+}
+
+type IosAccountListAdminRequest struct {
+	Name        string `form:"name" json:"name"`
+	Account     string `form:"account" json:"account"`
+	AccountType int    `form:"account_type" json:"account_type"`
+	Page        int    `form:"page" binding:"required" json:"page"`
+	Size        int    `form:"size" binding:"required" json:"size"`
+}
+
+type AddIosAccountAdminRequest struct {
+	Name        string `form:"name" json:"name"`
+	Account     string `form:"account" binding:"required" json:"account"`
+	Pass        string `form:"pass" binding:"required" json:"pass"`
+	AccountType int    `form:"account_type" binding:"required" json:"account_type"`
+}
+
+type EditIosAccountAdminRequest struct {
+	Id          int64  `form:"id" binding:"required" json:"id"` //编号ID
+	Name        string `form:"name" json:"name"`
+	Account     string `form:"account" json:"account"`
+	Pass        string `form:"pass" json:"pass"`
+	AccountType int    `form:"account_type" json:"account_type"`
+	Status      int    `form:"status" json:"status"`
+}
+
+type AppDnsListAdminRequest struct {
+	Dns      string `form:"dns" json:"dns"`
+	Ip       string `form:"ip" json:"ip"`
+	SiteType int    `form:"site_type" json:"site_type"`
+	Level    int    `form:"level" json:"level"`
+	Page     int    `form:"page" binding:"required" json:"page"`
+	Size     int    `form:"size" binding:"required" json:"size"`
+}
+
+type AddAppDnsAdminRequest struct {
+	Dns      string `form:"dns" binding:"required" json:"dns"`
+	Ip       string `form:"ip" binding:"required" json:"ip"`
+	SiteType int    `form:"site_type" binding:"required" json:"site_type"`
+	Level    int    `form:"level" binding:"required" json:"level"`
+}
+
+type EditAppDnsAdminRequest struct {
+	Id       int64  `form:"id" binding:"required" json:"id"`
+	Dns      string `form:"dns" json:"dns"`
+	Ip       string `form:"ip" json:"ip"`
+	SiteType int    `form:"site_type" json:"site_type"`
+	Level    int    `form:"level" json:"level"`
+	Status   int    `form:"status" json:"status"`
+}
+
+type NodeDnsListAdminRequest struct {
+	Dns    string `form:"dns" json:"dns"`
+	Ip     string `form:"ip" json:"ip"`
+	Level  int    `form:"level" json:"level"`
+	NodeId int    `form:"node_id" json:"node_id"`
+	Page   int    `form:"page" binding:"required" json:"page"`
+	Size   int    `form:"size" binding:"required" json:"size"`
+}
+
+type AddNodeDnsAdminRequest struct {
+	Dns    string `form:"dns" binding:"required" json:"dns"`
+	Ip     string `form:"ip" binding:"required" json:"ip"`
+	NodeId int64  `form:"node_id" binding:"required" json:"node_id"`
+	Level  int    `form:"level" binding:"required" json:"level"`
+}
+
+type EditNodeDnsAdminRequest struct {
+	Id     int64  `form:"id" binding:"required" json:"id"`
+	Dns    string `form:"dns" json:"dns"`
+	Ip     string `form:"ip" json:"ip"`
+	NodeId int64  `form:"node_id" json:"node_id"`
+	Level  int    `form:"level" json:"level"`
 	Status int    `form:"status" json:"status"`
 }

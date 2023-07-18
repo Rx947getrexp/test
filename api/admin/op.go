@@ -43,8 +43,8 @@ func MemberList(c *gin.Context) {
 		response.ResFail(c, "查询出错！")
 		return
 	}
-	cols := "u1.id as uid1,u1.uname as uname1,u1.created_at,u1.level,u1.expired_time as time1," +
-		"u2.id as uid2,u2.uname as uname2,u2.level,u2.expired_time as time2"
+	cols := "u1.id as id,u1.uname as uname,u1.created_at,u1.level,u1.expired_time as time1," +
+		"u2.id as uid2,u2.uname as uname2,u2.level,u2.expired_time as time2,u1.v2ray_uuid"
 	session.Cols(cols)
 	session.OrderBy("t.id desc")
 	dataList, _ := commonPageListV2(param.Page, param.Size, count, session)
@@ -520,6 +520,27 @@ func NodeList(c *gin.Context) {
 	session.Cols(cols)
 	session.OrderBy("n.id desc")
 	dataList, _ := commonPageListV2(param.Page, param.Size, count, session)
+	list := dataList.List.([]map[string]interface{})
+	if len(list) > 0 {
+		for _, item := range list {
+			var dnsArray []map[string]interface{}
+			nodeId := item["id"].(int64)
+			var dnsList []*model.TNodeDns
+			err = global.Db.Where("node_id = ? and status = 1", nodeId).Find(&dnsList)
+
+			for _, dns := range dnsList {
+				var dnsItem = make(map[string]interface{})
+				dnsItem["id"] = dns.Id
+				dnsItem["node_id"] = dns.NodeId
+				dnsItem["dns"] = dns.Dns
+				dnsItem["ip"] = dns.Ip
+				dnsItem["level"] = dns.Level
+				dnsArray = append(dnsArray, dnsItem)
+			}
+
+			item["dns_list"] = dnsArray
+		}
+	}
 	response.RespOk(c, "成功", dataList)
 }
 
@@ -678,20 +699,38 @@ func AppInfo(c *gin.Context) {
 		response.ResFail(c, "不合法！")
 		return
 	}
-	var list []*model.TDict
-	err = global.Db.Where("key_id = ?", param.AppLink).
-		Or("key_id = ?", param.AppJsZip).
-		Or("key_id = ?", param.AppVersion).
-		Find(&list)
-	if err != nil {
+	var result = make(map[string]interface{})
+	var tDict model.TDict
+	has, err := global.Db.Where("key_id = ?", param.AppLink).Get(&tDict)
+	if err != nil || !has {
 		global.Logger.Err(err).Msg("key不存在！")
 		response.ResFail(c, "失败！")
 		return
 	}
-	var result = make(map[string]interface{})
-	for _, item := range list {
-		result[item.KeyId] = item.Value
+	result[tDict.KeyId] = tDict.Value
+	var version model.TAppVersion
+	has, err = global.Db.Where("status = 1 and app_type = 3").OrderBy("id desc").Limit(1).Get(&version)
+	if err != nil || !has {
+		global.Logger.Err(err).Msg("key不存在！")
+		response.ResFail(c, "失败！")
+		return
 	}
+	result["app_version"] = version.Version
+	result["app_js_zip"] = version.Link
+	//var list []*model.TDict
+	//err = global.Db.Where("key_id = ?", param.AppLink).
+	//	Or("key_id = ?", param.AppJsZip).
+	//	Or("key_id = ?", param.AppVersion).
+	//	Find(&list)
+	//if err != nil {
+	//	global.Logger.Err(err).Msg("key不存在！")
+	//	response.ResFail(c, "失败！")
+	//	return
+	//}
+	//var result = make(map[string]interface{})
+	//for _, item := range list {
+	//	result[item.KeyId] = item.Value
+	//}
 	response.RespOk(c, "成功", result)
 }
 
@@ -721,25 +760,25 @@ func EditAppInfo(c *gin.Context) {
 		return
 	}
 
-	bean = new(model.TDict)
-	bean.UpdatedAt = nowTime
-	bean.Value = param.AppVersion
-	rows, err = global.Db.Cols("updated_at", "value").Where("key_id = ?", "app_version").Update(bean)
-	if err != nil || rows != 1 {
-		global.Logger.Err(err).Msg("操作失败！")
-		response.ResFail(c, "操作失败！")
-		return
-	}
-
-	bean = new(model.TDict)
-	bean.UpdatedAt = nowTime
-	bean.Value = param.AppJsZip
-	rows, err = global.Db.Cols("updated_at", "value").Where("key_id = ?", "app_js_zip").Update(bean)
-	if err != nil || rows != 1 {
-		global.Logger.Err(err).Msg("操作失败！")
-		response.ResFail(c, "操作失败！")
-		return
-	}
+	//bean = new(model.TDict)
+	//bean.UpdatedAt = nowTime
+	//bean.Value = param.AppVersion
+	//rows, err = global.Db.Cols("updated_at", "value").Where("key_id = ?", "app_version").Update(bean)
+	//if err != nil || rows != 1 {
+	//	global.Logger.Err(err).Msg("操作失败！")
+	//	response.ResFail(c, "操作失败！")
+	//	return
+	//}
+	//
+	//bean = new(model.TDict)
+	//bean.UpdatedAt = nowTime
+	//bean.Value = param.AppJsZip
+	//rows, err = global.Db.Cols("updated_at", "value").Where("key_id = ?", "app_js_zip").Update(bean)
+	//if err != nil || rows != 1 {
+	//	global.Logger.Err(err).Msg("操作失败！")
+	//	response.ResFail(c, "操作失败！")
+	//	return
+	//}
 	response.ResOk(c, "成功")
 }
 
@@ -1048,6 +1087,433 @@ func EditChannel(c *gin.Context) {
 	if param.Status > 0 {
 		cols = append(cols, "status")
 		bean.Status = param.Status
+	}
+	rows, err := global.Db.Cols(cols...).Where("id = ?", param.Id).Update(bean)
+	if err != nil || rows != 1 {
+		global.Logger.Err(err).Msg("操作失败！")
+		response.ResFail(c, "操作失败！")
+		return
+	}
+	response.ResOk(c, "成功")
+}
+
+func AppVersionList(c *gin.Context) {
+	param := new(request.AppVersionListAdminRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	session := service.AppVersionAdminList(param, user)
+	count, err := service.AppVersionAdminList(param, user).Count()
+	if err != nil {
+		global.Logger.Err(err).Msg("查询出错！")
+		response.ResFail(c, "查询出错！")
+		return
+	}
+	cols := "v.*"
+	session.Cols(cols)
+	session.OrderBy("v.id desc")
+	dataList, _ := commonPageListV2(param.Page, param.Size, count, session)
+	response.RespOk(c, "成功", dataList)
+}
+
+func AddAppVersion(c *gin.Context) {
+	param := new(request.AddAppVersionAdminRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	bean := &model.TAppVersion{
+		AppType:   param.AppType,
+		Version:   param.Version,
+		Link:      param.Link,
+		Status:    1,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		Author:    user.Uname,
+		Comment:   "",
+	}
+	rows, err := global.Db.Insert(bean)
+	if err != nil || rows != 1 {
+		global.Logger.Err(err).Msg("操作失败！")
+		response.ResFail(c, "操作失败！")
+		return
+	}
+	response.ResOk(c, "成功")
+}
+
+func EditAppVersion(c *gin.Context) {
+	param := new(request.EditAppVersionAdminRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	bean := new(model.TAppVersion)
+	bean.UpdatedAt = time.Now()
+	bean.Author = user.Uname
+	cols := []string{"updated_at", "author"}
+	if param.Version != "" {
+		cols = append(cols, "version")
+		bean.Version = param.Version
+	}
+	if param.Link != "" {
+		cols = append(cols, "link")
+		bean.Link = param.Link
+	}
+	if param.Status > 0 {
+		cols = append(cols, "status")
+		bean.Status = param.Status
+	}
+	rows, err := global.Db.Cols(cols...).Where("id = ?", param.Id).Update(bean)
+	if err != nil || rows != 1 {
+		global.Logger.Err(err).Msg("操作失败！")
+		response.ResFail(c, "操作失败！")
+		return
+	}
+	response.ResOk(c, "成功")
+}
+
+func AppDnsList(c *gin.Context) {
+	param := new(request.AppDnsListAdminRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	session := service.AppDnsAdminList(param, user)
+	count, err := service.AppDnsAdminList(param, user).Count()
+	if err != nil {
+		global.Logger.Err(err).Msg("查询出错！")
+		response.ResFail(c, "查询出错！")
+		return
+	}
+	cols := "d.*"
+	session.Cols(cols)
+	session.OrderBy("d.id desc")
+	dataList, _ := commonPageListV2(param.Page, param.Size, count, session)
+	response.RespOk(c, "成功", dataList)
+}
+
+func AddAppDns(c *gin.Context) {
+	param := new(request.AddAppDnsAdminRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	bean := &model.TAppDns{
+		SiteType:  param.SiteType,
+		Dns:       param.Dns,
+		Ip:        param.Ip,
+		Level:     param.Level,
+		Status:    1,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		Author:    user.Uname,
+		Comment:   "",
+	}
+	rows, err := global.Db.Insert(bean)
+	if err != nil || rows != 1 {
+		global.Logger.Err(err).Msg("操作失败！")
+		response.ResFail(c, "操作失败！")
+		return
+	}
+	response.ResOk(c, "成功")
+}
+
+func EditAppDns(c *gin.Context) {
+	param := new(request.EditAppDnsAdminRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	bean := new(model.TAppDns)
+	bean.UpdatedAt = time.Now()
+	bean.Author = user.Uname
+	cols := []string{"updated_at", "author"}
+	if param.Dns != "" {
+		cols = append(cols, "dns")
+		bean.Dns = param.Dns
+	}
+	if param.Ip != "" {
+		cols = append(cols, "ip")
+		bean.Ip = param.Ip
+	}
+	if param.Status > 0 {
+		cols = append(cols, "status")
+		bean.Status = param.Status
+	}
+	if param.SiteType > 0 {
+		cols = append(cols, "site_type")
+		bean.SiteType = param.SiteType
+	}
+	if param.Level > 0 {
+		cols = append(cols, "level")
+		bean.Level = param.Level
+	}
+	rows, err := global.Db.Cols(cols...).Where("id = ?", param.Id).Update(bean)
+	if err != nil || rows != 1 {
+		global.Logger.Err(err).Msg("操作失败！")
+		response.ResFail(c, "操作失败！")
+		return
+	}
+	response.ResOk(c, "成功")
+}
+
+func NodeDnsList(c *gin.Context) {
+	param := new(request.NodeDnsListAdminRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	session := service.NodeDnsAdminList(param, user)
+	count, err := service.NodeDnsAdminList(param, user).Count()
+	if err != nil {
+		global.Logger.Err(err).Msg("查询出错！")
+		response.ResFail(c, "查询出错！")
+		return
+	}
+	cols := "d.*"
+	session.Cols(cols)
+	session.OrderBy("d.id desc")
+	dataList, _ := commonPageListV2(param.Page, param.Size, count, session)
+	response.RespOk(c, "成功", dataList)
+}
+
+func AddNodeDns(c *gin.Context) {
+	param := new(request.AddNodeDnsAdminRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	bean := &model.TNodeDns{
+		NodeId:    param.NodeId,
+		Dns:       param.Dns,
+		Ip:        param.Ip,
+		Level:     param.Level,
+		Status:    1,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		Author:    user.Uname,
+		Comment:   "",
+	}
+	rows, err := global.Db.Insert(bean)
+	if err != nil || rows != 1 {
+		global.Logger.Err(err).Msg("操作失败！")
+		response.ResFail(c, "操作失败！")
+		return
+	}
+	response.ResOk(c, "成功")
+}
+
+func EditNodeDns(c *gin.Context) {
+	param := new(request.EditNodeDnsAdminRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	bean := new(model.TNodeDns)
+	bean.UpdatedAt = time.Now()
+	bean.Author = user.Uname
+	cols := []string{"updated_at", "author"}
+	if param.Dns != "" {
+		cols = append(cols, "dns")
+		bean.Dns = param.Dns
+	}
+	if param.Ip != "" {
+		cols = append(cols, "ip")
+		bean.Ip = param.Ip
+	}
+	if param.Status > 0 {
+		cols = append(cols, "status")
+		bean.Status = param.Status
+	}
+	if param.NodeId > 0 {
+		cols = append(cols, "node_id")
+		bean.NodeId = param.NodeId
+	}
+	if param.Level > 0 {
+		cols = append(cols, "level")
+		bean.Level = param.Level
+	}
+	rows, err := global.Db.Cols(cols...).Where("id = ?", param.Id).Update(bean)
+	if err != nil || rows != 1 {
+		global.Logger.Err(err).Msg("操作失败！")
+		response.ResFail(c, "操作失败！")
+		return
+	}
+	response.ResOk(c, "成功")
+}
+
+func IosAccountList(c *gin.Context) {
+	param := new(request.IosAccountListAdminRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	session := service.IosAccountAdminList(param, user)
+	count, err := service.IosAccountAdminList(param, user).Count()
+	if err != nil {
+		global.Logger.Err(err).Msg("查询出错！")
+		response.ResFail(c, "查询出错！")
+		return
+	}
+	cols := "a.*"
+	session.Cols(cols)
+	session.OrderBy("a.id desc")
+	dataList, _ := commonPageListV2(param.Page, param.Size, count, session)
+	response.RespOk(c, "成功", dataList)
+}
+
+func AddIosAccount(c *gin.Context) {
+	param := new(request.AddIosAccountAdminRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	bean := &model.TIosAccount{
+		Account:     param.Account,
+		Pass:        param.Pass,
+		Name:        param.Name,
+		AccountType: param.AccountType,
+		Status:      1,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		Author:      user.Uname,
+		Comment:     "",
+	}
+	rows, err := global.Db.Insert(bean)
+	if err != nil || rows != 1 {
+		global.Logger.Err(err).Msg("操作失败！")
+		response.ResFail(c, "操作失败！")
+		return
+	}
+	response.ResOk(c, "成功")
+}
+
+func EditIosAccount(c *gin.Context) {
+	param := new(request.EditIosAccountAdminRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	bean := new(model.TIosAccount)
+	bean.UpdatedAt = time.Now()
+	bean.Author = user.Uname
+	cols := []string{"updated_at", "author"}
+	if param.Name != "" {
+		cols = append(cols, "name")
+		bean.Name = param.Name
+	}
+	if param.Account != "" {
+		cols = append(cols, "account")
+		bean.Account = param.Account
+	}
+	if param.Pass != "" {
+		cols = append(cols, "pass")
+		bean.Pass = param.Pass
+	}
+	if param.Status > 0 {
+		cols = append(cols, "status")
+		bean.Status = param.Status
+	}
+	if param.AccountType > 0 {
+		cols = append(cols, "account_type")
+		bean.AccountType = param.AccountType
 	}
 	rows, err := global.Db.Cols(cols...).Where("id = ?", param.Id).Update(bean)
 	if err != nil || rows != 1 {

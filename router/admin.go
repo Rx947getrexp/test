@@ -106,6 +106,27 @@ func AdminRoute(group *gin.RouterGroup) {
 		channelGroup.POST("add_channel", admin.AddChannel)
 		channelGroup.POST("edit_channel", admin.EditChannel)
 
+		//APP版本管理
+		versionGroup := group.Group("app_version")
+		versionGroup.GET("version_list", admin.AppVersionList)
+		versionGroup.POST("add_version", admin.AddAppVersion)
+		versionGroup.POST("edit_version", admin.EditAppVersion)
+
+		//域名管理
+		dnsGroup := group.Group("dns")
+		dnsGroup.GET("app_dns_list", admin.AppDnsList)
+		dnsGroup.POST("add_app_dns", admin.AddAppDns)
+		dnsGroup.POST("edit_app_dns", admin.EditAppDns)
+		dnsGroup.GET("node_dns_list", admin.NodeDnsList)
+		dnsGroup.POST("add_node_dns", admin.AddNodeDns)
+		dnsGroup.POST("edit_node_dns", admin.EditNodeDns)
+
+		//IOS海外账号管理
+		iosAccountGroup := group.Group("ios_account")
+		iosAccountGroup.GET("ios_account_list", admin.IosAccountList)
+		iosAccountGroup.POST("add_ios_account", admin.AddIosAccount)
+		iosAccountGroup.POST("edit_ios_account", admin.EditIosAccount)
+
 		//平台报表
 		plantGroup := group.Group("plant")
 		giveGroup.GET("give_summary", admin.GiveSummary)

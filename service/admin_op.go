@@ -59,6 +59,9 @@ func NodeAdminList(param *request.NodeListAdminRequest, user *model.AdminUser) *
 	if param.Country != "" {
 		session.Where("n.country like ?", "%"+param.Country+"%")
 	}
+	if param.Ip != "" {
+		session.Where("n.ip like ?", "%"+param.Ip+"%")
+	}
 	return session
 }
 
@@ -114,6 +117,42 @@ func SiteAdminList(param *request.SiteListAdminRequest, user *model.AdminUser) *
 	}
 	if param.Ip != "" {
 		session.Where("s.ip = ?", param.Ip)
+	}
+	return session
+}
+
+func AppDnsAdminList(param *request.AppDnsListAdminRequest, user *model.AdminUser) *xorm.Session {
+	session := global.Db.Table("t_app_dns as d")
+	session.Where("d.status = 1")
+	if param.Dns != "" {
+		session.Where("d.dns = ?", param.Dns)
+	}
+	if param.Ip != "" {
+		session.Where("s.ip = ?", param.Ip)
+	}
+	if param.SiteType > 0 {
+		session.Where("site_type = ?", param.SiteType)
+	}
+	if param.Level > 0 {
+		session.Where("level = ?", param.Level)
+	}
+	return session
+}
+
+func NodeDnsAdminList(param *request.NodeDnsListAdminRequest, user *model.AdminUser) *xorm.Session {
+	session := global.Db.Table("t_node_dns as d")
+	session.Where("d.status = 1")
+	if param.Dns != "" {
+		session.Where("d.dns = ?", param.Dns)
+	}
+	if param.Ip != "" {
+		session.Where("s.ip = ?", param.Ip)
+	}
+	if param.NodeId > 0 {
+		session.Where("node_id = ?", param.NodeId)
+	}
+	if param.Level > 0 {
+		session.Where("level = ?", param.Level)
 	}
 	return session
 }
@@ -234,6 +273,30 @@ func MemberDevAdminList(param *request.MemberDevListAdminRequest, user *model.Ad
 	}
 	if param.DevId > 0 {
 		session.Where("ud.dev_id = ?", param.DevId)
+	}
+	return session
+}
+
+func AppVersionAdminList(param *request.AppVersionListAdminRequest, user *model.AdminUser) *xorm.Session {
+	session := global.Db.Table("t_app_version as v")
+	session.Where("v.status = 1")
+	if param.AppType > 0 {
+		session.Where("v.app_type = ?", param.AppType)
+	}
+	return session
+}
+
+func IosAccountAdminList(param *request.IosAccountListAdminRequest, user *model.AdminUser) *xorm.Session {
+	session := global.Db.Table("t_ios_account as a")
+	session.Where("a.status = 1 ")
+	if param.Name != "" {
+		session.Where("c.name = ?", param.Name)
+	}
+	if param.Account != "" {
+		session.Where("c.account = ?", param.Account)
+	}
+	if param.AccountType > 0 {
+		session.Where("account_type = ?", param.AccountType)
 	}
 	return session
 }

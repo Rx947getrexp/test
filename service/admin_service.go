@@ -109,3 +109,22 @@ func UpdateModel(T interface{}, sess *xorm.Session, id int64, columns ...string)
 	}
 	return nil
 }
+
+func FindNodeDnsByNodeId(nodeId int64, level int) ([]*model.TNodeDns, error) {
+	var err error
+	var list []*model.TNodeDns
+	err = global.Db.Where("node_id = ? and status = 1 and level = ?", nodeId, level).Find(&list)
+	return list, err
+}
+
+func FindAppDns(level int) ([]*model.TAppDns, error) {
+	var err error
+	var list []*model.TAppDns
+	err = global.Db.Where("status = 1 and level = ?", level).Find(&list)
+	return list, err
+}
+
+// RatingMemberLevel 用户评级获取线路
+func RatingMemberLevel(user *model.TUser) int {
+	return 1
+}
