@@ -382,7 +382,8 @@ func TeamInfo(c *gin.Context) {
 }
 
 func AppInfo(c *gin.Context) {
-	gateWay := "/app-upload"
+	host := "http://" + c.Request.Host
+	gateWay := host + "/app-upload"
 	var list []*model.TDict
 	err := global.Db.Where("key_id = ?", "app_link").
 		//Or("key_id = ?", "app_js_zip").
