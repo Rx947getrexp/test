@@ -382,6 +382,8 @@ func TeamInfo(c *gin.Context) {
 }
 
 func AppInfo(c *gin.Context) {
+	host := c.Request.Host
+	gateWay := host + "/app-upload"
 	var list []*model.TDict
 	err := global.Db.Where("key_id = ?", "app_link").
 		//Or("key_id = ?", "app_js_zip").
@@ -404,7 +406,7 @@ func AppInfo(c *gin.Context) {
 		return
 	}
 	result["app_version"] = version.Version
-	result["app_js_zip"] = version.Link
+	result["app_js_zip"] = gateWay + version.Link
 	result["app_zip_hash"] = "xxx"
 	response.RespOk(c, "成功", result)
 }
