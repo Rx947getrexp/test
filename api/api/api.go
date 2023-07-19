@@ -641,6 +641,30 @@ func ComboList(c *gin.Context) {
 		response.RespFail(c, lang.Translate("cn", "fail"), nil)
 		return
 	}
+	//获取USD价格
+	usdCny := 7 //实际从redis中获取
+	baseGoods := make(map[string]interface{})
+	for _, item := range list {
+		mType := item["m_type"].(int32)
+		period := item["period"].(int32)
+		if period == 7 {
+			baseGoods[fmt.Sprint(mType, "_", period)] = item["price"]
+		}
+	}
+	for _, item := range list {
+		mType := item["m_type"].(int32)
+		period := item["period"].(int32)
+		price, _ := decimal.NewFromString(item["price"].(string))
+		basePrice, _ := decimal.NewFromString(baseGoods[fmt.Sprint(mType, "_", 7)].(string))
+		baseConvertPrice := basePrice.Div(decimal.NewFromInt(7))
+		convertPrice := price.Div(decimal.NewFromInt(int64(period)))
+		cheapPercent := (baseConvertPrice.Sub(convertPrice)).Div(baseConvertPrice).Mul(decimal.NewFromInt(100))
+		item["price"] = price.StringFixed(2)
+		item["coin"] = "USD"
+		item["convert_price"] = convertPrice.StringFixed(2)
+		item["cheap_percent"] = cheapPercent.StringFixed(0)
+		item["cny_price"] = price.Mul(decimal.NewFromInt(int64(usdCny))).StringFixed(2)
+	}
 
 	//if len(list) == 0 {
 	//	result["list"] = []map[string]interface{}{}
