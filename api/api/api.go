@@ -634,7 +634,7 @@ func DnsList(c *gin.Context) {
 func ComboList(c *gin.Context) {
 	var result = make(map[string]interface{})
 	var list []map[string]interface{}
-	cols := "g.id,g.m_type,g.title,g.price,g.period,g.dev_limit,g.flow_limit"
+	cols := "g.id,g.m_type,g.title,g.price,g.period,g.dev_limit,g.flow_limit,g.is_discount,g.low,g.high"
 	err := global.Db.Table("t_goods as g").Cols(cols).Where("status = 1").OrderBy("id desc").Find(&list)
 	if err != nil {
 		global.Logger.Err(err).Msg("数据库链接出错")
@@ -664,6 +664,12 @@ func ComboList(c *gin.Context) {
 		item["convert_price"] = convertPrice.StringFixed(2)
 		item["cheap_percent"] = cheapPercent.StringFixed(0)
 		item["cny_price"] = price.Mul(decimal.NewFromInt(int64(usdCny))).StringFixed(2)
+		isDiscount := item["is_discount"].(int32)
+		if isDiscount == 1 {
+			item["discount_title"] = fmt.Sprintf("随机送%v-%v天", item["low"], item["high"])
+		} else {
+			item["discount_title"] = ""
+		}
 	}
 
 	//if len(list) == 0 {

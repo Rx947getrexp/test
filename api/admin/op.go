@@ -155,18 +155,21 @@ func AddCombo(c *gin.Context) {
 		return
 	}
 	goods := &model.TGoods{
-		MType:     param.MType,
-		Title:     param.Title,
-		TitleEn:   "",
-		Price:     decimal.NewFromFloat(param.Price).Truncate(2).String(),
-		Period:    param.Period,
-		DevLimit:  param.DevLimit,
-		FlowLimit: param.FlowLimit,
-		Status:    1,
-		Author:    user.Uname,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		Comment:   "",
+		MType:      param.MType,
+		Title:      param.Title,
+		TitleEn:    "",
+		Price:      decimal.NewFromFloat(param.Price).Truncate(2).String(),
+		Period:     param.Period,
+		DevLimit:   param.DevLimit,
+		FlowLimit:  param.FlowLimit,
+		Status:     1,
+		Author:     user.Uname,
+		IsDiscount: param.IsDiscount,
+		Low:        param.Low,
+		High:       param.High,
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
+		Comment:    "",
 	}
 	rows, err := global.Db.Insert(goods)
 	if err != nil || rows != 1 {
@@ -222,6 +225,18 @@ func EditCombo(c *gin.Context) {
 	if param.Status > 0 {
 		cols = append(cols, "status")
 		bean.Status = param.Status
+	}
+	if param.IsDiscount > 0 {
+		cols = append(cols, "is_discount")
+		bean.IsDiscount = param.IsDiscount
+	}
+	if param.Low > 0 {
+		cols = append(cols, "low")
+		bean.Low = param.Low
+	}
+	if param.High > 0 {
+		cols = append(cols, "high")
+		bean.High = param.High
 	}
 	rows, err := global.Db.Cols(cols...).Where("id = ?", param.Id).Update(bean)
 	if err != nil || rows != 1 {
