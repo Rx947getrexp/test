@@ -561,7 +561,7 @@ func NodeList(c *gin.Context) {
 	}
 	var list []map[string]interface{}
 	cols := "id,name,title,title_en,country,country_en,server,port," +
-		"min_port as min,max_port as max,path"
+		"min_port as min,max_port as max,path,is_recommend"
 	err := global.Db.Where("status = 1").
 		Table("t_node").
 		Cols(cols).

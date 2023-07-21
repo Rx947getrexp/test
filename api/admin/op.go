@@ -663,6 +663,10 @@ func EditNode(c *gin.Context) {
 		cols = append(cols, "status")
 		bean.Status = param.Status
 	}
+	if param.IsRecommend > 0 {
+		cols = append(cols, "is_recommend")
+		bean.IsRecommend = param.IsRecommend
+	}
 	rows, err := global.Db.Cols(cols...).Where("id = ?", param.Id).Update(bean)
 	if err != nil || rows != 1 {
 		global.Logger.Err(err).Msg("操作失败！")

@@ -234,18 +234,19 @@ type AddNodeAdminRequest struct {
 }
 
 type EditNodeAdminRequest struct {
-	Id      int64  `form:"id" binding:"required" json:"id"`
-	Title   string `form:"title" json:"title"`
-	Name    string `form:"name" json:"name"`
-	Country string `form:"country" json:"country"`
-	Ip      string `form:"ip" json:"ip"`
-	Server  string `form:"server" json:"server"`
-	Port    int    `form:"port" json:"port"`
-	Cpu     int    `form:"cpu" json:"cpu"`
-	Flow    int64  `form:"flow" json:"flow"`
-	Disk    int64  `form:"disk" json:"disk"`
-	Memory  int64  `form:"memory" json:"memory"`
-	Status  int    `form:"status" json:"status"`
+	Id          int64  `form:"id" binding:"required" json:"id"`
+	Title       string `form:"title" json:"title"`
+	Name        string `form:"name" json:"name"`
+	Country     string `form:"country" json:"country"`
+	Ip          string `form:"ip" json:"ip"`
+	Server      string `form:"server" json:"server"`
+	Port        int    `form:"port" json:"port"`
+	Cpu         int    `form:"cpu" json:"cpu"`
+	Flow        int64  `form:"flow" json:"flow"`
+	Disk        int64  `form:"disk" json:"disk"`
+	Memory      int64  `form:"memory" json:"memory"`
+	Status      int    `form:"status" json:"status"`
+	IsRecommend int    `form:"is_recommend" json:"is_recommend"`
 }
 
 type NodeListAdminRequest struct {

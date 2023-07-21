@@ -13,6 +13,7 @@ type TUser struct {
 	Level       int       `xorm:"comment('等级：0-vip0；1-vip1；2-vip2') INT"`
 	ExpiredTime int64     `xorm:"comment('vip到期时间') BIGINT"`
 	V2rayUuid   string    `xorm:"comment('节点UUID') VARCHAR(128)"`
+	V2rayTag    int       `xorm:"comment('v2ray存在UUID标签:1-有；2-无') INT"`
 	ChannelId   int       `xorm:"comment('渠道id') INT"`
 	Status      int       `xorm:"comment('冻结状态：0-正常；1-冻结') INT"`
 	CreatedAt   time.Time `xorm:"comment('创建时间') TIMESTAMP"`
