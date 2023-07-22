@@ -95,6 +95,7 @@ func Reg(c *gin.Context) {
 	}
 
 	uuid, _ := uuid.NewUUID()
+	fmt.Sprint(uuid)
 	pwdDecode := util.AesDecrypt(param.Passwd)
 
 	//开启事务
@@ -109,7 +110,7 @@ func Reg(c *gin.Context) {
 		Phone:       "",
 		Level:       0,
 		ExpiredTime: 0,
-		V2rayUuid:   uuid.String(),
+		V2rayUuid:   "c541b521-17dd-11ee-bc4e-0c9d92c013fb", //暂时写配置文件的UUID
 		Status:      0,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
@@ -968,6 +969,13 @@ func SwitchButtonStatus(c *gin.Context) {
 	//	response.ResFail(c, "用户鉴权失败！")
 	//	return
 	//}
+}
+
+func AppFilter(c *gin.Context) {
+	result := make(map[string]interface{})
+	result["poc_filter"] = "10.10.10.1"
+	result["refuse_filter"] = "10.10.100.100"
+	response.RespOk(c, "成功", result)
 }
 
 // JWTAuth 验证token
