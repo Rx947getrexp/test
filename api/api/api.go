@@ -109,7 +109,7 @@ func Reg(c *gin.Context) {
 		Email:       param.Account,
 		Phone:       "",
 		Level:       0,
-		ExpiredTime: 0,
+		ExpiredTime: time.Now().Unix(),
 		V2rayUuid:   "c541b521-17dd-11ee-bc4e-0c9d92c013fb", //暂时写配置文件的UUID
 		Status:      0,
 		CreatedAt:   time.Now(),
@@ -383,6 +383,13 @@ func TeamInfo(c *gin.Context) {
 }
 
 func AppInfo(c *gin.Context) {
+	type Result struct {
+		Code int `json:"code"`
+	}
+	c.JSON(http.StatusOK, Result{
+		Code: -1,
+	})
+	return
 	host := "http://" + c.Request.Host
 	gateWay := host + "/app-upload"
 	var list []*model.TDict
@@ -515,6 +522,23 @@ func ReceiveFree(c *gin.Context) {
 		rows, err = sess.Insert(gift)
 		if err != nil || rows < 1 {
 			global.Logger.Err(err).Msg("领取失败")
+			sess.Rollback()
+			response.ResFail(c, "失败！")
+			return
+		}
+
+		nowTimeUnix := time.Now().Unix()
+		var newExpiredTime int64
+		if user.ExpiredTime < nowTimeUnix {
+			newExpiredTime = nowTimeUnix + int64(giftSec)
+		} else {
+			newExpiredTime = user.ExpiredTime + int64(giftSec)
+		}
+		user.ExpiredTime = newExpiredTime
+		user.UpdatedAt = time.Now()
+		rows, err = sess.Cols("expired_time", "updated_at").Where("id = ?", user.Id).Update(user)
+		if err != nil || rows < 1 {
+			global.Logger.Err(err).Msg("更新用户状态失败")
 			sess.Rollback()
 			response.ResFail(c, "失败！")
 			return
