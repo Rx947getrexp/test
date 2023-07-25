@@ -485,6 +485,15 @@ func ReceiveFree(c *gin.Context) {
 		return
 	}
 
+	//1天只能领取3次
+	var counts int64
+	todayStr := time.Now().Format("2006-01-02")
+	_, err = global.Db.SQL("select count(*) from t_activity where user_id = ? and created_at >= ?", user.Id, todayStr).Get(&counts)
+	if counts >= 3 {
+		response.ResFail(c, "活动每天限制3次！")
+		return
+	}
+
 	var status = 2
 	var giftSec = 0
 	rand.Seed(time.Now().UnixNano())
