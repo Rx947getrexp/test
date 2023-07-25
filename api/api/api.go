@@ -1055,16 +1055,30 @@ func JWTAuth() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		//isBool := RedisInsert(strconv.FormatInt(claims.UserId, 10))
-		//if !isBool {
-		//	c.JSON(http.StatusOK, gin.H{
-		//		"code": 301,
-		//		"msg":  "授权已过期",
-		//	})
-		//	c.Abort()
-		//	return
-		//}
-		// 继续交由下一个路由处理,并将解析出的信息传递下去
+
+		devId := c.Request.Header.Get("Dev-Id")
+		if devId != "" {
+			var userDev model.TUserDev
+			has, err := global.Db.Where("user_id = ? and dev_id = ? and status = 2 ", claims.UserId, devId).Get(&userDev)
+			if err != nil {
+				c.JSON(http.StatusOK, gin.H{
+					"code":    100,
+					"message": "网络错误",
+				})
+				c.Abort()
+				return
+			}
+			if has {
+				c.JSON(http.StatusOK, gin.H{
+					"code":    301,
+					"message": "授权已过期",
+				})
+				c.Abort()
+				return
+			}
+
+		}
+
 		c.Set("claims", claims)
 		//uu := c.MustGet("claims").(*service.CustomClaims)
 		//fmt.Println("claims...", uu.UserId)
