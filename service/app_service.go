@@ -80,28 +80,39 @@ func UpdateUserDev(devId int64, user *model.TUser) error {
 	if !HasDev(devId) {
 		return errors.New("该设备号不存在")
 	}
+	useCount, err := getUserDevs(user)
+	if err != nil {
+		global.Logger.Err(err).Msg("数据库链接出错")
+		return errors.New("查询设备数出错")
+	}
+	limit, _ := getUserLimitDevs(user)
+	//if err != nil {
+	//	global.Logger.Err(err).Msg("数据库链接出错")
+	//	return errors.New("查询设备限制数出错")
+	//}
 	userDev := new(model.TUserDev)
 	has, err := global.Db.Where("dev_id = ?", devId).Get(userDev)
 	if err != nil {
 		global.Logger.Err(err).Msg("数据库链接出错")
-		return errors.New("数据库链接出错")
+		return errors.New("查询设备出错")
 	}
 	var rows int64
 	if has {
+		if userDev.Status == 2 {
+			//如果是已踢的设备，需判断目前总活跃总数是否受限
+			if useCount >= limit {
+				global.Logger.Err(err).Msg("设备数超限制")
+				return errors.New("设备数超限制")
+			}
+		}
 		//更新
 		userDev.UpdatedAt = time.Now()
 		userDev.UserId = user.Id
 		userDev.Status = constant.UserDevNormalStatus
 		rows, err = global.Db.Cols("updated_at", "user_id", "status").Where("id = ?", userDev.Id).Update(userDev)
 	} else {
-		var useCount int64
-		_, err := global.Db.SQL("select count(id) from t_user_dev where user_id = ? and status = 1", user.Id).Get(&useCount)
-		if err != nil {
-			global.Logger.Err(err).Msg("数据库链接出错")
-			return errors.New("数据库链接出错")
-		}
 		//根据等级判断，vip最多允许登录几台设备
-		if useCount >= 10 {
+		if useCount >= limit {
 			global.Logger.Err(err).Msg("设备数超限制")
 			return errors.New("设备数超限制")
 		}
@@ -122,6 +133,38 @@ func UpdateUserDev(devId int64, user *model.TUser) error {
 		return errors.New("数据库操作出错")
 	}
 	return nil
+}
+
+func getUserDevs(user *model.TUser) (int64, error) {
+	var useCount int64
+	_, err := global.Db.SQL("select count(id) from t_user_dev where user_id = ? and status = 1", user.Id).Get(&useCount)
+	if err != nil {
+		global.Logger.Err(err).Msg("数据库链接出错")
+		return useCount, errors.New("查询出错")
+	}
+	return useCount, err
+}
+
+func getUserLimitDevs(user *model.TUser) (int64, error) {
+	var err error
+	var limit int64 = 2 //默认2
+	if user.Level == 0 {
+		return limit, nil
+	}
+	//取当前使用套餐的等级
+	var result = make(map[string]interface{})
+	has, err := global.Db.Table("t_success_record as r").
+		Cols("g.id,g.dev_limit").
+		Where("r.user_id = ? and r.status = 1", user.Id).
+		Join("LEFT", "t_order as o", "r.order_id = o.id").
+		Join("LEFT", "t_goods as g", "o.goods_id = g.id").
+		Get(&result)
+	if err != nil || !has {
+		global.Logger.Err(err).Msg("查询设备数限制出错")
+		return limit, err
+	}
+	limit = int64(result["dev_limit"].(int))
+	return limit, err
 }
 
 func UpdateUserWorkMode(devId int64, user *model.TUser) error {
