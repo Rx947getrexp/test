@@ -19,7 +19,8 @@ func DepositOrder(order *model.TOrder) {
 	startSec := nowTime.Unix()
 	goodsDay := goods.Period
 	if goods.IsDiscount == 1 {
-		sendDay = 1
+		//随机事件
+		sendDay = GenerateRangeNum(goods.Low, goods.High+1)
 	}
 	totalSec := (goodsDay + sendDay) * 24 * 3600
 	endSec := startSec + int64(totalSec)

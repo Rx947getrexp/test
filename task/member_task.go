@@ -3,6 +3,7 @@ package task
 import (
 	"go-speed/global"
 	"go-speed/model"
+	"go-speed/service"
 	"time"
 )
 
@@ -42,6 +43,7 @@ func needUpdateUser(user *model.TUser) bool {
 	if user.ExpiredTime <= currTimeSec {
 		global.Logger.Info().Msgf("用户[%s]会员过期:", user.Uname)
 		//远程调用执行v2ray服务器删除UUID；得到回执后，并修改用户的v2ray_tag字段为2
+		service.ClearMemberV2rayUuid(user)
 		return true
 	}
 	return false
@@ -83,6 +85,7 @@ func needUpdateLevelRecord(record *model.TSuccessRecord) bool {
 	if record.EndTime <= currTimeSec {
 		global.Logger.Info().Msgf("套餐记录[%d]会员过期:", record.Id)
 		//执行过期流程
+		service.ChangeMemberLevel(record)
 		return true
 	}
 	return false

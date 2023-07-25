@@ -61,9 +61,13 @@ func TestEmail(t *testing.T) {
 func TestRand(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
 	for i := 0; i < 10; i++ {
-		println(rand.Intn(100))
+		println(rand.Intn(1))
 	}
-
+	//3-6范围，左闭右开
+	for i := 0; i < 30; i++ {
+		println(service.GenerateRangeNum(3, 6))
+		time.Sleep(time.Second)
+	}
 }
 
 func TestUuid(t *testing.T) {

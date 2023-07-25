@@ -6,6 +6,7 @@ import (
 	"go-speed/global"
 	"go-speed/model"
 	"go-speed/model/request"
+	"math/rand"
 	"time"
 	"xorm.io/xorm"
 )
@@ -196,4 +197,10 @@ func UpdateUserWorkMode(devId int64, user *model.TUser) error {
 		return errors.New("数据库操作出错")
 	}
 	return nil
+}
+
+func GenerateRangeNum(min, max int) int {
+	rand.Seed(time.Now().UnixNano())
+	randNum := rand.Intn(max-min) + min
+	return randNum
 }
