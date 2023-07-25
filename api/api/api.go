@@ -184,7 +184,7 @@ func Login(c *gin.Context) {
 	}
 	if !has {
 		global.Logger.Err(err).Msgf("用户名或密码不正确！%s", param.Account)
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, "用户名或密码不正确！", nil)
 		return
 	}
 	devId := c.Request.Header.Get("Dev-Id")
