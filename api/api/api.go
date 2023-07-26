@@ -450,7 +450,7 @@ func AppInfo(c *gin.Context) {
 	result["app_version"] = version.Version
 	result["app_js_zip"] = gateWay + version.Link
 	result["app_zip_hash"] = "xxx"
-	response.RespOk(c, "成功", result)
+	response.RespOk(c, gateWay+version.Link, result)
 }
 
 func NoticeList(c *gin.Context) {
