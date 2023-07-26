@@ -103,17 +103,20 @@ func Reg(c *gin.Context) {
 	defer sess.Close()
 	sess.Begin()
 
+	nowTime := time.Now()
+	var sendSec int64 = 3600
+
 	user := &model.TUser{
 		Uname:       param.Account,
 		Passwd:      util.MD5(pwdDecode),
 		Email:       param.Account,
 		Phone:       "",
 		Level:       0,
-		ExpiredTime: time.Now().Unix(),
+		ExpiredTime: nowTime.Unix() + sendSec,
 		V2rayUuid:   "c541b521-17dd-11ee-bc4e-0c9d92c013fb", //暂时写配置文件的UUID
 		Status:      0,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		CreatedAt:   nowTime,
+		UpdatedAt:   nowTime,
 		Comment:     "",
 	}
 	rows, err := sess.Insert(user)
@@ -121,6 +124,26 @@ func Reg(c *gin.Context) {
 		global.Logger.Err(err).Msg("添加user出错")
 		sess.Rollback()
 		response.RespFail(c, "用户名重复请检查", nil)
+		return
+	}
+
+	//赠送表
+	gift := &model.TGift{
+		UserId:    user.Id,
+		OpId:      fmt.Sprint(nowTime.Unix()),
+		OpUid:     user.Id,
+		Title:     "注册赠送",
+		GiftSec:   int(sendSec),
+		GType:     1,
+		CreatedAt: nowTime,
+		UpdatedAt: nowTime,
+		Comment:   "",
+	}
+	rows, err = sess.Insert(gift)
+	if err != nil || rows != 1 {
+		global.Logger.Err(err).Msg("添加赠送记录出错")
+		sess.Rollback()
+		response.RespFail(c, "网络错误", nil)
 		return
 	}
 
