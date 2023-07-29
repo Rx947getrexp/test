@@ -23,6 +23,7 @@ type TNode struct {
 	MaxPort     int       `xorm:"comment('最大端口') INT"`
 	Path        string    `xorm:"comment('ws路径') VARCHAR(32)"`
 	IsRecommend int       `xorm:"comment('是否推荐1-是；2-否') INT"`
+	ChannelId   int       `xorm:"comment('市场渠道（优选节点有效，默认0)') INT"`
 	Status      int       `xorm:"not null comment('状态:1-正常；2-已软删') INT"`
 	CreatedAt   time.Time `xorm:"comment('创建时间') TIMESTAMP"`
 	UpdatedAt   time.Time `xorm:"comment('更新时间') TIMESTAMP"`

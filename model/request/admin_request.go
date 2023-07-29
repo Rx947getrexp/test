@@ -369,6 +369,11 @@ type EditMemberAdminRequest struct {
 	Status string `form:"status" json:"status"`            //状态
 }
 
+type EditMemberDevAdminRequest struct {
+	Id     int64  `form:"id" binding:"required" json:"id"` //用户ID
+	Status string `form:"status" json:"status"`            //状态
+}
+
 type ChannelListAdminRequest struct {
 	Name string `form:"name" json:"name"`
 	Code string `form:"code" json:"code"`

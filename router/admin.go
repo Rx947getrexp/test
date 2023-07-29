@@ -52,6 +52,7 @@ func AdminRoute(group *gin.RouterGroup) {
 		memberGroup.GET("member_list", admin.MemberList)
 		memberGroup.GET("member_dev_list", admin.MemberDevList)
 		memberGroup.POST("edit_member", admin.EditMember)
+		memberGroup.POST("edit_member_dev", admin.EditMemberDev)
 
 		//套餐管理
 		comboGroup := group.Group("combo")

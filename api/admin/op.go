@@ -112,6 +112,37 @@ func EditMember(c *gin.Context) {
 	response.ResOk(c, "成功")
 }
 
+func EditMemberDev(c *gin.Context) {
+	param := new(request.EditMemberDevAdminRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	bean := new(model.TUserDev)
+	bean.UpdatedAt = time.Now()
+	bean.Comment = user.Uname
+	cols := []string{"updated_at", "comment"}
+	if param.Status != "" {
+		bean.Status, _ = strconv.Atoi(param.Status)
+		cols = append(cols, "status")
+	}
+	rows, err := global.Db.Cols(cols...).Where("id = ?", param.Id).Update(bean)
+	if err != nil || rows != 1 {
+		global.Logger.Err(err).Msg("操作失败！")
+		response.ResFail(c, "操作失败！")
+		return
+	}
+	response.ResOk(c, "成功")
+}
+
 func ComboList(c *gin.Context) {
 	param := new(request.GoodsListAdminRequest)
 	if err := c.ShouldBind(param); err != nil {

@@ -8,17 +8,21 @@ import (
 func init() {
 	initEn(language.AmericanEnglish)
 	initZhHans(language.SimplifiedChinese)
+	initRussian(language.Russian)
 }
 
 var (
-	cnPrinter = message.NewPrinter(language.SimplifiedChinese)
-	enPrinter = message.NewPrinter(language.AmericanEnglish)
+	cnPrinter  = message.NewPrinter(language.SimplifiedChinese)
+	enPrinter  = message.NewPrinter(language.AmericanEnglish)
+	rusPrinter = message.NewPrinter(language.Russian)
 )
 
 func getPrinterByLang(lang string) *message.Printer {
 	switch lang {
 	case "cn":
 		return cnPrinter
+	case "rus":
+		return rusPrinter
 	default:
 		return enPrinter
 	}

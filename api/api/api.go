@@ -23,6 +23,24 @@ import (
 
 // GenerateDevId C端获取DEV_ID，并保存在本地全局存储
 func GenerateDevId(c *gin.Context) {
+	result := make(map[string]interface{})
+	//查询库中是否有Client-Id
+	clientId := c.GetHeader("Client-Id")
+	if clientId != "" {
+		var bean model.TDev
+		has, err := global.Db.Where("client_id = ?", clientId).Get(&bean)
+		if err != nil {
+			global.Logger.Err(err).Msg("db连接出错")
+			response.RespFail(c, lang.Translate("cn", "fail"), nil)
+			return
+		}
+		if has {
+			result["dev_id"] = fmt.Sprint(bean.Id)
+			response.RespOk(c, "成功", result)
+			return
+		}
+	}
+
 	id, _ := service.GenSnowflake()
 	userAgent := c.GetHeader("User-Agent")
 	ua := user_agent.New(userAgent)
@@ -36,6 +54,7 @@ func GenerateDevId(c *gin.Context) {
 		Network:   constant.NetworkAutoMode,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
+		IsSend:    2,
 		Comment:   "",
 	}
 	rows, err := global.Db.Insert(dev)
@@ -44,7 +63,7 @@ func GenerateDevId(c *gin.Context) {
 		response.RespFail(c, lang.Translate("cn", "fail"), nil)
 		return
 	}
-	result := make(map[string]interface{})
+
 	result["dev_id"] = fmt.Sprint(id)
 	response.RespOk(c, "成功", result)
 }
@@ -94,6 +113,34 @@ func Reg(c *gin.Context) {
 		return
 	}
 
+	//渠道来源
+	var channel int = 1 //默认大陆区域 1-中国；2-俄罗斯；3-其它(英语系)
+	var err error
+	sourceChannel := c.GetHeader("Channel")
+	if sourceChannel != "" {
+		channel, err = strconv.Atoi(sourceChannel)
+		if err != nil {
+			response.RespFail(c, lang.Translate("cn", "fail"), nil)
+			return
+		}
+	}
+
+	var sendSec int64 = 0
+	//查询库中是否有Client-Id
+	clientId := c.GetHeader("Client-Id")
+	if clientId != "" {
+		var bean model.TDev
+		has, err := global.Db.Where("client_id = ? and is_send = 2", clientId).Get(&bean)
+		if err != nil {
+			global.Logger.Err(err).Msg("db连接出错")
+			response.RespFail(c, lang.Translate("cn", "fail"), nil)
+			return
+		}
+		if has {
+			sendSec += 3600 //此种情况才赠送时间
+		}
+	}
+
 	uuid, _ := uuid.NewUUID()
 	fmt.Sprint(uuid)
 	pwdDecode := util.AesDecrypt(param.Passwd)
@@ -104,7 +151,6 @@ func Reg(c *gin.Context) {
 	sess.Begin()
 
 	nowTime := time.Now()
-	var sendSec int64 = 3600
 
 	user := &model.TUser{
 		Uname:       param.Account,
@@ -115,6 +161,7 @@ func Reg(c *gin.Context) {
 		ExpiredTime: nowTime.Unix() + sendSec,
 		V2rayUuid:   "c541b521-17dd-11ee-bc4e-0c9d92c013fb", //暂时写配置文件的UUID
 		Status:      0,
+		ChannelId:   channel,
 		CreatedAt:   nowTime,
 		UpdatedAt:   nowTime,
 		Comment:     "",
@@ -128,23 +175,25 @@ func Reg(c *gin.Context) {
 	}
 
 	//赠送表
-	gift := &model.TGift{
-		UserId:    user.Id,
-		OpId:      fmt.Sprint(nowTime.Unix()),
-		OpUid:     user.Id,
-		Title:     "注册赠送",
-		GiftSec:   int(sendSec),
-		GType:     1,
-		CreatedAt: nowTime,
-		UpdatedAt: nowTime,
-		Comment:   "",
-	}
-	rows, err = sess.Insert(gift)
-	if err != nil || rows != 1 {
-		global.Logger.Err(err).Msg("添加赠送记录出错")
-		sess.Rollback()
-		response.RespFail(c, "网络错误", nil)
-		return
+	if sendSec > 0 {
+		gift := &model.TGift{
+			UserId:    user.Id,
+			OpId:      fmt.Sprint(nowTime.Unix()),
+			OpUid:     user.Id,
+			Title:     "注册赠送",
+			GiftSec:   int(sendSec),
+			GType:     1,
+			CreatedAt: nowTime,
+			UpdatedAt: nowTime,
+			Comment:   "",
+		}
+		rows, err = sess.Insert(gift)
+		if err != nil || rows != 1 {
+			global.Logger.Err(err).Msg("添加赠送记录出错")
+			sess.Rollback()
+			response.RespFail(c, "网络错误", nil)
+			return
+		}
 	}
 
 	//推荐关系
