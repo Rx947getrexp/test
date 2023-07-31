@@ -9,6 +9,7 @@ type TGoods struct {
 	MType      int       `xorm:"not null comment('会员类型：1-vip1；2-vip2') INT"`
 	Title      string    `xorm:"not null comment('套餐标题') VARCHAR(128)"`
 	TitleEn    string    `xorm:"comment('套餐标题（英文）') VARCHAR(128)"`
+	TitleRus   string    `xorm:"comment('套餐标题（俄文)') VARCHAR(128)"`
 	Price      string    `xorm:"not null comment('单价(U)') DECIMAL(10,6)"`
 	Period     int       `xorm:"not null comment('有效期（天）') INT"`
 	DevLimit   int       `xorm:"not null comment('设备限制数') INT"`
