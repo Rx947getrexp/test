@@ -51,6 +51,7 @@ func GenerateDevId(c *gin.Context) {
 	dev := &model.TDev{
 		Id:        id,
 		Os:        os,
+		ClientId:  clientId,
 		Network:   constant.NetworkAutoMode,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
