@@ -26,6 +26,7 @@ func GenerateDevId(c *gin.Context) {
 	result := make(map[string]interface{})
 	//查询库中是否有Client-Id
 	clientId := c.GetHeader("Client-Id")
+	fmt.Println(666, clientId)
 	if clientId != "" {
 		var bean model.TDev
 		has, err := global.Db.Where("client_id = ?", clientId).Get(&bean)
@@ -129,7 +130,6 @@ func Reg(c *gin.Context) {
 	var sendSec int64 = 0
 	//查询库中是否有Client-Id
 	clientId := c.GetHeader("Client-Id")
-	fmt.Println(666, clientId)
 	if clientId != "" {
 		var bean model.TDev
 		has, err := global.Db.Where("client_id = ? and is_send = 2", clientId).Get(&bean)
