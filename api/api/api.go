@@ -1090,7 +1090,7 @@ func SwitchButtonStatus(c *gin.Context) {
 func AppFilter(c *gin.Context) {
 	result := make(map[string]interface{})
 	result["poc_filter"] = "10.10.10.1"
-	result["refuse_filter"] = "10.10.100.100"
+	result["refuse_filter"] = "google"
 	response.RespOk(c, "成功", result)
 }
 
