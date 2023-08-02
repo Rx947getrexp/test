@@ -663,6 +663,9 @@ func ReceiveFreeSummary(c *gin.Context) {
 }
 
 func NodeList(c *gin.Context) {
+	la := c.GetHeader("Lang")
+	fmt.Println(la)
+	fmt.Println(666, c)
 	//用户评级
 	level := 1 //默认1
 	token := c.Request.Header.Get("Authorization-Token")
@@ -711,7 +714,7 @@ func NodeList(c *gin.Context) {
 	}
 	var result = make(map[string]interface{})
 	result["list"] = list
-	response.RespOk(c, "成功", result)
+	response.RespOk(c, lang.Translate(la, "success"), result)
 }
 
 func DnsList(c *gin.Context) {
