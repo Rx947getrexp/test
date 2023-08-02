@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/mssola/user_agent"
 	"github.com/shopspring/decimal"
+	"go-speed/api"
 	"go-speed/constant"
 	"go-speed/global"
 	"go-speed/lang"
@@ -1134,8 +1135,9 @@ func AppFilter(c *gin.Context) {
 func PrintParam() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		fmt.Println(666, c.Request.Header)
-		fmt.Println(777, c.Request.Body)
-		fmt.Println(999, c.Request.Form)
+
+		bodyBytes := api.ReadBodyToCache(c)
+		fmt.Printf("request={%s}, data={%v}", c.Request.RequestURI, string(bodyBytes))
 	}
 }
 

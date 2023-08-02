@@ -8,7 +8,6 @@ import (
 func ApiRoute(group *gin.RouterGroup) {
 	group.Use(api.PrintParam())
 	{
-
 		group.POST("generate_dev_id", api.GenerateDevId)
 		group.POST("send_email", api.SendEmail)
 		group.POST("reg", api.Reg)
