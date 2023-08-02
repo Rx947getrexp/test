@@ -27,7 +27,7 @@ func ApiRouters() *gin.Engine {
 	routers.Use(Cors()) //解决跨域
 	//routers.Use(api.PrintRequest)
 	//routers.Use(api.FilteredSQLInject)
-	routers.Use(api.RateMiddleware(api.NewLimiterV2()))
+	//routers.Use(api.RateMiddleware(api.NewLimiterV2()))
 	routers.GET("test", api.Test)
 	publicGroup := routers.Group("")
 	router.ApiRoute(publicGroup)
