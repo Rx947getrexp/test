@@ -665,7 +665,9 @@ func ReceiveFreeSummary(c *gin.Context) {
 func NodeList(c *gin.Context) {
 	la := c.GetHeader("Lang")
 	fmt.Println(la)
-	fmt.Println(666, c)
+	fmt.Println(666, c.Request.Header)
+	fmt.Println(777, c.Request.Body)
+	fmt.Println(999, c.Request.Form)
 	//用户评级
 	level := 1 //默认1
 	token := c.Request.Header.Get("Authorization-Token")
