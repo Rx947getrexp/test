@@ -664,10 +664,6 @@ func ReceiveFreeSummary(c *gin.Context) {
 
 func NodeList(c *gin.Context) {
 	la := c.GetHeader("Lang")
-	fmt.Println(la)
-	fmt.Println(666, c.Request.Header)
-	fmt.Println(777, c.Request.Body)
-	fmt.Println(999, c.Request.Form)
 	//用户评级
 	level := 1 //默认1
 	token := c.Request.Header.Get("Authorization-Token")
@@ -1133,6 +1129,14 @@ func AppFilter(c *gin.Context) {
 	result["poc_filter"] = "10.10.10.1"
 	result["refuse_filter"] = "google"
 	response.RespOk(c, "成功", result)
+}
+
+func PrintParam() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		fmt.Println(666, c.Request.Header)
+		fmt.Println(777, c.Request.Body)
+		fmt.Println(999, c.Request.Form)
+	}
 }
 
 // JWTAuth 验证token
