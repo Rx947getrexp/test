@@ -144,8 +144,6 @@ func Reg(c *gin.Context) {
 		}
 	}
 
-	uuid, _ := uuid.NewUUID()
-	fmt.Sprint(uuid)
 	pwdDecode := util.AesDecrypt(param.Passwd)
 
 	//开启事务
@@ -174,6 +172,19 @@ func Reg(c *gin.Context) {
 		global.Logger.Err(err).Msg("添加user出错")
 		sess.Rollback()
 		response.RespFail(c, "用户名重复请检查", nil)
+		return
+	}
+
+	//更新Uuid
+	rnd := rand.New(rand.NewSource(user.Id))
+	uuid.SetRand(rnd)
+	nonce, _ := uuid.NewRandomFromReader(rnd)
+	user.V2rayUuid = nonce.String()
+	rows, err = sess.Cols("v2ray_uuid").Where("id = ?", user.Id).Update(user)
+	if err != nil || rows != 1 {
+		global.Logger.Err(err).Msg("添加user-uuid出错")
+		sess.Rollback()
+		response.RespFail(c, "注册失败", nil)
 		return
 	}
 
