@@ -996,6 +996,37 @@ func BanDev(c *gin.Context) {
 	response.ResOk(c, "成功")
 }
 
+//连接
+func Connect(c *gin.Context) {
+	param := new(request.ConnectRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		return
+	}
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("用户token鉴权失败")
+		response.ResFail(c, "用户鉴权失败！")
+		return
+	}
+	if user.ExpiredTime > time.Now().Unix() {
+		ok, err := service.InsertUserUuid(user, param.NodeId)
+		if err != nil || !ok {
+
+		}
+		if ok {
+			service.InsertNodeUuid()
+		}
+
+	}
+	//下发服务器配置给客户端
+	result := make(map[string]interface{})
+	result["node_id"] = 1
+	response.RespOk(c, "成功", result)
+}
+
 // ChangeNetwork 切换节点工作
 func ChangeNetwork(c *gin.Context) {
 	param := new(request.ChangeNetworkRequest)
