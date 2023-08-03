@@ -9,7 +9,12 @@ import (
 	"go-speed/model/response"
 	"go-speed/util"
 	"net/http"
+	"os"
+	"os/exec"
+	"strings"
 )
+
+var v2rayJson = "{\n\t\"inbounds\": [{\n\t\t\"tag\": \"tcp-ws\",\n\t\t\"port\": 11111,\n\t\t\"listen\": \"127.0.0.1\",\n\t\t\"protocol\": \"vmess\",\n\t\t\"settings\": {\n\t\t\t\"clients\": [{\n\t\t\t\t\t\"email\": \"###\",\n\t\t\t\t\t\"id\": \"***\",\n\t\t\t\t\t\"alterId\": 0,\n\t\t\t\t\t\"level\": 0\n\t\t\t\t}\n\n\t\t\t]\n\t\t},\n\t\t\"streamSettings\": {\n\t\t\t\"network\": \"ws\",\n\t\t\t\"wsSettings\": {\n\t\t\t\t\"path\": \"/work\"\n\t\t\t}\n\t\t}\n\t}]\n\n}\n"
 
 func NodeAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -27,6 +32,42 @@ func NodeAuth() gin.HandlerFunc {
 	}
 }
 
+func AddSub(c *gin.Context) {
+	param := new(request.NodeAddSubRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	path := ""
+	if param.Tag == "1" {
+		path = fmt.Sprintf("/v2rayJsonAdd/%s.json", param.Uuid)
+	} else {
+		path = fmt.Sprintf("/v2rayJsonSub/%s.json", param.Uuid)
+	}
+	v2rayJson = strings.ReplaceAll(v2rayJson, "###", param.Email)
+	v2rayJson = strings.ReplaceAll(v2rayJson, "***", param.Uuid)
+	fmt.Println(v2rayJson)
+
+	file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE, 0644)
+	defer file.Close()
+	file.WriteString(v2rayJson)
+	if err != nil {
+		global.Logger.Info().Msg("添加失败")
+		response.ResFail(c, "添加失败")
+		return
+	}
+	if param.Tag == "1" {
+		exec.Command("v2ray  api adi -s 127.0.0.1:10085 /v2rayJsonAdd")
+		_ = os.Remove(fmt.Sprintf("/v2rayJsonSub/%s.json", param.Uuid))
+	} else {
+		_ = os.Remove(fmt.Sprintf("/v2rayJsonAdd/%s.json", param.Uuid))
+		exec.Command("v2ray  api rmi -s 127.0.0.1:10085 /v2rayJsonSub")
+	}
+	global.Logger.Info().Msg("添加成功")
+
+	response.ResOk(c, "成功")
+}
 func AddEmail(c *gin.Context) {
 	param := new(request.NodeAddEmailRequest)
 	if err := c.ShouldBind(param); err != nil {

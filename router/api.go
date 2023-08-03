@@ -22,6 +22,7 @@ func ApiRoute(group *gin.RouterGroup) {
 	group.GET("ad_list", api.AdList)
 	group.GET("app_info", api.AppInfo)
 	group.GET("app_filter", api.AppFilter)
+	group.GET("connect", api.Connect)
 
 	group.Use(api.JWTAuth())
 	{
@@ -43,7 +44,7 @@ func ApiRoute(group *gin.RouterGroup) {
 		group.POST("ban_dev", api.BanDev)
 
 		group.POST("change_network", api.ChangeNetwork) //暂没用到
-		group.POST("connect", api.Connect)
+		group.POST("connect2", api.Connect2)
 
 	}
 

@@ -126,5 +126,6 @@ func FindAppDns(level int) ([]*model.TAppDns, error) {
 
 // RatingMemberLevel 用户评级获取线路
 func RatingMemberLevel(user *model.TUser) int {
+
 	return 1
 }

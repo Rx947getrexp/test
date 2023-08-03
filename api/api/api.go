@@ -1000,9 +1000,38 @@ func BanDev(c *gin.Context) {
 	}
 	response.ResOk(c, "成功")
 }
+func Connect(c *gin.Context) {
+
+	//发送请求：
+	req := &request.NodeAddSubRequest{
+		Tag:   "1",
+		Uuid:  "222",
+		Email: "aaaxxx@qq.com",
+	}
+	url := "https://node2.wuwuwu360.xyz:13003/node/add_sub"
+	res := new(response.Response)
+	headerParam := make(map[string]string)
+	timestamp := fmt.Sprint(time.Now().Unix())
+	headerParam["timestamp"] = timestamp
+	headerParam["accessToken"] = util.MD5(fmt.Sprint(timestamp, constant.AccessTokenSalt))
+	err := util.HttpClientPostV2(url, headerParam, req, res)
+	if err != nil {
+		global.Logger.Err(err).Msg("发送心跳包失败...")
+		return
+	}
+	if res.Code == 401 {
+		global.Logger.Err(err).Msg("发送心跳包鉴权失败...")
+		return
+	}
+
+	//下发服务器配置给客户端
+	result := make(map[string]interface{})
+	result["node_id"] = 1
+	response.RespOk(c, "成功", result)
+}
 
 //连接
-func Connect(c *gin.Context) {
+func Connect2(c *gin.Context) {
 	param := new(request.ConnectRequest)
 	if err := c.ShouldBind(param); err != nil {
 		global.Logger.Err(err).Msg("绑定参数")
@@ -1017,6 +1046,28 @@ func Connect(c *gin.Context) {
 		return
 	}
 	if user.ExpiredTime > time.Now().Unix() {
+		//发送请求：
+		req := &request.NodeAddSubRequest{
+			Tag:   "1",
+			Uuid:  user.V2rayUuid,
+			Email: user.Email,
+		}
+		url := "https://node2.wuwuwu360.xyz/node/add_sub"
+		res := new(response.Response)
+		headerParam := make(map[string]string)
+		timestamp := fmt.Sprint(time.Now().Unix())
+		headerParam["timestamp"] = timestamp
+		headerParam["accessToken"] = util.MD5(fmt.Sprint(timestamp, constant.AccessTokenSalt))
+		err := util.HttpClientPostV2(url, headerParam, req, res)
+		if err != nil {
+			global.Logger.Err(err).Msg("发送心跳包失败...")
+			return
+		}
+		if res.Code == 401 {
+			global.Logger.Err(err).Msg("发送心跳包鉴权失败...")
+			return
+		}
+
 		ok, err := service.InsertUserUuid(user, param.NodeId)
 		if err != nil || !ok {
 
