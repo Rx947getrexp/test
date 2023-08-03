@@ -58,8 +58,13 @@ func AddSub(c *gin.Context) {
 	}
 	defer file.Close()
 	wr := bufio.NewWriter(file)
-	wr.WriteString(v2rayJson) //注意这里是写在缓存中的，而不是直接落盘的
-	wr.Flush()                //将缓存的内容写入文件
+	_, err = wr.WriteString(v2rayJson) //注意这里是写在缓存中的，而不是直接落盘的
+	if err != nil {
+		global.Logger.Err(err).Msg("添加失败")
+		response.ResFail(c, "添加失败")
+		return
+	}
+	wr.Flush() //将缓存的内容写入文件
 
 	if param.Tag == "1" {
 		_ = os.Remove(fmt.Sprintf("/v2rayJsonSub/%s.json", param.Uuid))
