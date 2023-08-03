@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go-speed/constant"
@@ -49,22 +50,21 @@ func AddSub(c *gin.Context) {
 	v2rayJson = strings.ReplaceAll(v2rayJson, "***", param.Uuid)
 	fmt.Println(v2rayJson)
 
-	file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE, 0755)
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		global.Logger.Err(err).Msg("添加失败")
 		response.ResFail(c, "添加失败")
 		return
 	}
 	defer file.Close()
-	_, err = file.WriteString(v2rayJson)
-	if err != nil {
-		global.Logger.Err(err).Msg("添加失败")
-		response.ResFail(c, "添加失败")
-		return
-	}
+	wr := bufio.NewWriter(file)
+	wr.WriteString(v2rayJson) //注意这里是写在缓存中的，而不是直接落盘的
+	wr.Flush()                //将缓存的内容写入文件
+
 	if param.Tag == "1" {
-		exec.Command("v2ray  api adi -s 127.0.0.1:10085 /v2rayJsonAdd")
 		_ = os.Remove(fmt.Sprintf("/v2rayJsonSub/%s.json", param.Uuid))
+		exec.Command("v2ray  api adi -s 127.0.0.1:10085 /v2rayJsonAdd")
+
 	} else {
 		_ = os.Remove(fmt.Sprintf("/v2rayJsonAdd/%s.json", param.Uuid))
 		exec.Command("v2ray  api rmi -s 127.0.0.1:10085 /v2rayJsonSub")
