@@ -51,14 +51,14 @@ func AddSub(c *gin.Context) {
 
 	file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
-		global.Logger.Info().Msg("添加失败")
+		global.Logger.Err(err).Msg("添加失败")
 		response.ResFail(c, "添加失败")
 		return
 	}
 	defer file.Close()
 	_, err = file.WriteString(v2rayJson)
 	if err != nil {
-		global.Logger.Info().Msg("添加失败")
+		global.Logger.Err(err).Msg("添加失败")
 		response.ResFail(c, "添加失败")
 		return
 	}
