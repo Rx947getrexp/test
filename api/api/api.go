@@ -1020,7 +1020,7 @@ func Connect(c *gin.Context) {
 		Uuid:  "222",
 		Email: "aaaxxx@qq.com",
 	}
-	url := "https://node2.wuwuwu360.xyz:13003/node/add_sub"
+	url := "https://node2.wuwuwu360.xyz/site-api/node/add_sub"
 	res := new(response.Response)
 	headerParam := make(map[string]string)
 	timestamp := fmt.Sprint(time.Now().Unix())
