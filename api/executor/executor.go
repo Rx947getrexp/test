@@ -68,7 +68,8 @@ func AddSub(c *gin.Context) {
 
 	if param.Tag == "1" {
 		_ = os.Remove(fmt.Sprintf("/v2rayJsonSub/%s.json", param.Uuid))
-		err = exec.Command("/usr/local/bin/v2ray", "  api adi -s 127.0.0.1:10085 /v2rayJsonAdd").Run()
+		cmds := exec.Command("/usr/local/bin/v2ray", "  api adi -s 127.0.0.1:10085 /v2rayJsonAdd")
+		err = cmds.Start()
 		if err != nil {
 			global.Logger.Err(err).Msg("添加失败")
 			response.ResFail(c, "添加失败")
