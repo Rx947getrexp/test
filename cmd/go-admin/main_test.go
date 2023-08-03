@@ -77,6 +77,14 @@ func TestUuid(t *testing.T) {
 		return
 	}
 	fmt.Println(nonce.String())
+
+	for i := 0; i <= 50; i++ {
+		rnd := rand.New(rand.NewSource(int64(i)))
+		uuid.SetRand(rnd)
+		nonce2, _ := uuid.NewRandomFromReader(rnd)
+		fmt.Println("nonce2:", nonce2.String())
+	}
+
 }
 
 func TestPwd(t *testing.T) {
