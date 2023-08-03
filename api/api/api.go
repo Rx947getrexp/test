@@ -1012,7 +1012,7 @@ func BanDev(c *gin.Context) {
 	}
 	response.ResOk(c, "成功")
 }
-func Connect(c *gin.Context) {
+func Connect2(c *gin.Context) {
 
 	//发送请求：
 	req := &request.NodeAddSubRequest{
@@ -1020,7 +1020,7 @@ func Connect(c *gin.Context) {
 		Uuid:  "3a4112cc-17de-11ee-8b15-0c9d92c013dd",
 		Email: "aaaxxx@qq.com",
 	}
-	url := "https://node2.wuwuwu360.xyz/site-api/node/add_sub"
+	url := "https://node2.wuwuwu360.xyz/sl"
 	res := new(response.Response)
 	headerParam := make(map[string]string)
 	timestamp := fmt.Sprint(time.Now().Unix())
@@ -1043,7 +1043,7 @@ func Connect(c *gin.Context) {
 }
 
 //连接
-func Connect2(c *gin.Context) {
+func Connect(c *gin.Context) {
 	param := new(request.ConnectRequest)
 	if err := c.ShouldBind(param); err != nil {
 		global.Logger.Err(err).Msg("绑定参数")
@@ -1057,42 +1057,42 @@ func Connect2(c *gin.Context) {
 		response.ResFail(c, "用户鉴权失败！")
 		return
 	}
+	req := &request.NodeAddSubRequest{}
 	if user.ExpiredTime > time.Now().Unix() {
 		//发送请求：
-		req := &request.NodeAddSubRequest{
-			Tag:   "1",
-			Uuid:  user.V2rayUuid,
-			Email: user.Email,
-		}
-		url := "https://node2.wuwuwu360.xyz/node/add_sub"
-		res := new(response.Response)
-		headerParam := make(map[string]string)
-		timestamp := fmt.Sprint(time.Now().Unix())
-		headerParam["timestamp"] = timestamp
-		headerParam["accessToken"] = util.MD5(fmt.Sprint(timestamp, constant.AccessTokenSalt))
-		err := util.HttpClientPostV2(url, headerParam, req, res)
-		if err != nil {
-			global.Logger.Err(err).Msg("发送心跳包失败...")
-			return
-		}
-		if res.Code == 401 {
-			global.Logger.Err(err).Msg("发送心跳包鉴权失败...")
-			return
-		}
+		req.Tag = "1"
+	} else {
+		req.Tag = "2"
+	}
+	req.Uuid = user.V2rayUuid
+	req.Email = user.Email
+	//url := "https://node2.wuwuwu360.xyz/node/add_sub"
+	dnsList, _ := service.FindNodeDnsByNodeId(param.NodeId, user.Level)
+	dns := dnsList[0].Dns
+	url := fmt.Sprintf("https://%s/node/add_sub", dns)
 
-		ok, err := service.InsertUserUuid(user, param.NodeId)
-		if err != nil || !ok {
-
-		}
-		if ok {
-			service.InsertNodeUuid()
-		}
-
+	res := new(response.Response)
+	headerParam := make(map[string]string)
+	timestamp := fmt.Sprint(time.Now().Unix())
+	headerParam["timestamp"] = timestamp
+	headerParam["accessToken"] = util.MD5(fmt.Sprint(timestamp, constant.AccessTokenSalt))
+	err = util.HttpClientPostV2(url, headerParam, req, res)
+	if err != nil {
+		global.Logger.Err(err).Msg("发送心跳包失败...")
+		response.RespFail(c, "失败", nil)
+		return
+	}
+	if res.Code == 401 {
+		global.Logger.Err(err).Msg("发送心跳包鉴权失败...")
+		response.RespFail(c, "失败", nil)
+		return
 	}
 	//下发服务器配置给客户端
-	result := make(map[string]interface{})
-	result["node_id"] = 1
-	response.RespOk(c, "成功", result)
+	if res.Code == 200 {
+		response.RespOk(c, "成功", nil)
+	} else {
+		response.RespFail(c, "失败", nil)
+	}
 }
 
 // ChangeNetwork 切换节点工作

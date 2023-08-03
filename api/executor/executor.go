@@ -72,20 +72,22 @@ func AddSub(c *gin.Context) {
 		err = cmds.Start()
 		if err != nil {
 			global.Logger.Err(err).Msg("添加失败")
-			response.ResFail(c, "添加失败")
+			response.ResFail(c, "添加udid启动失败")
 			return
 		}
+
 	} else {
 		_ = os.Remove(fmt.Sprintf("/v2rayJsonAdd/%s.json", param.Uuid))
-		err = exec.Command("/usr/local/bin/v2ray", "  api rmi -s 127.0.0.1:10085 /v2rayJsonSub").Run()
+		cmds := exec.Command("/usr/local/bin/v2ray", "  api rmi -s 127.0.0.1:10085 /v2rayJsonSub")
+		err = cmds.Start()
 		if err != nil {
-			global.Logger.Err(err).Msg("删除失败")
-			response.ResFail(c, "删除失败")
+			global.Logger.Err(err).Msg("删除udid启动失败")
+			response.ResFail(c, "删除udid启动失败")
 			return
 		}
 	}
 	global.Logger.Info().Msg("添加成功")
-
+	_ = os.Remove(path)
 	response.ResOk(c, "成功")
 }
 func AddEmail(c *gin.Context) {
