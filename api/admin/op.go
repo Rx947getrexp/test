@@ -749,38 +749,20 @@ func AppInfo(c *gin.Context) {
 		response.ResFail(c, "不合法！")
 		return
 	}
+
+	var list []*model.TDict
+	err = global.Db.Where("key_id = ?", param.FilterPac).
+		Or("key_id = ?", param.FilterRefuse).
+		Find(&list)
+	if err != nil {
+		global.Logger.Err(err).Msg("key不存在！")
+		response.ResFail(c, "失败！")
+		return
+	}
 	var result = make(map[string]interface{})
-	var tDict model.TDict
-	has, err := global.Db.Where("key_id = ?", param.AppLink).Get(&tDict)
-	if err != nil || !has {
-		global.Logger.Err(err).Msg("key不存在！")
-		response.ResFail(c, "失败！")
-		return
+	for _, item := range list {
+		result[item.KeyId] = item.Value
 	}
-	result[tDict.KeyId] = tDict.Value
-	var version model.TAppVersion
-	has, err = global.Db.Where("status = 1 and app_type = 3").OrderBy("id desc").Limit(1).Get(&version)
-	if err != nil || !has {
-		global.Logger.Err(err).Msg("key不存在！")
-		response.ResFail(c, "失败！")
-		return
-	}
-	result["app_version"] = version.Version
-	result["app_js_zip"] = version.Link
-	//var list []*model.TDict
-	//err = global.Db.Where("key_id = ?", param.AppLink).
-	//	Or("key_id = ?", param.AppJsZip).
-	//	Or("key_id = ?", param.AppVersion).
-	//	Find(&list)
-	//if err != nil {
-	//	global.Logger.Err(err).Msg("key不存在！")
-	//	response.ResFail(c, "失败！")
-	//	return
-	//}
-	//var result = make(map[string]interface{})
-	//for _, item := range list {
-	//	result[item.KeyId] = item.Value
-	//}
 	response.RespOk(c, "成功", result)
 }
 
@@ -802,33 +784,22 @@ func EditAppInfo(c *gin.Context) {
 
 	bean := new(model.TDict)
 	bean.UpdatedAt = nowTime
-	bean.Value = param.AppLink
-	rows, err := global.Db.Cols("updated_at", "value").Where("key_id = ?", "app_link").Update(bean)
+	bean.Value = param.FilterPac
+	rows, err := global.Db.Cols("updated_at", "value").Where("key_id = ?", "filter_pac").Update(bean)
 	if err != nil || rows != 1 {
 		global.Logger.Err(err).Msg("操作失败！")
 		response.ResFail(c, "操作失败！")
 		return
 	}
-
-	//bean = new(model.TDict)
-	//bean.UpdatedAt = nowTime
-	//bean.Value = param.AppVersion
-	//rows, err = global.Db.Cols("updated_at", "value").Where("key_id = ?", "app_version").Update(bean)
-	//if err != nil || rows != 1 {
-	//	global.Logger.Err(err).Msg("操作失败！")
-	//	response.ResFail(c, "操作失败！")
-	//	return
-	//}
-	//
-	//bean = new(model.TDict)
-	//bean.UpdatedAt = nowTime
-	//bean.Value = param.AppJsZip
-	//rows, err = global.Db.Cols("updated_at", "value").Where("key_id = ?", "app_js_zip").Update(bean)
-	//if err != nil || rows != 1 {
-	//	global.Logger.Err(err).Msg("操作失败！")
-	//	response.ResFail(c, "操作失败！")
-	//	return
-	//}
+	bean = new(model.TDict)
+	bean.UpdatedAt = nowTime
+	bean.Value = param.FilterRefuse
+	rows, err = global.Db.Cols("updated_at", "value").Where("key_id = ?", "filter_refuse").Update(bean)
+	if err != nil || rows != 1 {
+		global.Logger.Err(err).Msg("操作失败！")
+		response.ResFail(c, "操作失败！")
+		return
+	}
 	response.ResOk(c, "成功")
 }
 

@@ -299,15 +299,13 @@ type EditSiteAdminRequest struct {
 }
 
 type DictDetailAdminRequest struct {
-	AppLink    string `form:"app_link" binding:"required" json:"app_link_key"`
-	AppJsZip   string `form:"app_js_zip" binding:"required" json:"app_js_zip"`
-	AppVersion string `form:"app_version" binding:"required" json:"app_version"`
+	FilterPac    string `form:"filter_pac" binding:"required" json:"filter_pac"`
+	FilterRefuse string `form:"filter_refuse" binding:"required" json:"filter_refuse"`
 }
 
 type DictEditAdminRequest struct {
-	AppLink string `form:"app_link" binding:"required" json:"app_link_key"`
-	//AppJsZip   string `form:"app_js_zip" binding:"required" json:"app_js_zip"`
-	//AppVersion string `form:"app_version" binding:"required" json:"app_version"`
+	FilterPac    string `form:"filter_pac" binding:"required" json:"filter_pac"`
+	FilterRefuse string `form:"filter_refuse" binding:"required" json:"filter_refuse"`
 }
 
 type GiftListAdminRequest struct {

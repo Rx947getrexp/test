@@ -1189,9 +1189,19 @@ func SwitchButtonStatus(c *gin.Context) {
 }
 
 func AppFilter(c *gin.Context) {
-	result := make(map[string]interface{})
-	result["poc_filter"] = "10.10.10.1"
-	result["refuse_filter"] = "google"
+	var list []*model.TDict
+	global.Db.Where("key_id = ?", "filter_pac").
+		Or("key_id = ?", "filter_refuse").
+		Find(&list)
+	var result = make(map[string]interface{})
+	for _, item := range list {
+		if item.KeyId == "filter_pac" {
+			result["poc_filter"] = item.Value
+		} else if item.KeyId == "filter_refuse" {
+			result["refuse_filter"] = item.Value
+		}
+
+	}
 	response.RespOk(c, "成功", result)
 }
 
