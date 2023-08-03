@@ -1017,7 +1017,7 @@ func Connect(c *gin.Context) {
 	//发送请求：
 	req := &request.NodeAddSubRequest{
 		Tag:   "1",
-		Uuid:  "222",
+		Uuid:  "3a4112cc-17de-11ee-8b15-0c9d92c013dd",
 		Email: "aaaxxx@qq.com",
 	}
 	url := "https://node2.wuwuwu360.xyz/site-api/node/add_sub"

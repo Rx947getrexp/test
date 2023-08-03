@@ -68,11 +68,20 @@ func AddSub(c *gin.Context) {
 
 	if param.Tag == "1" {
 		_ = os.Remove(fmt.Sprintf("/v2rayJsonSub/%s.json", param.Uuid))
-		exec.Command("v2ray  api adi -s 127.0.0.1:10085 /v2rayJsonAdd")
-
+		err = exec.Command("v2ray  api adi -s 127.0.0.1:10085 /v2rayJsonAdd").Run()
+		if err != nil {
+			global.Logger.Err(err).Msg("添加失败")
+			response.ResFail(c, "添加失败")
+			return
+		}
 	} else {
 		_ = os.Remove(fmt.Sprintf("/v2rayJsonAdd/%s.json", param.Uuid))
-		exec.Command("v2ray  api rmi -s 127.0.0.1:10085 /v2rayJsonSub")
+		err = exec.Command("v2ray  api rmi -s 127.0.0.1:10085 /v2rayJsonSub").Run()
+		if err != nil {
+			global.Logger.Err(err).Msg("删除失败")
+			response.ResFail(c, "删除失败")
+			return
+		}
 	}
 	global.Logger.Info().Msg("添加成功")
 
