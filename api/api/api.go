@@ -179,7 +179,7 @@ func Reg(c *gin.Context) {
 	rnd := rand.New(rand.NewSource(user.Id))
 	uuid.SetRand(rnd)
 	nonce, _ := uuid.NewRandomFromReader(rnd)
-	user.V2rayUuid = nonce.String()
+	user.V2rayUuid = nonce.String()                         //正式注册生成uuid
 	user.V2rayUuid = "c541b521-17dd-11ee-bc4e-0c9d92c013fb" //需要注释
 	rows, err = sess.Cols("v2ray_uuid").Where("id = ?", user.Id).Update(user)
 	if err != nil || rows != 1 {
@@ -470,41 +470,9 @@ func TeamInfo(c *gin.Context) {
 }
 
 func AppInfo(c *gin.Context) {
-	host := "http://" + c.Request.Host
-	gateWay := host + "/app-upload"
-	var version model.TAppVersion
-	has, err := global.Db.Where("status = 1 and app_type = 3").OrderBy("id desc").Limit(1).Get(&version)
-	if err != nil || !has {
-		global.Logger.Err(err).Msg("key不存在！")
-		response.ResFail(c, "失败！")
-		return
-	}
-	type Result struct {
-		Code int    `json:"code"`
-		Msg  string `json:"message"`
-	}
-	c.JSON(http.StatusOK, Result{
-		Code: -1,
-		Msg:  gateWay + version.Link,
-	})
-	return
 	/*
 		host := "http://" + c.Request.Host
 		gateWay := host + "/app-upload"
-		var list []*model.TDict
-		err := global.Db.Where("key_id = ?", "app_link").
-			//Or("key_id = ?", "app_js_zip").
-			//Or("key_id = ?", "app_version").
-			Find(&list)
-		if err != nil {
-			global.Logger.Err(err).Msg("key不存在！")
-			response.ResFail(c, "失败！")
-			return
-		}
-		var result = make(map[string]interface{})
-		for _, item := range list {
-			result[item.KeyId] = item.Value
-		}
 		var version model.TAppVersion
 		has, err := global.Db.Where("status = 1 and app_type = 3").OrderBy("id desc").Limit(1).Get(&version)
 		if err != nil || !has {
@@ -512,12 +480,44 @@ func AppInfo(c *gin.Context) {
 			response.ResFail(c, "失败！")
 			return
 		}
-		result["app_version"] = version.Version
-		result["app_js_zip"] = gateWay + version.Link
-		result["app_zip_hash"] = "xxx"
-		response.RespOk(c, gateWay+version.Link, result)
-
+		type Result struct {
+			Code int    `json:"code"`
+			Msg  string `json:"message"`
+		}
+		c.JSON(http.StatusOK, Result{
+			Code: -1,
+			Msg:  gateWay + version.Link,
+		})
+		return
 	*/
+	host := "http://" + c.Request.Host
+	gateWay := host + "/app-upload"
+	var list []*model.TDict
+	err := global.Db.Where("key_id = ?", "app_link").
+		//Or("key_id = ?", "app_js_zip").
+		//Or("key_id = ?", "app_version").
+		Find(&list)
+	if err != nil {
+		global.Logger.Err(err).Msg("key不存在！")
+		response.ResFail(c, "失败！")
+		return
+	}
+	var result = make(map[string]interface{})
+	for _, item := range list {
+		result[item.KeyId] = item.Value
+	}
+	var version model.TAppVersion
+	has, err := global.Db.Where("status = 1 and app_type = 3").OrderBy("id desc").Limit(1).Get(&version)
+	if err != nil || !has {
+		global.Logger.Err(err).Msg("key不存在！")
+		response.ResFail(c, "失败！")
+		return
+	}
+	result["app_version"] = version.Version
+	result["app_js_zip"] = gateWay + version.Link
+	result["app_zip_hash"] = "xxx"
+	response.RespOk(c, gateWay+version.Link, result)
+
 }
 
 func NoticeList(c *gin.Context) {
