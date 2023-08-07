@@ -60,7 +60,7 @@ type ChangeNetworkRequest struct {
 	WorkMode int   `form:"work_mode" binding:"required" json:"work_mode"` //1-智能；2-手选IP
 	NodeLine int64 `form:"node_line" json:"node_line"`                    //工作线路
 }
-type ConnectRequest struct {
+type ConnectDevRequest struct {
 	NodeId int64 `form:"NodeId" binding:"required" json:"NodeId"`
 }
 type SwitchButtonStatusRequest struct {
