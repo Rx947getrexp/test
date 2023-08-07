@@ -1050,6 +1050,7 @@ func Connect(c *gin.Context) {
 		response.RespFail(c, lang.Translate("cn", "fail"), nil)
 		return
 	}
+	global.Logger.Printf("111This is info log, %d", param.NodeId)
 	claims := c.MustGet("claims").(*service.CustomClaims)
 	user, err := service.GetUserByClaims(claims)
 	if err != nil {
@@ -1057,6 +1058,7 @@ func Connect(c *gin.Context) {
 		response.ResFail(c, "用户鉴权失败！")
 		return
 	}
+	global.Logger.Printf("22222This is info log, %d", param.NodeId)
 	req := &request.NodeAddSubRequest{}
 	if user.ExpiredTime > time.Now().Unix() {
 		//发送请求：
@@ -1064,6 +1066,7 @@ func Connect(c *gin.Context) {
 	} else {
 		req.Tag = "2"
 	}
+	global.Logger.Printf("33333This is info log, %d", param.NodeId)
 	req.Uuid = user.V2rayUuid
 	req.Email = user.Email
 	//url := "https://node2.wuwuwu360.xyz/node/add_sub"
@@ -1078,7 +1081,7 @@ func Connect(c *gin.Context) {
 	headerParam["accessToken"] = util.MD5(fmt.Sprint(timestamp, constant.AccessTokenSalt))
 	err = util.HttpClientPostV2(url, headerParam, req, res)
 
-	global.Logger.Printf("This is info log, %d", param.NodeId)
+	global.Logger.Printf("44444This is info log, %d", param.NodeId)
 
 	if err != nil {
 		global.Logger.Err(err).Msg("发送心跳包失败...")
