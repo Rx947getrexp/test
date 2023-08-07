@@ -1045,8 +1045,10 @@ func Connect2(c *gin.Context) {
 //连接
 func Connect(c *gin.Context) {
 	param := new(request.ConnectRequest)
+	global.Logger.Info().Msgf("111xxxdddThis is info log")
 	if err := c.ShouldBind(param); err != nil {
 		global.Logger.Err(err).Msg("绑定参数")
+		global.Logger.Info().Msgf("111mmmdddThis is info log")
 		response.RespFail(c, lang.Translate("cn", "fail"), nil)
 		return
 	}
