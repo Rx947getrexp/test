@@ -1050,7 +1050,7 @@ func Connect(c *gin.Context) {
 		response.RespFail(c, lang.Translate("cn", "fail"), nil)
 		return
 	}
-
+	global.Logger.Info().Msgf("111xxxThis is info log, %d", param.NodeId)
 	fmt.Printf("111This is info log, %d", param.NodeId)
 	global.Logger.Printf("111This is info log, %d", param.NodeId)
 	claims := c.MustGet("claims").(*service.CustomClaims)
