@@ -1044,7 +1044,10 @@ func Connect2(c *gin.Context) {
 
 //连接
 func Connect(c *gin.Context) {
+	global.Logger.Info().Msgf("11This is info log")
+	fmt.Sprintf("AAAAAAAAAAA")
 	param := new(request.ConnectRequest)
+
 	global.Logger.Info().Msgf("111xxxdddThis is info log")
 	if err := c.ShouldBind(param); err != nil {
 		global.Logger.Err(err).Msg("绑定参数")
