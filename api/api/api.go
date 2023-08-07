@@ -1206,12 +1206,23 @@ func AppFilter(c *gin.Context) {
 }
 
 func PrintParam() gin.HandlerFunc {
+	/*
+		return func(c *gin.Context) {
+			fmt.Println(666, c.Request.Header)
+
+			bodyBytes := api.ReadBodyToCache(c)
+			fmt.Printf("request={%s}, data={%v}", c.Request.RequestURI, string(bodyBytes))
+		}
+	*/
 	return func(c *gin.Context) {
 		fmt.Println(666, c.Request.Header)
+		fmt.Println(777, c.Request.Body)
+		fmt.Println(999, c.Request.Form)
 
 		bodyBytes := api.ReadBodyToCache(c)
 		fmt.Printf("request={%s}, data={%v}", c.Request.RequestURI, string(bodyBytes))
 	}
+
 }
 
 // JWTAuth 验证token
