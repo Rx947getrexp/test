@@ -22,7 +22,7 @@ func ApiRoute(group *gin.RouterGroup) {
 	group.GET("ad_list", api.AdList)
 	group.GET("app_info", api.AppInfo)
 	group.GET("app_filter", api.AppFilter) //策略审核
-	group.GET("connect", api.Connect)
+	//group.GET("connect", api.Connect)
 
 	group.Use(api.JWTAuth())
 	{
