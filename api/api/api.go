@@ -1077,6 +1077,9 @@ func Connect(c *gin.Context) {
 	headerParam["timestamp"] = timestamp
 	headerParam["accessToken"] = util.MD5(fmt.Sprint(timestamp, constant.AccessTokenSalt))
 	err = util.HttpClientPostV2(url, headerParam, req, res)
+
+	global.Logger.Printf("This is info log, %d", param.NodeId)
+
 	if err != nil {
 		global.Logger.Err(err).Msg("发送心跳包失败...")
 		response.RespFail(c, "失败", nil)
