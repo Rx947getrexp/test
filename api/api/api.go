@@ -1044,8 +1044,6 @@ func Connect2(c *gin.Context) {
 
 //连接
 func Connect(c *gin.Context) {
-	global.Logger.Info().Msgf("11This is info log")
-
 	param := new(request.ConnectDevRequest)
 
 	global.Logger.Info().Msgf(" is info log")
@@ -1055,9 +1053,8 @@ func Connect(c *gin.Context) {
 		response.RespFail(c, lang.Translate("cn", "fail"), nil)
 		return
 	}
-	global.Logger.Info().Msgf("111xxxThis is info log, %d", param.NodeId)
-	fmt.Printf("111This is info log, %d", param.NodeId)
-	global.Logger.Printf("111This is info log, %d", param.NodeId)
+
+	global.Logger.Info().Msgf("111IFTTTThis is info log, %d", param.NodeId)
 	claims := c.MustGet("claims").(*service.CustomClaims)
 	user, err := service.GetUserByClaims(claims)
 	if err != nil {
@@ -1065,7 +1062,7 @@ func Connect(c *gin.Context) {
 		response.ResFail(c, "用户鉴权失败！")
 		return
 	}
-	global.Logger.Info().Msgf("22222This is info log, %d,%d", param.NodeId, user.Level)
+	global.Logger.Info().Msgf("test, %d,%d", param.NodeId, user.Level)
 	req := &request.NodeAddSubRequest{}
 	if user.ExpiredTime > time.Now().Unix() {
 		//发送请求：
