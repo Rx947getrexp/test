@@ -1080,7 +1080,7 @@ func Connect(c *gin.Context) {
 	dnsList, _ := service.FindNodeDnsByNodeId(param.NodeId, user.Level+1)
 	dns := dnsList[0].Dns
 	url := fmt.Sprintf("https://%s/node/add_sub", dns)
-
+	fmt.Printf("111TTTTTTThistest, %s", url)
 	res := new(response.Response)
 	headerParam := make(map[string]string)
 	timestamp := fmt.Sprint(time.Now().Unix())
