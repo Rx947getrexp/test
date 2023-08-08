@@ -61,7 +61,7 @@ type ChangeNetworkRequest struct {
 	NodeLine int64 `form:"node_line" json:"node_line"`                    //工作线路
 }
 type ConnectDevRequest struct {
-	NodeId int64 `form:"NodeId" binding:"required" json:"NodeId"`
+	NodeId int64 `form:"node_id" binding:"required" json:"node_id"`
 }
 type SwitchButtonStatusRequest struct {
 	Status int `form:"status" binding:"required" json:"status"` //1-开启；2-关闭
