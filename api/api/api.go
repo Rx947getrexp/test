@@ -179,8 +179,8 @@ func Reg(c *gin.Context) {
 	rnd := rand.New(rand.NewSource(user.Id))
 	uuid.SetRand(rnd)
 	nonce, _ := uuid.NewRandomFromReader(rnd)
-	user.V2rayUuid = nonce.String()                         //正式注册生成uuid
-	user.V2rayUuid = "c541b521-17dd-11ee-bc4e-0c9d92c013fb" //需要注释
+	user.V2rayUuid = nonce.String() //正式注册生成uuid
+	//user.V2rayUuid = "c541b521-17dd-11ee-bc4e-0c9d92c013fb" //需要注释
 	rows, err = sess.Cols("v2ray_uuid").Where("id = ?", user.Id).Update(user)
 	if err != nil || rows != 1 {
 		global.Logger.Err(err).Msg("添加user-uuid出错")
