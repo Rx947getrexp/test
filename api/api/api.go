@@ -1077,7 +1077,7 @@ func Connect(c *gin.Context) {
 	req.Uuid = user.V2rayUuid
 	req.Email = user.Email
 	//url := "https://node2.wuwuwu360.xyz/node/add_sub"
-	dnsList, _ := service.FindNodeDnsByNodeId(param.NodeId, user.Level)
+	dnsList, _ := service.FindNodeDnsByNodeId(param.NodeId, user.Level+1)
 	dns := dnsList[0].Dns
 	url := fmt.Sprintf("https://%s/node/add_sub", dns)
 
