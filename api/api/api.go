@@ -1073,7 +1073,7 @@ func Connect(c *gin.Context) {
 	} else {
 		req.Tag = "2"
 	}
-	global.Logger.Printf("33333This is info log, %d", param.NodeId)
+	global.Logger.Printf("33333This is info log, %d,req.Tag:%s", param.NodeId, req.Tag)
 	req.Uuid = user.V2rayUuid
 	req.Email = user.Email
 	//url := "https://node2.wuwuwu360.xyz/node/add_sub"
