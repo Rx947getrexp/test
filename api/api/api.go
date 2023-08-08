@@ -1065,7 +1065,7 @@ func Connect(c *gin.Context) {
 		response.ResFail(c, "用户鉴权失败！")
 		return
 	}
-	global.Logger.Printf("22222This is info log, %d", param.NodeId)
+	global.Logger.Printf("22222This is info log, %d,%d", param.NodeId, user.Level)
 	req := &request.NodeAddSubRequest{}
 	if user.ExpiredTime > time.Now().Unix() {
 		//发送请求：
