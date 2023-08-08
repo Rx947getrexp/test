@@ -1044,9 +1044,11 @@ func Connect2(c *gin.Context) {
 
 //连接
 func Connect(c *gin.Context) {
-	global.Logger.Info().Msgf("111xxxThis is info log, zzz")
+	global.Logger.Info().Msgf("11This is info log")
+
 	param := new(request.ConnectDevRequest)
-	global.Logger.Info().Msgf("111xxxThis is info log, %d,zzz", param.NodeId)
+
+	global.Logger.Info().Msgf(" is info log")
 	if err := c.ShouldBind(param); err != nil {
 		global.Logger.Err(err).Msg("绑定参数")
 		global.Logger.Info().Msgf("111mmmThis is info log")
@@ -1054,7 +1056,7 @@ func Connect(c *gin.Context) {
 		return
 	}
 	global.Logger.Info().Msgf("111xxxThis is info log, %d", param.NodeId)
-
+	fmt.Printf("111This is info log, %d", param.NodeId)
 	global.Logger.Printf("111This is info log, %d", param.NodeId)
 	claims := c.MustGet("claims").(*service.CustomClaims)
 	user, err := service.GetUserByClaims(claims)
