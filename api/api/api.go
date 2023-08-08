@@ -1056,8 +1056,6 @@ func Connect(c *gin.Context) {
 		return
 	}
 
-	fmt.Printf("111TTTTTTThis is info log, %d", param.NodeId)
-
 	claims := c.MustGet("claims").(*service.CustomClaims)
 	user, err := service.GetUserByClaims(claims)
 	if err != nil {
@@ -1065,7 +1063,7 @@ func Connect(c *gin.Context) {
 		response.ResFail(c, "用户鉴权失败！")
 		return
 	}
-	fmt.Printf("111TTTTTTThistest, %d,%d", param.NodeId, user.Level)
+
 	req := &request.NodeAddSubRequest{}
 	if user.ExpiredTime > time.Now().Unix() {
 		//发送请求：
@@ -1073,14 +1071,14 @@ func Connect(c *gin.Context) {
 	} else {
 		req.Tag = "2"
 	}
-	global.Logger.Printf("33333This is info log, %d,req.Tag:%s", param.NodeId, req.Tag)
+	fmt.Printf("33333This is info log, %d,req.Tag:%s", param.NodeId, req.Tag)
 	req.Uuid = user.V2rayUuid
 	req.Email = user.Email
 	//url := "https://node2.wuwuwu360.xyz/node/add_sub"
 	dnsList, _ := service.FindNodeDnsByNodeId(param.NodeId, user.Level+1)
 	dns := dnsList[0].Dns
 	url := fmt.Sprintf("https://%s/site-api/node/add_sub", dns)
-	fmt.Printf("111TTTTTTThistest, %s", url)
+
 	res := new(response.Response)
 	headerParam := make(map[string]string)
 	timestamp := fmt.Sprint(time.Now().Unix())
