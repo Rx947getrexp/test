@@ -1071,9 +1071,10 @@ func Connect(c *gin.Context) {
 	} else {
 		req.Tag = "2"
 	}
-	fmt.Printf("33333This is info log, %d,req.Tag:%s", param.NodeId, req.Tag)
+
 	req.Uuid = user.V2rayUuid
 	req.Email = user.Email
+	fmt.Printf("33333:nodeid:%d,level:%d,req.Tag:%s,udid:%s,email:%s", param.NodeId, user.Level, req.Tag, req.Uuid)
 	//url := "https://node2.wuwuwu360.xyz/node/add_sub"
 	dnsList, _ := service.FindNodeDnsByNodeId(param.NodeId, user.Level+1)
 	dns := dnsList[0].Dns
