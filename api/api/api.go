@@ -1044,7 +1044,7 @@ func Connect2(c *gin.Context) {
 
 //连接
 func Connect(c *gin.Context) {
-
+	global.Logger.Info().Msgf("111xxxThis is info log, zzz")
 	param := new(request.ConnectDevRequest)
 	global.Logger.Info().Msgf("111xxxThis is info log, %d,zzz", param.NodeId)
 	if err := c.ShouldBind(param); err != nil {
