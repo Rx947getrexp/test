@@ -48,9 +48,9 @@ func AddSub(c *gin.Context) {
 	}
 	v2rayJson = strings.ReplaceAll(v2rayJson, "###", param.Email)
 	v2rayJson = strings.ReplaceAll(v2rayJson, "***", param.Uuid)
-	fmt.Println(v2rayJson)
-	fmt.Printf("111TTTTTTThistest, %s", param.Email)
-	fmt.Printf("222TTTTTTThistest, %s", param.Uuid)
+
+	fmt.Printf("111TTTTTTThistest, Email:%s,uuid:%s,Tag:%s", param.Email, param.Uuid, param.Tag)
+
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 	if err != nil {
 		global.Logger.Err(err).Msg("添加失败")
