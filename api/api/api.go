@@ -119,7 +119,7 @@ func Reg(c *gin.Context) {
 	var counts int64
 	_, errx := global.Db.SQL("select count(*) from t_user where uname = ?", param.Account).Get(&counts)
 	if counts > 0 {
-
+		fmt.Printf("zzzzzzz用户邮箱：%s", param.Account)
 		response.RespFail(c, "该邮箱已注册，请登录或更换！", nil)
 		return
 	} else {
