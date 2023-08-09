@@ -144,6 +144,12 @@ func Reg(c *gin.Context) {
 		}
 	}
 
+	var myuser model.TUser
+	hasx, err := global.Db.Where("email = ? ", param.Account).Get(&myuser)
+	if hasx {
+		response.RespFail(c, "邮箱已存在，请更换或登录", nil)
+		return
+	}
 	pwdDecode := util.AesDecrypt(param.Passwd)
 
 	//开启事务
