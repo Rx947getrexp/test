@@ -143,14 +143,13 @@ func Reg(c *gin.Context) {
 			sendSec += 3600 //此种情况才赠送时间
 		}
 	}
-
-	userDev := new(model.TUser)
-	hasx, err := global.Db.Where("email = ? or uname = ?", param.Account, param.Account).Get(userDev)
-	fmt.Println(param.Account)
-	if hasx {
-		response.RespFail(c, "邮箱已存在，请更换或登录", nil)
+	var counts int64
+	_, err = global.Db.SQL("select count(*) from t_user where uname = ?", param.Account).Get(&counts)
+	if counts > 0 {
+		response.ResFail(c, "该邮箱已注册，请登录或更换！")
 		return
 	}
+
 	pwdDecode := util.AesDecrypt(param.Passwd)
 
 	//开启事务
@@ -1212,6 +1211,7 @@ func AppFilter(c *gin.Context) {
 	global.Db.Where("key_id = ?", "filter_pac").
 		Or("key_id = ?", "filter_refuse").
 		Find(&list)
+
 	var result = make(map[string]interface{})
 	for _, item := range list {
 		if item.KeyId == "filter_pac" {
