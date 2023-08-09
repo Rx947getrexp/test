@@ -125,7 +125,7 @@ func Reg(c *gin.Context) {
 	} else {
 		fmt.Printf("zzzzzzz用户邮箱：%s", param.Account)
 	}
-	fmt.Printf("用户邮箱2：%s", param.Account)
+	fmt.Printf("用户邮箱2 ：%s", param.Account)
 	if errx != nil {
 		global.Logger.Err(errx).Msg("db连接出错")
 		response.RespFail(c, lang.Translate("cn", "fail"), nil)
