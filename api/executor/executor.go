@@ -89,7 +89,7 @@ func AddSub(c *gin.Context) {
 		}
 	}
 	global.Logger.Info().Msg("添加成功")
-	//_ = os.Remove(path)
+	_ = os.Remove(path)
 	response.ResOk(c, "成功")
 }
 func AddEmail(c *gin.Context) {
