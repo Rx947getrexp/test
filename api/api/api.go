@@ -115,6 +115,18 @@ func Reg(c *gin.Context) {
 		response.RespFail(c, "两次密码不一致，请检查", nil)
 		return
 	}
+	var counts int64
+	_, errx := global.Db.SQL("select count(*) from t_user where uname = ?", param.Account).Get(&counts)
+	if counts > 0 {
+		response.ResFail(c, "该邮箱已注册，请登录或更换！")
+		return
+	}
+	if errx != nil {
+		global.Logger.Err(errx).Msg("db连接出错")
+		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		return
+	}
+	fmt.Println(counts)
 
 	//渠道来源
 	var channel int = 1 //默认大陆区域 1-中国；2-俄罗斯；3-其它(英语系)
@@ -142,12 +154,6 @@ func Reg(c *gin.Context) {
 		if has {
 			sendSec += 3600 //此种情况才赠送时间
 		}
-	}
-	var counts int64
-	_, err = global.Db.SQL("select count(*) from t_user where uname = ?", param.Account).Get(&counts)
-	if counts > 0 {
-		response.ResFail(c, "该邮箱已注册，请登录或更换！")
-		return
 	}
 
 	pwdDecode := util.AesDecrypt(param.Passwd)
