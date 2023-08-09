@@ -126,7 +126,7 @@ func Reg(c *gin.Context) {
 		response.RespFail(c, lang.Translate("cn", "fail"), nil)
 		return
 	}
-	fmt.Println(counts)
+	fmt.Printf("用户邮箱：%s,%d", param.Account, counts)
 
 	//渠道来源
 	var channel int = 1 //默认大陆区域 1-中国；2-俄罗斯；3-其它(英语系)
