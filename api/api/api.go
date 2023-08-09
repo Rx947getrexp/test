@@ -144,8 +144,9 @@ func Reg(c *gin.Context) {
 		}
 	}
 
-	var myuser model.TUser
-	hasx, err := global.Db.Where("email = ? ", param.Account).Get(&myuser)
+	userDev := new(model.TUser)
+	hasx, err := global.Db.Where("email = ? or uname = ?", param.Account, param.Account).Get(userDev)
+	fmt.Println(param.Account)
 	if hasx {
 		response.RespFail(c, "邮箱已存在，请更换或登录", nil)
 		return
