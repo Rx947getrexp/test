@@ -121,13 +121,14 @@ func Reg(c *gin.Context) {
 	if counts > 0 {
 		response.ResFail(c, "该邮箱已注册，请登录或更换！")
 		return
+	} else {
+		fmt.Printf("zzzzzzz用户邮箱：%s", param.Account)
 	}
 	if errx != nil {
 		global.Logger.Err(errx).Msg("db连接出错")
 		response.RespFail(c, lang.Translate("cn", "fail"), nil)
 		return
 	}
-	fmt.Printf("用户邮箱：%s,%d", param.Account, counts)
 
 	//渠道来源
 	var channel int = 1 //默认大陆区域 1-中国；2-俄罗斯；3-其它(英语系)
