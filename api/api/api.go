@@ -115,7 +115,7 @@ func Reg(c *gin.Context) {
 		response.RespFail(c, "两次密码不一致，请检查", nil)
 		return
 	}
-	fmt.Printf("用户邮箱：%s", param.Account)
+	fmt.Printf("用户邮箱x：%s", param.Account)
 	var counts int64
 	_, errx := global.Db.SQL("select count(*) from t_user where uname = ?", param.Account).Get(&counts)
 	if counts > 0 {
