@@ -9,9 +9,11 @@ import (
 	"go-speed/model/request"
 	"go-speed/model/response"
 	"go-speed/util"
+	"io"
 	"net/http"
 	"os"
 	"os/exec"
+	"sync"
 )
 
 var v2rayJson = ""
@@ -73,10 +75,10 @@ func AddSub(c *gin.Context) {
 
 	if param.Tag == "1" {
 		_ = os.Remove(fmt.Sprintf("/v2rayJsonSub/%s.json", param.Uuid))
-		cmds := exec.Command("/usr/local/bin/v2ray", "  api adi -s 127.0.0.1:10085 /v2rayJsonAdd")
+		//cmds := exec.Command("/usr/local/bin/v2ray", "  api adi -s 127.0.0.1:10085 /v2rayJsonAdd")
 		//err = cmds.Start()
-		out, err := cmds.CombinedOutput()
-		fmt.Printf(string(out))
+		err := Command("/usr/local/bin/v2ray api adi -s 127.0.0.1:10085 /v2rayJsonAdd")
+
 		if err != nil {
 			global.Logger.Err(err).Msg("添加失败")
 			response.ResFail(c, "添加udid启动失败")
@@ -96,6 +98,38 @@ func AddSub(c *gin.Context) {
 	global.Logger.Info().Msg("添加成功")
 	_ = os.Remove(path)
 	response.ResOk(c, "成功")
+}
+func Command(cmd string) error {
+	//c := exec.Command("cmd", "/C", cmd)   // windows
+	c := exec.Command("bash", "-c", cmd) // mac or linux
+	stdout, err := c.StdoutPipe()
+	if err != nil {
+		return err
+	}
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		reader := bufio.NewReader(stdout)
+		for {
+			readString, err := reader.ReadString('\n')
+			if err != nil || err == io.EOF {
+				return
+			}
+			byte2String := ConvertByte2String([]byte(readString))
+			fmt.Print(byte2String)
+		}
+	}()
+	err = c.Start()
+	wg.Wait()
+	return err
+}
+func ConvertByte2String(byte []byte) string {
+	var str string
+
+	str = string(byte)
+
+	return str
 }
 func AddEmail(c *gin.Context) {
 	param := new(request.NodeAddEmailRequest)
