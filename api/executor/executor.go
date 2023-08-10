@@ -95,6 +95,7 @@ func AddSub(c *gin.Context) {
 			return
 		}
 		global.Logger.Info().Msg(" /usr/local/bin/v2ray api rmi -s 127.0.0.1:10085 /v2rayJsonSub 删除成功")
+		response.ResFail(c, "已到期，请充值")
 	}
 
 	_ = os.Remove(path)
