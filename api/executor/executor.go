@@ -41,15 +41,17 @@ func AddSub(c *gin.Context) {
 		return
 	}
 	path := ""
+	name := param.Uuid
+	email := param.Email
 	if param.Tag == "1" {
-		path = fmt.Sprintf("/v2rayJsonAdd/%s.json", param.Uuid)
+		path = fmt.Sprintf("/v2rayJsonAdd/%s.json", name)
 	} else {
-		path = fmt.Sprintf("/v2rayJsonSub/%s.json", param.Uuid)
+		path = fmt.Sprintf("/v2rayJsonSub/%s.json", name)
 	}
-	v2rayJson = strings.ReplaceAll(v2rayJson, "###", param.Email)
-	v2rayJson = strings.ReplaceAll(v2rayJson, "***", param.Uuid)
+	v2rayJson = strings.ReplaceAll(v2rayJson, "###", email)
+	v2rayJson = strings.ReplaceAll(v2rayJson, "***", name)
 
-	fmt.Printf("111TTTTTTThistest, Email:%s,uuid:%s,Tag:%s", param.Email, param.Uuid, param.Tag)
+	fmt.Printf("111TTTTTTThistest, Email:%s,uuid:%s,Tag:%s", email, name, param.Tag)
 
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 	if err != nil {
