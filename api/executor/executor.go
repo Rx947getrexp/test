@@ -74,22 +74,24 @@ func AddSub(c *gin.Context) {
 	if param.Tag == "1" {
 		_ = os.Remove(fmt.Sprintf("/v2rayJsonSub/%s.json", param.Uuid))
 		cmds := exec.Command("/usr/local/bin/v2ray", "  api adi -s 127.0.0.1:10085 /v2rayJsonAdd")
-		err = cmds.Start()
+		out, err := cmds.CombinedOutput()
 		if err != nil {
 			global.Logger.Err(err).Msg("添加失败")
 			response.ResFail(c, "添加udid启动失败")
 			return
 		}
 
+		fmt.Printf("combined out:%s, Email:%s,uuid:%s,Tag:%s", string(out), email, name, param.Tag)
 	} else {
 		_ = os.Remove(fmt.Sprintf("/v2rayJsonAdd/%s.json", param.Uuid))
 		cmds := exec.Command("/usr/local/bin/v2ray", "  api rmi -s 127.0.0.1:10085 /v2rayJsonSub")
-		err = cmds.Start()
+		out, err := cmds.CombinedOutput()
 		if err != nil {
 			global.Logger.Err(err).Msg("删除udid启动失败")
 			response.ResFail(c, "删除udid启动失败")
 			return
 		}
+		fmt.Printf("delete combined out:%s, Email:%s,uuid:%s,Tag:%s", string(out), email, name, param.Tag)
 	}
 	global.Logger.Info().Msg("添加成功")
 	_ = os.Remove(path)
