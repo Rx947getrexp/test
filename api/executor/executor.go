@@ -2,7 +2,6 @@ package executor
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go-speed/constant"
@@ -75,35 +74,24 @@ func AddSub(c *gin.Context) {
 	if param.Tag == "1" {
 		_ = os.Remove(fmt.Sprintf("/v2rayJsonSub/%s.json", param.Uuid))
 		cmds := exec.Command("/usr/local/bin/v2ray", "  api adi -s 127.0.0.1:10085 /v2rayJsonAdd")
-
-		var stdout, stderr bytes.Buffer
-		cmds.Stdout = &stdout // 标准输出
-		cmds.Stderr = &stderr // 标准错误
-		err := cmds.Run()
-		outStr, errStr := string(stdout.Bytes()), string(stderr.Bytes())
-		fmt.Printf("out:\n%s\nerr:\n%s\n", outStr, errStr)
+		//err = cmds.Start()
+		out, err := cmds.CombinedOutput()
+		fmt.Printf(string(out))
 		if err != nil {
 			global.Logger.Err(err).Msg("添加失败")
 			response.ResFail(c, "添加udid启动失败")
 			return
 		}
 
-		fmt.Printf("combined out:%s, Email:%s,uuid:%s,Tag:%s", outStr, email, name, param.Tag)
 	} else {
 		_ = os.Remove(fmt.Sprintf("/v2rayJsonAdd/%s.json", param.Uuid))
 		cmds := exec.Command("/usr/local/bin/v2ray", "  api rmi -s 127.0.0.1:10085 /v2rayJsonSub")
-		var stdout, stderr bytes.Buffer
-		cmds.Stdout = &stdout // 标准输出
-		cmds.Stderr = &stderr // 标准错误
-		err := cmds.Run()
-		outStr, errStr := string(stdout.Bytes()), string(stderr.Bytes())
-		fmt.Printf("out:\n%s\nerr:\n%s\n", outStr, errStr)
+		err = cmds.Start()
 		if err != nil {
 			global.Logger.Err(err).Msg("删除udid启动失败")
 			response.ResFail(c, "删除udid启动失败")
 			return
 		}
-		fmt.Printf("delete combined out:%s, Email:%s,uuid:%s,Tag:%s", outStr, email, name, param.Tag)
 	}
 	global.Logger.Info().Msg("添加成功")
 	_ = os.Remove(path)
