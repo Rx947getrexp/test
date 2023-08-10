@@ -81,7 +81,7 @@ func AddSub(c *gin.Context) {
 
 		if err != nil {
 			global.Logger.Err(err).Msg("添加失败")
-			response.ResFail(c, "添加udid启动失败")
+			response.ResFail(c, "添加失败")
 			return
 		}
 		global.Logger.Info().Msg("添加成功")
@@ -91,7 +91,7 @@ func AddSub(c *gin.Context) {
 
 		if err != nil {
 			global.Logger.Err(err).Msg("删除udid启动失败")
-			response.ResFail(c, "删除udid启动失败")
+			response.ResFail(c, "删除失败")
 			return
 		}
 		global.Logger.Info().Msg(" /usr/local/bin/v2ray api rmi -s 127.0.0.1:10085 /v2rayJsonSub 删除成功")
