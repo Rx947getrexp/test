@@ -87,8 +87,8 @@ func AddSub(c *gin.Context) {
 
 	} else {
 		_ = os.Remove(fmt.Sprintf("/v2rayJsonAdd/%s.json", param.Uuid))
-		cmds := exec.Command("/usr/local/bin/v2ray", "  api rmi -s 127.0.0.1:10085 /v2rayJsonSub")
-		err = cmds.Start()
+		err := Command("/usr/local/bin/v2ray api rmi -s 127.0.0.1:10085 /v2rayJsonSub")
+
 		if err != nil {
 			global.Logger.Err(err).Msg("删除udid启动失败")
 			response.ResFail(c, "删除udid启动失败")
