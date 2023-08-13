@@ -43,8 +43,7 @@ func AddSub(c *gin.Context) {
 		response.ResFail(c, "参数错误")
 		return
 	}
-	response.ResOk(c, "成功")
-	return
+
 	path := ""
 	name := param.Uuid
 	email := param.Email

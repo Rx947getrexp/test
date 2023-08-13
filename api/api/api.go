@@ -195,8 +195,8 @@ func Reg(c *gin.Context) {
 	rnd := rand.New(rand.NewSource(user.Id))
 	uuid.SetRand(rnd)
 	nonce, _ := uuid.NewRandomFromReader(rnd)
-	user.V2rayUuid = nonce.String()                         //正式注册生成uuid
-	user.V2rayUuid = "bf268a88-318f-d58f-0e9f-66d6f066be31" //需要注释
+	user.V2rayUuid = nonce.String() //正式注册生成uuid
+	//user.V2rayUuid = "bf268a88-318f-d58f-0e9f-66d6f066be31" //需要注释
 	fmt.Printf("id=%d", user.Id)
 	rows, err = sess.Cols("v2ray_uuid").Where("id = ?", user.Id).Update(user)
 	if err != nil || rows != 1 {
