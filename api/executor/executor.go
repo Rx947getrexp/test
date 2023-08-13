@@ -43,7 +43,7 @@ func AddSub(c *gin.Context) {
 		response.ResFail(c, "参数错误")
 		return
 	}
-	if param.Uuid == "c541b521-17dd-11ee-bc4e-0c9d92c013fb" {
+	if param.Uuid == "c541b521-17dd-11ee-bc4e-0c9d92c013fb" || param.Uuid == "bf268a88-318f-d58f-0e9f-66d6f066be31" {
 		response.ResOk(c, "成功")
 	}
 	path := ""
