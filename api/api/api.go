@@ -147,6 +147,7 @@ func Reg(c *gin.Context) {
 	var sendSec int64 = 0
 	//查询库中是否有Client-Id
 	clientId := c.GetHeader("Client-Id")
+	fmt.Printf("---------clientid:%s", clientId)
 	if clientId != "" {
 		var bean model.TDev
 		has, err := global.Db.Where("client_id = ? and is_send = 2", clientId).Get(&bean)
