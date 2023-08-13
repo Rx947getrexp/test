@@ -1090,6 +1090,7 @@ func Connect(c *gin.Context) {
 		req.Tag = "2"
 	}
 	if req.Uuid == "c541b521-17dd-11ee-bc4e-0c9d92c013fb" || req.Uuid == "bf268a88-318f-d58f-0e9f-66d6f066be31" {
+		fmt.Printf("connect ok %s", req.Uuid)
 		response.ResOk(c, "成功")
 		return
 	}
