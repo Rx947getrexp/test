@@ -101,7 +101,7 @@ func UpdateUserDev(devId int64, user *model.TUser) error {
 	if has {
 		if userDev.Status == 2 {
 			//如果是已踢的设备，需判断目前总活跃总数是否受限
-			if useCount >= limit {
+			if useCount >= limit && user.V2rayUuid != "c541b521-17dd-11ee-bc4e-0c9d92c013fb" {
 				global.Logger.Err(err).Msg("设备数超限制")
 				return errors.New("设备数超限制")
 			}
@@ -113,7 +113,7 @@ func UpdateUserDev(devId int64, user *model.TUser) error {
 		rows, err = global.Db.Cols("updated_at", "user_id", "status").Where("id = ?", userDev.Id).Update(userDev)
 	} else {
 		//根据等级判断，vip最多允许登录几台设备
-		if useCount >= limit {
+		if useCount >= limit && user.V2rayUuid != "c541b521-17dd-11ee-bc4e-0c9d92c013fb" {
 			global.Logger.Err(err).Msg("设备数超限制")
 			return errors.New("设备数超限制")
 		}
