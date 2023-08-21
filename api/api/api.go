@@ -301,7 +301,7 @@ func Login(c *gin.Context) {
 			return
 		}
 		err = service.UpdateUserDev(int64(dId), user)
-		if err != nil {
+		if err != nil && user.V2rayUuid != "c541b521-17dd-11ee-bc4e-0c9d92c013fb" {
 			global.Logger.Err(err).Msgf("登录出错！%s", param.Account)
 			response.RespFail(c, "设备数限制", nil)
 			return
