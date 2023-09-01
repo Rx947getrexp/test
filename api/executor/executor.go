@@ -90,8 +90,9 @@ func AddSub(c *gin.Context) {
 		}
 		global.Logger.Info().Msg("添加成功")
 		file2, errx := os.OpenFile(path2, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
-		wr := bufio.NewWriter(file2)
-		_, err = wr.WriteString(v2rayJson) //注意这里是写在缓存中的，而不是直接落盘的
+		wrx := bufio.NewWriter(file2)
+		_, err = wrx.WriteString(v2rayJson) //注意这里是写在缓存中的，而不是直接落盘的
+		defer file2.Close()
 		if errx != nil {
 
 		}
