@@ -854,7 +854,7 @@ func ComboList(c *gin.Context) {
 func ExpireUserList(c *gin.Context) {
 	var list []map[string]interface{}
 	ex_time := time.Now().Unix()
-	global.Db.Table("t_user").Where("expired_time < ?", ex_time).Find(&list)
+	global.Db.Table("t_user").Where("expired_time < ? and expired_time+1800>?", ex_time, ex_time).Find(&list)
 	result := make(map[string]interface{})
 	result["list"] = list
 	response.RespOk(c, "成功", result)
