@@ -20,6 +20,7 @@ func ApiRoute(group *gin.RouterGroup) {
 	group.GET("dns_list", api.DnsList)
 	group.GET("combo_list", api.ComboList)
 	group.GET("ad_list", api.AdList)
+	group.GET("expire_user", api.ExpireUserList)
 	group.GET("app_info", api.AppInfo)
 	group.GET("app_filter", api.AppFilter) //策略审核
 	//group.GET("connect", api.Connect)

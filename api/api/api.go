@@ -851,6 +851,15 @@ func ComboList(c *gin.Context) {
 	response.RespOk(c, "成功", result)
 }
 
+func ExpireUserList(c *gin.Context) {
+	var list []map[string]interface{}
+	ex_time := time.Now().Unix()
+	global.Db.Table("t_user").Where("expired_time < ?", ex_time).Find(&list)
+	result := make(map[string]interface{})
+	result["list"] = list
+	response.RespOk(c, "成功", result)
+}
+
 func AdList(c *gin.Context) {
 	var list []map[string]interface{}
 	global.Db.Table("t_ad").Where("status = 1").Find(&list)
