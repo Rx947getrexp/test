@@ -47,11 +47,13 @@ func AddSub(c *gin.Context) {
 	path := ""
 	name := param.Uuid
 	email := param.Email
+	path2 := fmt.Sprintf("/v2rayJsonAddBak/%s.json", name)
 	if param.Tag == "1" {
 		path = fmt.Sprintf("/v2rayJsonAdd/%s.json", name)
 	} else {
 		path = fmt.Sprintf("/v2rayJsonSub/%s.json", name)
 	}
+
 	//v2rayJson = strings.ReplaceAll(v2rayJson, "###", email)
 	//v2rayJson = strings.ReplaceAll(v2rayJson, "***", name)
 	v2rayJson = fmt.Sprintf("{\n\t\"inbounds\": [{\n\t\t\"tag\": \"tcp-ws\",\n\t\t\"port\": 11111,\n\t\t\"listen\": \"127.0.0.1\",\n\t\t\"protocol\": \"vmess\",\n\t\t\"settings\": {\n\t\t\t\"clients\": [{\n\t\t\t\t\t\"email\": \"%s\",\n\t\t\t\t\t\"id\": \"%s\",\n\t\t\t\t\t\"alterId\": 0,\n\t\t\t\t\t\"level\": 0\n\t\t\t\t}\n\n\t\t\t]\n\t\t},\n\t\t\"streamSettings\": {\n\t\t\t\"network\": \"ws\",\n\t\t\t\"wsSettings\": {\n\t\t\t\t\"path\": \"/work\"\n\t\t\t}\n\t\t}\n\t}]\n\n}\n", email, name)
@@ -76,6 +78,7 @@ func AddSub(c *gin.Context) {
 
 	if param.Tag == "1" {
 		_ = os.Remove(fmt.Sprintf("/v2rayJsonSub/%s.json", param.Uuid))
+
 		//cmds := exec.Command("/usr/local/bin/v2ray", "  api adi -s 127.0.0.1:10085 /v2rayJsonAdd")
 		//err = cmds.Start()
 		err := Command("/usr/local/bin/v2ray api adi -s 127.0.0.1:10085 /v2rayJsonAdd")
@@ -86,10 +89,16 @@ func AddSub(c *gin.Context) {
 			return
 		}
 		global.Logger.Info().Msg("添加成功")
+		file2, errx := os.OpenFile(path2, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+		wr := bufio.NewWriter(file2)
+		_, err = wr.WriteString(v2rayJson) //注意这里是写在缓存中的，而不是直接落盘的
+		if errx != nil {
+
+		}
 	} else {
 		_ = os.Remove(fmt.Sprintf("/v2rayJsonAdd/%s.json", param.Uuid))
 		err := Command("/usr/local/bin/v2ray api rmi -s 127.0.0.1:10085 /v2rayJsonSub")
-
+		_ = os.Remove(path2)
 		if err != nil {
 			global.Logger.Err(err).Msg("删除udid启动失败")
 			response.ResFail(c, "删除失败")
