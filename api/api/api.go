@@ -532,12 +532,10 @@ func GetConf(c *gin.Context) {
 		dnsList, _ := service.FindNodeDnsByNodeId(nodeId, 1)
 		for _, dns := range dnsList {
 			var dnsItem = make(map[string]interface{})
-			dnsItem["id"] = dns.Id
-			dnsItem["node_id"] = dns.NodeId
-			dnsItem["dns"] = util.AesEncrypt(dns.Dns)
+
+			dnsItem["dns"] = dns.Dns
 			//dnsItem["ip"] = dns.Ip
-			dnsItem["level"] = dns.Level
-			dnsArray = append(dnsArray, dnsItem)
+
 		}
 		item["dns_list"] = dnsArray
 	}
