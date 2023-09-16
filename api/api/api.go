@@ -499,7 +499,6 @@ func GetConf(c *gin.Context) {
 
 	buff := bytes.NewBuffer(nil)
 	t.Write(buff)
-
 	fmt.Println(buff)
 	/*
 		param := new(request.NoticeListRequest)
