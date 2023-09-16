@@ -491,7 +491,7 @@ func TeamInfo(c *gin.Context) {
 }
 
 func GetConf(c *gin.Context) {
-	c.String(http.StatusOK, "hello world")
+	c.String(http.StatusOK, configs)
 	/*
 		param := new(request.NoticeListRequest)
 		if err := c.ShouldBind(param); err != nil {
