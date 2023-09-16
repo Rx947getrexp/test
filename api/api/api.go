@@ -135,19 +135,20 @@ func Reg(c *gin.Context) {
 		response.RespFail(c, lang.Translate("cn", "fail"), nil)
 		return
 	}
-
-	//渠道来源
-	var channel int = 1 //默认大陆区域 1-中国；2-俄罗斯；3-其它(英语系)
-	var err error
-	sourceChannel := c.GetHeader("Channel")
-	if sourceChannel != "" {
-		channel, err = strconv.Atoi(sourceChannel)
-		if err != nil {
-			response.RespFail(c, lang.Translate("cn", "fail"), nil)
-			return
+	/*
+		//渠道来源
+		var channel int = 1 //默认大陆区域 1-中国；2-俄罗斯；3-其它(英语系)
+		var err error
+		sourceChannel := c.GetHeader("Channel")
+		if sourceChannel != "" {
+			channel, err = sourceChannel
+			if err != nil {
+				response.RespFail(c, lang.Translate("cn", "fail"), nil)
+				return
+			}
 		}
-	}
-
+	*/
+	channel := c.GetHeader("Channel")
 	var sendSec int64 = 0
 	//查询库中是否有Client-Id
 	clientId := c.GetHeader("Client-Id")
@@ -183,7 +184,8 @@ func Reg(c *gin.Context) {
 		ExpiredTime: nowTime.Unix() + sendSec,
 		V2rayUuid:   "c541b521-17dd-11ee-bc4e-0c9d92c013fb", //暂时写配置文件的UUID
 		Status:      0,
-		ChannelId:   channel,
+		Channel:     channel,
+		ChannelId:   1,
 		CreatedAt:   nowTime,
 		UpdatedAt:   nowTime,
 		Comment:     "",

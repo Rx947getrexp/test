@@ -15,6 +15,7 @@ type TUser struct {
 	V2rayUuid   string    `xorm:"comment('节点UUID') VARCHAR(128)"`
 	V2rayTag    int       `xorm:"comment('v2ray存在UUID标签:1-有；2-无') INT"`
 	ChannelId   int       `xorm:"comment('渠道id') INT"`
+	Channel     string    `xorm:"comment('渠道id') VARCHAR(128)"`
 	Status      int       `xorm:"comment('冻结状态：0-正常；1-冻结') INT"`
 	CreatedAt   time.Time `xorm:"comment('创建时间') TIMESTAMP"`
 	UpdatedAt   time.Time `xorm:"comment('更新时间') TIMESTAMP"`
