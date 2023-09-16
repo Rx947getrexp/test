@@ -3,7 +3,6 @@ package executor
 import (
 	"bufio"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"go-speed/constant"
 	"go-speed/global"
 	"go-speed/model/request"
@@ -14,6 +13,8 @@ import (
 	"os"
 	"os/exec"
 	"sync"
+
+	"github.com/gin-gonic/gin"
 )
 
 var v2rayJson = ""
@@ -109,7 +110,7 @@ func AddSub(c *gin.Context) {
 		response.ResFail(c, "已到期，请充值")
 	}
 
-	_ = os.Remove(path)
+	//_ = os.Remove(path)
 	response.ResOk(c, "成功")
 }
 func Command(cmd string) error {
