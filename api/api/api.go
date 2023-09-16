@@ -534,7 +534,7 @@ func GetConf(c *gin.Context) {
 			var dnsItem = make(map[string]interface{})
 
 			dnsItem["dns"] = dns.Dns
-			//dnsItem["ip"] = dns.Ip
+			dnsItem["ip"] = dns.Ip
 
 		}
 		item["dns_list"] = dnsArray
