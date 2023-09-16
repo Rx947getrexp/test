@@ -542,7 +542,7 @@ func GetConf(c *gin.Context) {
 	var result = make(map[string]interface{})
 	result["list"] = list
 	response.RespOk(c, "success", result)
-	c.String(http.StatusOK, configs)
+	//c.String(http.StatusOK, configs)
 	/*
 		param := new(request.NoticeListRequest)
 		if err := c.ShouldBind(param); err != nil {
