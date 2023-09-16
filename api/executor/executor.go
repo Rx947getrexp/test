@@ -83,7 +83,7 @@ func AddSub(c *gin.Context) {
 
 		//cmds := exec.Command("/usr/local/bin/v2ray", "  api adi -s 127.0.0.1:10085 /v2rayJsonAdd")
 		//err = cmds.Start()
-		err := Command("/usr/local/bin/v2ray api adi -s 127.0.0.1:10085 /v2rayJsonAdd")
+		err := Command("/usr/local/bin/v2ray api adi -s 127.0.0.1:10088 /v2rayJsonAdd")
 
 		if err != nil {
 			global.Logger.Err(err).Msg("添加失败")
@@ -100,18 +100,18 @@ func AddSub(c *gin.Context) {
 		}
 	} else {
 		_ = os.Remove(fmt.Sprintf("/v2rayJsonAdd/%s.json", param.Uuid))
-		err := Command("/usr/local/bin/v2ray api rmi -s 127.0.0.1:10085 /v2rayJsonSub")
+		err := Command("/usr/local/bin/v2ray api rmi -s 127.0.0.1:10088 /v2rayJsonSub")
 		_ = os.Remove(path2)
 		if err != nil {
 			global.Logger.Err(err).Msg("删除udid启动失败")
 			response.ResFail(c, "删除失败")
 			return
 		}
-		global.Logger.Info().Msg(" /usr/local/bin/v2ray api rmi -s 127.0.0.1:10085 /v2rayJsonSub 删除成功")
+		global.Logger.Info().Msg(" /usr/local/bin/v2ray api rmi -s 127.0.0.1:10088 /v2rayJsonSub 删除成功")
 		response.ResFail(c, "已到期，请充值")
 	}
 
-	//_ = os.Remove(path)
+	_ = os.Remove(path)
 	response.ResOk(c, "成功")
 }
 func Command(cmd string) error {
