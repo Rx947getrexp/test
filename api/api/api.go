@@ -493,8 +493,6 @@ func TeamInfo(c *gin.Context) {
 
 func GetConf(c *gin.Context) {
 
-	global.Logger.Info().Msgf("11This is info log")
-
 	param := new(request.BanDevRequest)
 	if err := c.ShouldBind(param); err != nil {
 		global.Logger.Err(err).Msg("绑定参数")
