@@ -14,6 +14,7 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -23,7 +24,7 @@ import (
 	"xorm.io/xorm"
 )
 
-var configs = "{\"log\":{\"level\":\"{{logLevel}}\",\"output\":\"{{leafLogFile}}\"},\"dns\":{\"servers\":[\"1.1.1.1\",\"8.8.8.8\"],\"hosts\":{\"node2.wuwuwu360.xyz\":[\"107.148.239.239\"]}},\"inbounds\":[{\"protocol\":\"tun\",\"settings\":{\"fd\":\"{{tunFd}}\"},\"tag\":\"tun_in\"}],\"outbounds\":[{\"protocol\":\"failover\",\"tag\":\"failover_out\",\"settings\":{\"actors\":[\"proxy1\",\"proxy2\"],\"failTimeout\":4,\"healthCheck\":true,\"checkInterval\":300,\"failover\":true,\"fallbackCache\":false,\"cacheSize\":256,\"cacheTimeout\":60}},{\"tag\":\"proxy1\",\"protocol\":\"chain\",\"settings\":{\"actors\":[\"tls\",\"ws\",\"trojan1\"]}},{\"tag\":\"proxy2\",\"protocol\":\"chain\",\"settings\":{\"actors\":[\"tls\",\"ws\",\"trojan2\"]}},{\"protocol\":\"tls\",\"tag\":\"tls\",\"settings\":{\"alpn\":[\"http/1.1\"],\"insecure\":true}},{\"protocol\":\"ws\",\"tag\":\"ws\",\"settings\":{\"path\":\"/work\"}},{\"protocol\":\"trojan1\",\"settings\":{\"address\":\"node1.wuwuwu360.xyz\",\"port\":443,\"password\":\"3a4112cd-17de-11ee-8b15-0c9d92c013fb\"},\"tag\":\"trojan\"},{\"protocol\":\"trojan2\",\"settings\":{\"address\":\"node2.wuwuwu360.xyz\",\"port\":443,\"password\":\"3a4112cd-17de-11ee-8b15-0c9d92c013fb\"},\"tag\":\"trojan\"},{\"protocol\":\"direct\",\"tag\":\"direct_out\"},{\"protocol\":\"drop\",\"tag\":\"reject_out\"}],\"router\":{\"domainResolve\":true,\"rules\":[{\"external\":[\"site:{{dlcFile}}:cn\"],\"target\":\"direct_out\"},{\"external\":[\"mmdb:{{geoFile}}:cn\"],\"target\":\"direct_out\"},{\"domainKeyword\":[\"apple\",\"icloud\"],\"target\":\"direct_out\"}]}}"
+var configs = "{\"log\":{\"level\":\"{{logLevel}}\",\"output\":\"{{leafLogFile}}\"},\"dns\":{\"servers\":[\"1.1.1.1\",\"8.8.8.8\"],\"hosts\":{\"node2.wuwuwu360.xyz\":[\"107.148.239.239\"]}},\"inbounds\":[{\"protocol\":\"tun\",\"settings\":{\"fd\":\"{{tunFd}}\"},\"tag\":\"tun_in\"}],\"outbounds\":[{\"protocol\":\"failover\",\"tag\":\"failover_out\",\"settings\":{\"actors\":[\"proxy1\",\"proxy2\"],\"failTimeout\":4,\"healthCheck\":true,\"checkInterval\":300,\"failover\":true,\"fallbackCache\":false,\"cacheSize\":256,\"cacheTimeout\":60}},{\"tag\":\"proxy1\",\"protocol\":\"chain\",\"settings\":{\"actors\":[\"tls\",\"ws\",\"trojan1\"]}},{\"tag\":\"proxy2\",\"protocol\":\"chain\",\"settings\":{\"actors\":[\"tls\",\"ws\",\"trojan2\"]}},{\"protocol\":\"tls\",\"tag\":\"tls\",\"settings\":{\"alpn\":[\"http/1.1\"],\"insecure\":true}},{\"protocol\":\"ws\",\"tag\":\"ws\",\"settings\":{\"path\":\"/work\"}},%s,{\"protocol\":\"direct\",\"tag\":\"direct_out\"},{\"protocol\":\"drop\",\"tag\":\"reject_out\"}],\"router\":{\"domainResolve\":true,\"rules\":[{\"external\":[\"site:{{dlcFile}}:cn\"],\"target\":\"direct_out\"},{\"external\":[\"mmdb:{{geoFile}}:cn\"],\"target\":\"direct_out\"},{\"domainKeyword\":[\"apple\",\"icloud\"],\"target\":\"direct_out\"}]}}"
 
 // GenerateDevId C端获取DEV_ID，并保存在本地全局存储
 func GenerateDevId(c *gin.Context) {
@@ -526,8 +527,9 @@ func GetConf(c *gin.Context) {
 		response.RespFail(c, lang.Translate("cn", "fail"), nil)
 		return
 	}
+	var dnsArray = []string{}
 	for _, item := range list {
-		var dnsArray []map[string]interface{}
+
 		nodeId := item["id"].(int64)
 		dnsList, _ := service.FindNodeDnsByNodeId(nodeId, 1)
 		i := 0
@@ -535,14 +537,14 @@ func GetConf(c *gin.Context) {
 			var dnsItem = make(map[string]interface{})
 			i = i + 1
 			name := fmt.Sprintf("trojan_%d", i)
-			dnsItem["dns"] = fmt.Sprintf("{\"protocol\": \"%s\",\"settings\": {\"address\": \"%s\",\"port\": 443,\"password\": \"3a4112cd-17de-11ee-8b15-0c9d92c013fb\"},\"tag\": \"trojan\"}", name, dns.Dns)
+			retstr := fmt.Sprintf("{\"protocol\": \"%s\",\"settings\": {\"address\": \"%s\",\"port\": 443,\"password\": \"3a4112cd-17de-11ee-8b15-0c9d92c013fb\"},\"tag\": \"trojan\"}", name, dns.Dns)
 			dnsItem["level"] = dns.Level
-			dnsArray = append(dnsArray, dnsItem)
+			dnsArray = append(dnsArray, retstr)
 		}
 		item["dns_list"] = dnsArray
 	}
 	var result = make(map[string]interface{})
-	result["list"] = list
+	result["list"] = fmt.Sprintf(configs, strings.Join(dnsArray, ","))
 	response.RespOk(c, "success", result)
 	//c.String(http.StatusOK, configs)
 	/*
