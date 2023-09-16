@@ -491,7 +491,7 @@ func TeamInfo(c *gin.Context) {
 	response.RespOk(c, "成功", res)
 }
 
-func GetConfs(c *gin.Context) {
+func GetConfig(c *gin.Context) {
 
 	param := new(request.BanDevRequest)
 	if err := c.ShouldBind(param); err != nil {
