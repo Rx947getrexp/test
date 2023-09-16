@@ -536,19 +536,17 @@ func GetConf(c *gin.Context) {
 		dnsList, _ := service.FindNodeDnsByNodeId(nodeId, 1)
 
 		for _, dns := range dnsList {
-			var dnsItem = make(map[string]interface{})
+
 			i = i + 1
 			name := fmt.Sprintf("trojan%d", i)
 			retstr := fmt.Sprintf("{\"protocol\": \"%s\",\"settings\": {\"address\": \"%s\",\"port\": 443,\"password\": \"%s\"},\"tag\": \"trojan\"}", name, dns.Dns, uuid)
-			dnsItem["level"] = dns.Level
+
 			dnsArray = append(dnsArray, retstr)
 		}
 		item["dns_list"] = dnsArray
 	}
-	var result = make(map[string]interface{})
-	result["list"] = fmt.Sprintf(configs, strings.Join(dnsArray, ","))
-	response.RespOk(c, "success", result)
-	//c.String(http.StatusOK, configs)
+
+	c.String(http.StatusOK, fmt.Sprintf(configs, strings.Join(dnsArray, ",")))
 	/*
 		param := new(request.NoticeListRequest)
 		if err := c.ShouldBind(param); err != nil {
