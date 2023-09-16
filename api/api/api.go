@@ -514,6 +514,7 @@ func GetConf(c *gin.Context) {
 		}
 		global.Logger.Err(err).Msg(user.V2rayUuid)
 	*/
+	uuid := "1233456"
 	var list []map[string]interface{}
 	cols := "id,name,title,title_en,country,country_en,server,port," +
 		"min_port as min,max_port as max,path,is_recommend"
@@ -528,16 +529,17 @@ func GetConf(c *gin.Context) {
 		return
 	}
 	var dnsArray = []string{}
+	i := 0
 	for _, item := range list {
 
 		nodeId := item["id"].(int64)
 		dnsList, _ := service.FindNodeDnsByNodeId(nodeId, 1)
-		i := 0
+
 		for _, dns := range dnsList {
 			var dnsItem = make(map[string]interface{})
 			i = i + 1
-			name := fmt.Sprintf("trojan_%d", i)
-			retstr := fmt.Sprintf("{\"protocol\": \"%s\",\"settings\": {\"address\": \"%s\",\"port\": 443,\"password\": \"3a4112cd-17de-11ee-8b15-0c9d92c013fb\"},\"tag\": \"trojan\"}", name, dns.Dns)
+			name := fmt.Sprintf("trojan%d", i)
+			retstr := fmt.Sprintf("{\"protocol\": \"%s\",\"settings\": {\"address\": \"%s\",\"port\": 443,\"password\": \"%s\"},\"tag\": \"trojan\"}", name, dns.Dns, uuid)
 			dnsItem["level"] = dns.Level
 			dnsArray = append(dnsArray, retstr)
 		}
