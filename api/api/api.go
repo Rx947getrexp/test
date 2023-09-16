@@ -495,16 +495,6 @@ func GetConf(c *gin.Context) {
 
 	global.Logger.Info().Msgf("11This is info log")
 
-	param := new(request.ConnectDevRequest)
-
-	global.Logger.Info().Msgf(" is info log")
-	if err := c.ShouldBind(param); err != nil {
-		global.Logger.Err(err).Msg("绑定参数")
-		global.Logger.Info().Msgf("111mmmThis is info log")
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
-		return
-	}
-
 	claims := c.MustGet("claims").(*service.CustomClaims)
 	user, err := service.GetUserByClaims(claims)
 	if err != nil {
