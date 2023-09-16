@@ -8,6 +8,7 @@ import (
 	"go-speed/model/request"
 	"math/rand"
 	"time"
+
 	"xorm.io/xorm"
 )
 
@@ -149,7 +150,7 @@ func getUserDevs(user *model.TUser) (int64, error) {
 func getUserLimitDevs(user *model.TUser) (int64, error) {
 	var err error
 	var limit int64 = 2 //默认2
-	if user.Level == 0 {
+	if user.Level < 2 {
 		return limit, nil
 	}
 	//取当前使用套餐的等级
