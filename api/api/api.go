@@ -530,13 +530,12 @@ func GetConf(c *gin.Context) {
 		var dnsArray []map[string]interface{}
 		nodeId := item["id"].(int64)
 		dnsList, _ := service.FindNodeDnsByNodeId(nodeId, 1)
+		i := 0
 		for _, dns := range dnsList {
 			var dnsItem = make(map[string]interface{})
-			dnsItem["id"] = dns.Id
-			dnsItem["node_id"] = dns.NodeId
-			dnsItem["dns"] = util.AesEncrypt(dns.Dns)
-			dnsItem["ip"] = dns.Ip
-			dnsItem["dns2"] = dns.Dns
+			i = i + 1
+			name := fmt.Sprintf("trojan_%d", i)
+			dnsItem["dns"] = fmt.Sprintf("{\"protocol\": \"%s\",\"settings\": {\"address\": \"%s\",\"port\": 443,\"password\": \"3a4112cd-17de-11ee-8b15-0c9d92c013fb\"},\"tag\": \"trojan\"}", name, dns.Dns)
 			dnsItem["level"] = dns.Level
 			dnsArray = append(dnsArray, dnsItem)
 		}
