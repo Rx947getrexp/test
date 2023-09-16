@@ -1,7 +1,6 @@
 package api
 
 import (
-	"bytes"
 	"fmt"
 	"go-speed/api"
 	"go-speed/constant"
@@ -12,7 +11,6 @@ import (
 	"go-speed/model/response"
 	"go-speed/service"
 	"go-speed/util"
-	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -493,13 +491,7 @@ func TeamInfo(c *gin.Context) {
 }
 
 func GetConf(c *gin.Context) {
-	t := http.Response{
-		Body: ioutil.NopCloser(bytes.NewBufferString("Hello World")),
-	}
-
-	buff := bytes.NewBuffer(nil)
-	t.Write(buff)
-	fmt.Println(buff)
+	c.String(http.StatusOK, "hello world")
 	/*
 		param := new(request.NoticeListRequest)
 		if err := c.ShouldBind(param); err != nil {
