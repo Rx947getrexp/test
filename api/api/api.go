@@ -491,27 +491,28 @@ func TeamInfo(c *gin.Context) {
 }
 
 func GetConf(c *gin.Context) {
-	global.Logger.Info().Msgf("11This is info log")
+	/*
+		global.Logger.Info().Msgf("11This is info log")
 
-	param := new(request.ConnectDevRequest)
+		param := new(request.ConnectDevRequest)
 
-	global.Logger.Info().Msgf(" is info log")
-	if err := c.ShouldBind(param); err != nil {
-		global.Logger.Err(err).Msg("绑定参数")
-		global.Logger.Info().Msgf("111mmmThis is info log")
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
-		return
-	}
+		global.Logger.Info().Msgf(" is info log")
+		if err := c.ShouldBind(param); err != nil {
+			global.Logger.Err(err).Msg("绑定参数")
+			global.Logger.Info().Msgf("111mmmThis is info log")
+			response.RespFail(c, lang.Translate("cn", "fail"), nil)
+			return
+		}
 
-	claims := c.MustGet("claims").(*service.CustomClaims)
-	user, err := service.GetUserByClaims(claims)
-	if err != nil {
-		global.Logger.Err(err).Msg("用户token鉴权失败")
-		response.ResFail(c, "用户鉴权失败！")
-		return
-	}
-	global.Logger.Err(err).Msg(user.V2rayUuid)
-
+		claims := c.MustGet("claims").(*service.CustomClaims)
+		user, err := service.GetUserByClaims(claims)
+		if err != nil {
+			global.Logger.Err(err).Msg("用户token鉴权失败")
+			response.ResFail(c, "用户鉴权失败！")
+			return
+		}
+		global.Logger.Err(err).Msg(user.V2rayUuid)
+	*/
 	var list []map[string]interface{}
 	cols := "id,name,title,title_en,country,country_en,server,port," +
 		"min_port as min,max_port as max,path,is_recommend"
@@ -521,14 +522,14 @@ func GetConf(c *gin.Context) {
 		OrderBy("id desc").
 		Find(&list)
 	if errs != nil {
-		global.Logger.Err(err).Msg("数据库链接出错")
+		global.Logger.Err(errs).Msg("数据库链接出错")
 		response.RespFail(c, lang.Translate("cn", "fail"), nil)
 		return
 	}
 	for _, item := range list {
 		var dnsArray []map[string]interface{}
 		nodeId := item["id"].(int64)
-		dnsList, _ := service.FindNodeDnsByNodeId(nodeId, user.Level)
+		dnsList, _ := service.FindNodeDnsByNodeId(nodeId, 1)
 		for _, dns := range dnsList {
 			var dnsItem = make(map[string]interface{})
 			dnsItem["id"] = dns.Id
