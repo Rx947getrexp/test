@@ -511,6 +511,7 @@ func GetConf(c *gin.Context) {
 		return
 	}
 	global.Logger.Err(err).Msg(user.V2rayUuid)
+
 	var list []map[string]interface{}
 	cols := "id,name,title,title_en,country,country_en,server,port," +
 		"min_port as min,max_port as max,path,is_recommend"
@@ -527,7 +528,7 @@ func GetConf(c *gin.Context) {
 	for _, item := range list {
 		var dnsArray []map[string]interface{}
 		nodeId := item["id"].(int64)
-		dnsList, _ := service.FindNodeDnsByNodeId(nodeId, level)
+		dnsList, _ := service.FindNodeDnsByNodeId(nodeId, user.Level)
 		for _, dns := range dnsList {
 			var dnsItem = make(map[string]interface{})
 			dnsItem["id"] = dns.Id
