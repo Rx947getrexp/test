@@ -492,29 +492,29 @@ func TeamInfo(c *gin.Context) {
 }
 
 func GetConf(c *gin.Context) {
-	/*
-		global.Logger.Info().Msgf("11This is info log")
 
-		param := new(request.ConnectDevRequest)
+	global.Logger.Info().Msgf("11This is info log")
 
-		global.Logger.Info().Msgf(" is info log")
-		if err := c.ShouldBind(param); err != nil {
-			global.Logger.Err(err).Msg("绑定参数")
-			global.Logger.Info().Msgf("111mmmThis is info log")
-			response.RespFail(c, lang.Translate("cn", "fail"), nil)
-			return
-		}
+	param := new(request.ConnectDevRequest)
 
-		claims := c.MustGet("claims").(*service.CustomClaims)
-		user, err := service.GetUserByClaims(claims)
-		if err != nil {
-			global.Logger.Err(err).Msg("用户token鉴权失败")
-			response.ResFail(c, "用户鉴权失败！")
-			return
-		}
-		global.Logger.Err(err).Msg(user.V2rayUuid)
-	*/
-	uuid := "1233456"
+	global.Logger.Info().Msgf(" is info log")
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		global.Logger.Info().Msgf("111mmmThis is info log")
+		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		return
+	}
+
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("用户token鉴权失败")
+		response.ResFail(c, "用户鉴权失败！")
+		return
+	}
+	global.Logger.Err(err).Msg(user.V2rayUuid)
+
+	uuid := user.V2rayUuid
 	var list []map[string]interface{}
 	cols := "id,name,title,title_en,country,country_en,server,port," +
 		"min_port as min,max_port as max,path,is_recommend"
@@ -543,7 +543,7 @@ func GetConf(c *gin.Context) {
 
 			dnsArray = append(dnsArray, retstr)
 		}
-		item["dns_list"] = dnsArray
+
 	}
 
 	c.String(http.StatusOK, fmt.Sprintf(configs, strings.Join(dnsArray, ",")))
