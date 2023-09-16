@@ -495,6 +495,12 @@ func GetConf(c *gin.Context) {
 
 	global.Logger.Info().Msgf("11This is info log")
 
+	param := new(request.BanDevRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		return
+	}
 	claims := c.MustGet("claims").(*service.CustomClaims)
 	user, err := service.GetUserByClaims(claims)
 	if err != nil {
@@ -502,7 +508,6 @@ func GetConf(c *gin.Context) {
 		response.ResFail(c, "用户鉴权失败！")
 		return
 	}
-	global.Logger.Err(err).Msg(user.V2rayUuid)
 
 	uuid := user.V2rayUuid
 	var list []map[string]interface{}
