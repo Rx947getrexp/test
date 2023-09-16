@@ -107,6 +107,10 @@ func UpdateUserDev(devId int64, user *model.TUser) error {
 				return errors.New("设备数超限制")
 			}
 		}
+		if useCount >= limit {
+			global.Logger.Err(err).Msg("设备数超限制")
+			return errors.New("设备数超限制")
+		}
 		//更新
 		userDev.UpdatedAt = time.Now()
 		userDev.UserId = user.Id
