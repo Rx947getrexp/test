@@ -1,11 +1,8 @@
 package api
 
 import (
+	"bytes"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-	"github.com/mssola/user_agent"
-	"github.com/shopspring/decimal"
 	"go-speed/api"
 	"go-speed/constant"
 	"go-speed/global"
@@ -15,12 +12,20 @@ import (
 	"go-speed/model/response"
 	"go-speed/service"
 	"go-speed/util"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/mssola/user_agent"
+	"github.com/shopspring/decimal"
 	"xorm.io/xorm"
 )
+
+var configs = "{\"log\":{\"level\":\"{{logLevel}}\",\"output\":\"{{leafLogFile}}\"},\"dns\":{\"servers\":[\"1.1.1.1\",\"8.8.8.8\"],\"hosts\":{\"node2.wuwuwu360.xyz\":[\"107.148.239.239\"]}},\"inbounds\":[{\"protocol\":\"tun\",\"settings\":{\"fd\":\"{{tunFd}}\"},\"tag\":\"tun_in\"}],\"outbounds\":[{\"protocol\":\"failover\",\"tag\":\"failover_out\",\"settings\":{\"actors\":[\"proxy1\",\"proxy2\"],\"failTimeout\":4,\"healthCheck\":true,\"checkInterval\":300,\"failover\":true,\"fallbackCache\":false,\"cacheSize\":256,\"cacheTimeout\":60}},{\"tag\":\"proxy1\",\"protocol\":\"chain\",\"settings\":{\"actors\":[\"tls\",\"ws\",\"trojan1\"]}},{\"tag\":\"proxy2\",\"protocol\":\"chain\",\"settings\":{\"actors\":[\"tls\",\"ws\",\"trojan2\"]}},{\"protocol\":\"tls\",\"tag\":\"tls\",\"settings\":{\"alpn\":[\"http/1.1\"],\"insecure\":true}},{\"protocol\":\"ws\",\"tag\":\"ws\",\"settings\":{\"path\":\"/work\"}},{\"protocol\":\"trojan1\",\"settings\":{\"address\":\"node1.wuwuwu360.xyz\",\"port\":443,\"password\":\"3a4112cd-17de-11ee-8b15-0c9d92c013fb\"},\"tag\":\"trojan\"},{\"protocol\":\"trojan2\",\"settings\":{\"address\":\"node2.wuwuwu360.xyz\",\"port\":443,\"password\":\"3a4112cd-17de-11ee-8b15-0c9d92c013fb\"},\"tag\":\"trojan\"},{\"protocol\":\"direct\",\"tag\":\"direct_out\"},{\"protocol\":\"drop\",\"tag\":\"reject_out\"}],\"router\":{\"domainResolve\":true,\"rules\":[{\"external\":[\"site:{{dlcFile}}:cn\"],\"target\":\"direct_out\"},{\"external\":[\"mmdb:{{geoFile}}:cn\"],\"target\":\"direct_out\"},{\"domainKeyword\":[\"apple\",\"icloud\"],\"target\":\"direct_out\"}]}}"
 
 // GenerateDevId C端获取DEV_ID，并保存在本地全局存储
 func GenerateDevId(c *gin.Context) {
@@ -487,6 +492,38 @@ func TeamInfo(c *gin.Context) {
 	response.RespOk(c, "成功", res)
 }
 
+func GetConf(c *gin.Context) {
+	t := http.Response{
+		Body: ioutil.NopCloser(bytes.NewBufferString("Hello World")),
+	}
+
+	buff := bytes.NewBuffer(nil)
+	t.Write(buff)
+
+	fmt.Println(buff)
+	/*
+		param := new(request.NoticeListRequest)
+		if err := c.ShouldBind(param); err != nil {
+			global.Logger.Err(err).Msg("绑定参数")
+			response.RespFail(c, lang.Translate("cn", "fail"), nil)
+			return
+		}
+		session := service.NoticeList(param)
+		count, err := service.NoticeList(param).Count()
+		if err != nil {
+			global.Logger.Err(err).Msg("查询出错！")
+			response.ResFail(c, "查询出错！")
+			return
+		}
+		cols := "n.id,n.title,n.tag,n.created_at"
+		session.Cols(cols)
+		session.OrderBy("n.id desc")
+		dataList, _ := commonPageListV2(param.Page, param.Size, count, session)
+		response.RespOk(c, "成功", dataList)
+		response.RespFail(c, "推荐人ID不正确", nil)
+	*/
+
+}
 func AppInfo(c *gin.Context) {
 	/*
 		host := "http://" + c.Request.Host
@@ -854,7 +891,7 @@ func ComboList(c *gin.Context) {
 func ExpireUserList(c *gin.Context) {
 	var list []map[string]interface{}
 	ex_time := time.Now().Unix()
-	global.Db.Table("t_user").Where("expired_time < ? and expired_time+1800>?", ex_time, ex_time).Find(&list)
+	global.Db.Table("t_user").Where("expired_time < ? and expired_time+1200>?", ex_time, ex_time).Find(&list)
 	result := make(map[string]interface{})
 	result["list"] = list
 	response.RespOk(c, "成功", result)
