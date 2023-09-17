@@ -107,10 +107,11 @@ func UpdateUserDev(devId int64, user *model.TUser) error {
 				return errors.New("设备数超限制")
 			}
 		}
-		if useCount >= limit {
-			global.Logger.Err(err).Msg("设备数超限制")
-			return errors.New("设备数超限制")
-		}
+		/*
+			if useCount >= limit {
+				global.Logger.Err(err).Msg("设备数超限制")
+				return errors.New("设备数超限制")
+			}*/
 		//更新
 		userDev.UpdatedAt = time.Now()
 		userDev.UserId = user.Id
@@ -154,9 +155,11 @@ func getUserDevs(user *model.TUser) (int64, error) {
 func getUserLimitDevs(user *model.TUser) (int64, error) {
 	var err error
 	var limit int64 = 2 //默认2
-	if user.Level < 2 {
-		return limit, nil
-	}
+	/*
+		if user.Level < 2 {
+			return limit, nil
+		}
+	*/
 	//取当前使用套餐的等级
 	var result = make(map[string]interface{})
 	has, err := global.Db.Table("t_success_record as r").
