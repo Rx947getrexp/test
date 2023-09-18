@@ -2,14 +2,15 @@ package service
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
 	"go-speed/global"
 	"go-speed/model"
 	"go-speed/model/request"
 	"go-speed/model/response"
 	"go-speed/util"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 	"xorm.io/xorm"
 )
 
@@ -114,6 +115,13 @@ func FindNodeDnsByNodeId(nodeId int64, level int) ([]*model.TNodeDns, error) {
 	var err error
 	var list []*model.TNodeDns
 	err = global.Db.Where("node_id = ? and status = 1 and level = ?", nodeId, level).Find(&list)
+	return list, err
+}
+
+func FindNodeDnsByLevel(level int) ([]*model.TNodeDns, error) {
+	var err error
+	var list []*model.TNodeDns
+	err = global.Db.Where(" status = 1 and level = ?", level).Find(&list)
 	return list, err
 }
 

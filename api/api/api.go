@@ -1149,18 +1149,33 @@ func Connect2(c *gin.Context) {
 
 //连接
 func Connect(c *gin.Context) {
-	global.Logger.Info().Msgf("11This is info log")
+	/*
+		global.Logger.Info().Msgf("11This is info log")
 
-	param := new(request.ConnectDevRequest)
+		param := new(request.ConnectDevRequest)
 
-	global.Logger.Info().Msgf(" is info log")
+		global.Logger.Info().Msgf(" is info log")
+		if err := c.ShouldBind(param); err != nil {
+			global.Logger.Err(err).Msg("绑定参数")
+			global.Logger.Info().Msgf("111mmmThis is info log")
+			response.RespFail(c, lang.Translate("cn", "fail"), nil)
+			return
+		}
+
+		claims := c.MustGet("claims").(*service.CustomClaims)
+		user, err := service.GetUserByClaims(claims)
+		if err != nil {
+			global.Logger.Err(err).Msg("用户token鉴权失败")
+			response.ResFail(c, "用户鉴权失败！")
+			return
+		}
+	*/
+	param := new(request.BanDevRequest)
 	if err := c.ShouldBind(param); err != nil {
 		global.Logger.Err(err).Msg("绑定参数")
-		global.Logger.Info().Msgf("111mmmThis is info log")
 		response.RespFail(c, lang.Translate("cn", "fail"), nil)
 		return
 	}
-
 	claims := c.MustGet("claims").(*service.CustomClaims)
 	user, err := service.GetUserByClaims(claims)
 	if err != nil {
@@ -1183,20 +1198,19 @@ func Connect(c *gin.Context) {
 	}
 	req.Uuid = user.V2rayUuid
 	req.Email = user.Email
-	fmt.Printf("33333:nodeid:%d,level:%d,req.Tag:%s,udid:%s,email:%s", param.NodeId, user.Level, req.Tag, req.Uuid, req.Email)
+	fmt.Printf("33333:level:%d,req.Tag:%s,udid:%s,email:%s", user.Level, req.Tag, req.Uuid, req.Email)
 	//url := "https://node2.wuwuwu360.xyz/node/add_sub"
-	dnsList, _ := service.FindNodeDnsByNodeId(param.NodeId, user.Level+1)
+	dnsList, _ := service.FindNodeDnsByLevel(user.Level + 1)
 	dns := dnsList[0].Dns
+	//这里要加多台机器的url
 	url := fmt.Sprintf("https://%s/site-api/node/add_sub", dns)
-
 	res := new(response.Response)
+
 	headerParam := make(map[string]string)
 	timestamp := fmt.Sprint(time.Now().Unix())
 	headerParam["timestamp"] = timestamp
 	headerParam["accessToken"] = util.MD5(fmt.Sprint(timestamp, constant.AccessTokenSalt))
 	err = util.HttpClientPostV2(url, headerParam, req, res)
-
-	global.Logger.Printf("44444This is info log, %d", param.NodeId)
 
 	if err != nil {
 		global.Logger.Err(err).Msg("发送心跳包失败...")
