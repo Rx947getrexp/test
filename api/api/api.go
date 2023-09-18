@@ -533,8 +533,8 @@ func GetConfig(c *gin.Context) {
 		for _, dns := range dnsList {
 
 			i = i + 1
-			//name := fmt.Sprintf("trojan%d", i)
-			retstr := fmt.Sprintf("{\"protocol\": \"trojan\",\"settings\": {\"address\": \"%s\",\"port\": 443,\"password\": \"%s\"},\"tag\": \"trojan\"}", dns.Dns, uuid)
+			name := fmt.Sprintf("trojan%d", i)
+			retstr := fmt.Sprintf("{\"protocol\": \"trojan\",\"settings\": {\"address\": \"%s\",\"port\": 443,\"password\": \"%s\"},\"tag\": \"%s\"}", dns.Dns, uuid, name)
 
 			dnsArray = append(dnsArray, retstr)
 		}
