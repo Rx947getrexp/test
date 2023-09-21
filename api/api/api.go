@@ -1205,7 +1205,7 @@ func Connect(c *gin.Context) {
 	dns := dnsList[0].Dns
 	fmt.Printf("33333:level:%d,req.Tag:%s,udid:%s,email:%s,dns:%s      ", user.Level, req.Tag, req.Uuid, req.Email, dns)
 	//这里要加多台机器的url
-	url := fmt.Sprintf("https://%s/site-api/node/add_sub", dns)
+	url := fmt.Sprintf("https://node2.wuwuwu360.xyz/site-api/node/add_sub") //, dns)
 	res := new(response.Response)
 
 	headerParam := make(map[string]string)
