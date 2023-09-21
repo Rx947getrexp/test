@@ -302,7 +302,7 @@ func Login(c *gin.Context) {
 	if devId != "" {
 		dId, err := strconv.Atoi(devId)
 		if err != nil {
-			global.Logger.Err(err).Msgf("登录出错！%s,did:%d", param.Account, dId)
+			global.Logger.Err(err).Msgf("登录出错！%s,%d", param.Account, dId)
 			response.RespFail(c, lang.Translate("cn", "fail"), nil)
 			return
 		}
@@ -1150,7 +1150,6 @@ func Connect2(c *gin.Context) {
 
 //连接
 func Connect(c *gin.Context) {
-fmt.Printf("test")
 	/*
 		global.Logger.Info().Msgf("11This is info log")
 
@@ -1200,13 +1199,12 @@ fmt.Printf("test")
 	}
 	req.Uuid = user.V2rayUuid
 	req.Email = user.Email
-
+	fmt.Printf("33333:level:%d,req.Tag:%s,udid:%s,email:%s", user.Level, req.Tag, req.Uuid, req.Email)
 	//url := "https://node2.wuwuwu360.xyz/node/add_sub"
-	//dnsList, _ := service.FindNodeDnsByLevel(user.Level + 1)
-	//dns := dnsList[0].Dns
-	fmt.Printf("33333:level:%d,req.Tag:%s,udid:%s,email:%s     ", user.Level, req.Tag, req.Uuid, req.Email)
+	dnsList, _ := service.FindNodeDnsByLevel(user.Level + 1)
+	dns := dnsList[0].Dns
 	//这里要加多台机器的url
-	url := fmt.Sprintf("https://node2.wuwuwu360.xyz/site-api/node/add_sub") //, dns)
+	url := fmt.Sprintf("https://%s/site-api/node/add_sub", dns)
 	res := new(response.Response)
 
 	headerParam := make(map[string]string)
