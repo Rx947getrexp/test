@@ -48,7 +48,7 @@ func ApiRoute(group *gin.RouterGroup) {
 		group.POST("ban_dev", api.BanDev)
 
 		group.POST("change_network", api.ChangeNetwork) //暂没用到
-		group.POST("connect", api.Connect)
+		group.GET("connect", api.Connect)
 		group.GET("get_conf", api.GetConfig)
 
 	}
