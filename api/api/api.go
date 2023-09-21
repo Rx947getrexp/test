@@ -1150,6 +1150,7 @@ func Connect2(c *gin.Context) {
 
 //连接
 func Connect(c *gin.Context) {
+fmt.Printf("test")
 	/*
 		global.Logger.Info().Msgf("11This is info log")
 
