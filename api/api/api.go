@@ -1174,7 +1174,8 @@ func Connect(c *gin.Context) {
 	param := new(request.BanDevRequest)
 	if err := c.ShouldBind(param); err != nil {
 		global.Logger.Err(err).Msg("绑定参数")
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		//response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.ResFail(c, "连接失效了")
 		return
 	}
 	claims := c.MustGet("claims").(*service.CustomClaims)
