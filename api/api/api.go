@@ -1201,9 +1201,9 @@ func Connect(c *gin.Context) {
 	req.Email = user.Email
 
 	//url := "https://node2.wuwuwu360.xyz/node/add_sub"
-	dnsList, _ := service.FindNodeDnsByLevel(user.Level + 1)
-	dns := dnsList[0].Dns
-	fmt.Printf("33333:level:%d,req.Tag:%s,udid:%s,email:%s,dns:%s      ", user.Level, req.Tag, req.Uuid, req.Email, dns)
+	//dnsList, _ := service.FindNodeDnsByLevel(user.Level + 1)
+	//dns := dnsList[0].Dns
+	fmt.Printf("33333:level:%d,req.Tag:%s,udid:%s,email:%s     ", user.Level, req.Tag, req.Uuid, req.Email)
 	//这里要加多台机器的url
 	url := fmt.Sprintf("https://node2.wuwuwu360.xyz/site-api/node/add_sub") //, dns)
 	res := new(response.Response)
