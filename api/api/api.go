@@ -1216,7 +1216,7 @@ func Connect(c *gin.Context) {
 
 	if err != nil {
 		global.Logger.Err(err).Msg("发送心跳包失败...")
-		fmt.Printf("connect 2")
+		fmt.Printf(",发送失败 %s", err.Error())
 		response.RespFail(c, "失败", nil)
 		return
 	}
