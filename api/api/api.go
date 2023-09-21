@@ -1174,6 +1174,7 @@ func Connect(c *gin.Context) {
 	param := new(request.BanDevRequest)
 	if err := c.ShouldBind(param); err != nil {
 		global.Logger.Err(err).Msg("绑定参数")
+		fmt.Printf("connect 1")
 		response.ResFail(c, "缺少参数")
 		return
 	}
@@ -1199,14 +1200,14 @@ func Connect(c *gin.Context) {
 	}
 	req.Uuid = user.V2rayUuid
 	req.Email = user.Email
-	fmt.Printf("33333:level:%d,req.Tag:%s,udid:%s,email:%s", user.Level, req.Tag, req.Uuid, req.Email)
+
 	//url := "https://node2.wuwuwu360.xyz/node/add_sub"
 	dnsList, _ := service.FindNodeDnsByLevel(user.Level + 1)
 	dns := dnsList[0].Dns
 	//这里要加多台机器的url
 	url := fmt.Sprintf("https://%s/site-api/node/add_sub", dns)
 	res := new(response.Response)
-
+	fmt.Printf("33333:level:%d,req.Tag:%s,udid:%s,email:%s,url:%s", user.Level, req.Tag, req.Uuid, req.Email, url)
 	headerParam := make(map[string]string)
 	timestamp := fmt.Sprint(time.Now().Unix())
 	headerParam["timestamp"] = timestamp
@@ -1215,6 +1216,7 @@ func Connect(c *gin.Context) {
 
 	if err != nil {
 		global.Logger.Err(err).Msg("发送心跳包失败...")
+		fmt.Printf("connect 2")
 		response.RespFail(c, "失败", nil)
 		return
 	}
