@@ -540,7 +540,7 @@ func GetConfig(c *gin.Context) {
 			mproxy := "\"proxy" + strconv.Itoa(i) + "\""
 
 			d_proxy = append(d_proxy, mproxy)
-			m := fmt.Sprintf("{\"tag\": %s,\"protocol\": \"chain\",\"settings\": {\"actors\": [\"tls\",\"ws\",\"trojan%d\"]}}", mproxy, i)
+			m := fmt.Sprintf("{\"tag\": %s,\"protocol\": \"chain\",\"settings\": {\"actors\": [\"ws\",\"trojan%d\"]}}", mproxy, i)
 			d_data = append(d_data, m)
 			np := fmt.Sprintf("{\"protocol\": \"trojan\",\"settings\": {\"address\": \"%s\",\"port\": 443,\"password\": \"%s\"},\"tag\": \"trojan%d\"}", dns.Dns, uuid, i)
 			d_proto = append(d_proto, np)
