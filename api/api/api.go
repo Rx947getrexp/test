@@ -524,7 +524,7 @@ func GetConfig(c *gin.Context) {
 		response.RespFail(c, lang.Translate("cn", "fail"), nil)
 		return
 	}
-	var dnsArray = []string{}
+	//var dnsArray = []string{}
 	var d_proxy = []string{}
 	var d_data = []string{}
 	var d_proto = []string{}
