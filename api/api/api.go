@@ -549,6 +549,7 @@ func GetConfig(c *gin.Context) {
 			//retstr := fmt.Sprintf("{\"protocol\": \"trojan\",\"settings\": {\"address\": \"%s\",\"port\": 443,\"password\": \"%s\"},\"tag\": \"%s\"}", dns.Dns, uuid, name)
 
 			//dnsArray = append(dnsArray, retstr)
+			break
 		}
 
 	}
