@@ -525,6 +525,9 @@ func GetConfig(c *gin.Context) {
 		return
 	}
 	var dnsArray = []string{}
+	var d_proxy = []string{}
+	var d_data = []string{}
+	var d_proto = []string{}
 	i := 0
 	for _, item := range list {
 
@@ -534,16 +537,26 @@ func GetConfig(c *gin.Context) {
 		for _, dns := range dnsList {
 
 			i = i + 1
-			//name := fmt.Sprintf("trojan%d", i)
-			name := "trojan"
-			retstr := fmt.Sprintf("{\"protocol\": \"trojan\",\"settings\": {\"address\": \"%s\",\"port\": 443,\"password\": \"%s\"},\"tag\": \"%s\"}", dns.Dns, uuid, name)
+			mproxy := fmt.Sprint("proxy%d", i)
 
-			dnsArray = append(dnsArray, retstr)
+			d_proxy = append(d_proxy, mproxy)
+			m := fmt.Sprintf("{\"tag\": \"%s\",\"protocol\": \"chain\",\"settings\": {\"actors\": [\"tls\",\"ws\",\"trojan%d\"]}}", mproxy, i)
+			d_data = append(d_data, m)
+			np := fmt.Sprintf("{\"protocol\": \"trojan\",\"settings\": {\"address\": \"%s\",\"port\": 443,\"password\": \"%s\"},\"tag\": \"trojan%d\"}", dns.Dns, uuid, i)
+			d_proto = append(d_proto, np)
+			//name := fmt.Sprintf("trojan%d", i)
+			//name := "trojan"
+			//retstr := fmt.Sprintf("{\"protocol\": \"trojan\",\"settings\": {\"address\": \"%s\",\"port\": 443,\"password\": \"%s\"},\"tag\": \"%s\"}", dns.Dns, uuid, name)
+
+			//dnsArray = append(dnsArray, retstr)
 		}
 
 	}
+	mystring := "{\"log\":{\"level\":\"{{logLevel}}\",\"output\":\"{{leafLogFile}}\"},\"dns\":{\"servers\":[\"1.1.1.1\",\"8.8.8.8\"],\"hosts\":{\"node2.wuwuwu360.xyz\":[\"107.148.239.239\"]}},\"inbounds\":[{\"protocol\":\"tun\",\"settings\":{\"fd\":\"{{tunFd}}\"},\"tag\":\"tun_in\"}],\"outbounds\":[{\"protocol\":\"failover\",\"tag\":\"failover_out\",\"settings\":{\"actors\":[%s],\"failTimeout\":4,\"healthCheck\":true,\"checkInterval\":300,\"failover\":true,\"fallbackCache\":false,\"cacheSize\":256,\"cacheTimeout\":60}},%s,{\"protocol\":\"tls\",\"tag\":\"tls\",\"settings\":{\"alpn\":[\"http/1.1\"],\"insecure\":true}},{\"protocol\":\"ws\",\"tag\":\"ws\",\"settings\":{\"path\":\"/work\"}},%s,{\"protocol\":\"direct\",\"tag\":\"direct_out\"},{\"protocol\":\"drop\",\"tag\":\"reject_out\"}],\"router\":{\"domainResolve\":true,\"rules\":[{\"external\":[\"site:{{dlcFile}}:cn\"],\"target\":\"direct_out\"},{\"external\":[\"mmdb:{{geoFile}}:cn\"],\"target\":\"direct_out\"},{\"domainKeyword\":[\"apple\",\"icloud\"],\"target\":\"direct_out\"}]}}"
+	c.String(http.StatusOK, fmt.Sprintf(mystring, strings.Join(d_proxy, ","), strings.Join(d_data, ","), strings.Join(d_proto, ",")))
 
-	c.String(http.StatusOK, fmt.Sprintf(configs, strings.Join(dnsArray, ",")))
+	//	d_proxy,d_data,d_proto)
+	//c.String(http.StatusOK, fmt.Sprintf(configs, strings.Join(dnsArray, ",")))
 	/*
 		param := new(request.NoticeListRequest)
 		if err := c.ShouldBind(param); err != nil {
