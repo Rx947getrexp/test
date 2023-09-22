@@ -58,7 +58,7 @@ func AddSub(c *gin.Context) {
 	//v2rayJson = strings.ReplaceAll(v2rayJson, "###", email)
 	//v2rayJson = strings.ReplaceAll(v2rayJson, "***", name)
 
-	v2rayJson = fmt.Sprintf("{\"inbounds\":[{\"tag\":\"tcp-ws\",\"port\":10085,\"listen\":\"0.0.0.0\",\"protocol\":\"trojan\",\"settings\":{\"clients\":[{\"email\":\"%s\",\"password\":\"%s\"}],\"fallbacks\":[{\"dest\":80}]},\"streamSettings\":{\"network\":\"ws\",\"security\":\"none\",\"tlsSettings\":{\"alpn\":[\"h2\",\"h3\",\"http/1.1\"],\"certificates\":[{\"certificateFile\":\"/usr/local/v2ray.crt\",\"keyFile\":\"/usr/local/v2ray.key\"}]},\"wsSettings\":{\"path\":\"/work\"}}}]}", email, name)
+	v2rayJson = fmt.Sprintf("{\"inbounds\":[{\"tag\":\"tcp-ws\",\"port\":10085,\"listen\":\"0.0.0.0\",\"protocol\":\"trojan\",\"settings\":{\"clients\":[{\"email\":\"%s\",\"password\":\"%s\"}],\"fallbacks\":[{\"dest\":80}]},\"streamSettings\":{\"network\":\"ws\",\"security\":\"none\",\"tlsSettings\":{\"alpn\":[\"h2\",\"h3\",\"http/1.1\"],\"certificates\":[{\"certificateFile\":\"/usr/local/cert/cert.crt\",\"keyFile\":\"/usr/local/cert/private.key\"}]},\"wsSettings\":{\"path\":\"/work\"}}}]}", email, name)
 	fmt.Printf("111TTTTTTThistest, Email:%s,uuid:%s,Tag:%s", email, name, param.Tag)
 
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
