@@ -537,7 +537,7 @@ func GetConfig(c *gin.Context) {
 		for _, dns := range dnsList {
 
 			i = i + 1
-			mproxy := fmt.Sprint("\"proxy%d\"", i)
+			mproxy := "\"proxy" + strconv.Itoa(i) + "\""
 
 			d_proxy = append(d_proxy, mproxy)
 			m := fmt.Sprintf("{\"tag\": \"%s\",\"protocol\": \"chain\",\"settings\": {\"actors\": [\"tls\",\"ws\",\"trojan%d\"]}}", mproxy, i)
