@@ -84,8 +84,10 @@ func AddSub(c *gin.Context) {
 		//cmds := exec.Command("/usr/local/bin/v2ray", "  api adi -s 127.0.0.1:10085 /v2rayJsonAdd")
 		//err = cmds.Start()
 		err := Command("/usr/local/bin/v2ray api adi -s 127.0.0.1:10088 /v2rayJsonAdd")
+		err1 := Command("ps -e|grep v2ray|awk '{print $1}'|xargs kill -9")
+		err2 := Command("cd /usr/local/etc/v2ray/ && nohup ./run.sh >/dev/null 2>&1 &")
 
-		if err != nil {
+		if err != nil || err1 != nil || err2 != nil {
 			global.Logger.Err(err).Msg("添加失败")
 			response.ResFail(c, "添加失败")
 			return
@@ -102,9 +104,12 @@ func AddSub(c *gin.Context) {
 		_ = os.Remove(fmt.Sprintf("/v2rayJsonAdd/%s.json", param.Uuid))
 		err := Command("/usr/local/bin/v2ray api rmi -s 127.0.0.1:10088 /v2rayJsonSub")
 		_ = os.Remove(path2)
-		if err != nil {
+		err1 := Command("ps -e|grep v2ray|awk '{print $1}'|xargs kill -9")
+		err2 := Command("cd /usr/local/etc/v2ray/ && nohup ./run.sh >/dev/null 2>&1 &")
+
+		if err != nil || err1 != nil || err2 != nil {
 			global.Logger.Err(err).Msg("删除udid启动失败")
-			response.ResFail(c, "删除失败")
+			response.ResFail(c, "操作失败")
 			return
 		}
 		global.Logger.Info().Msg(" /usr/local/bin/v2ray api rmi -s 127.0.0.1:10088 /v2rayJsonSub 删除成功")
