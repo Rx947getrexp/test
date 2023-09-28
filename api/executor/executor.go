@@ -44,6 +44,7 @@ func AddSub(c *gin.Context) {
 		response.ResFail(c, "参数错误")
 		return
 	}
+	response.ResOk(c, "成功")
 
 	path := ""
 	name := param.Uuid
