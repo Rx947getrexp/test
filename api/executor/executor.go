@@ -85,7 +85,7 @@ func AddSub(c *gin.Context) {
 		//err = cmds.Start()
 		err := Command("/usr/local/bin/v2ray api adi -s 127.0.0.1:10088 /v2rayJsonAdd")
 		err1 := Command("ps -e|grep v2ray|awk '{print $1}'|xargs kill -9")
-		err2 := Command("cd /usr/local/etc/v2ray/ && nohup ./run.sh >/dev/null 2>&1 &")
+		err2 := Command("nohup /usr/local/bin/v2ray run -c /usr/local/etc/v2ray/config.json > /dev/null 2>&1 &")
 
 		if err != nil || err1 != nil || err2 != nil {
 			global.Logger.Err(err).Msg("添加失败")
@@ -105,7 +105,7 @@ func AddSub(c *gin.Context) {
 		err := Command("/usr/local/bin/v2ray api rmi -s 127.0.0.1:10088 /v2rayJsonSub")
 		_ = os.Remove(path2)
 		err1 := Command("ps -e|grep v2ray|awk '{print $1}'|xargs kill -9")
-		err2 := Command("cd /usr/local/etc/v2ray/ && nohup ./run.sh >/dev/null 2>&1 &")
+		err2 := Command("nohup /usr/local/bin/v2ray run -c /usr/local/etc/v2ray/config.json > /dev/null 2>&1 &")
 
 		if err != nil || err1 != nil || err2 != nil {
 			global.Logger.Err(err).Msg("删除udid启动失败")
