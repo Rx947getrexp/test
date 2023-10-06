@@ -50,6 +50,8 @@ func AddSub(c *gin.Context) {
 		v2rayJson = fmt.Sprintf("{\"email\": \"%s\",\"password\": \"%s\"}", param.Email, param.Uuid)
 		path = fmt.Sprintf("/v2rayJsonAdd/%s.json", name)
 		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+		wr := bufio.NewWriter(file)
+		_, err = wr.WriteString(v2rayJson) //注意这里是写在缓存中的，而不是直接落盘的
 		defer file.Close()
 		if err != nil {
 			global.Logger.Err(err).Msg("添加失败")
