@@ -52,6 +52,7 @@ func AddSub(c *gin.Context) {
 		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 		wr := bufio.NewWriter(file)
 		_, err = wr.WriteString(v2rayJson) //注意这里是写在缓存中的，而不是直接落盘的
+		wr.Flush()                         //将缓存的内容写入文件
 		defer file.Close()
 		if err != nil {
 			global.Logger.Err(err).Msg("添加失败")
