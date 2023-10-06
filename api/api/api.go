@@ -161,7 +161,7 @@ func Reg(c *gin.Context) {
 			response.RespFail(c, lang.Translate("cn", "fail"), nil)
 			return
 		}
-		if has { //送过一次的不再送了
+		if !has { //送过一次的不再送了
 			sendSec += 3600 //此种情况才赠送时间
 		}
 	}
