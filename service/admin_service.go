@@ -118,6 +118,13 @@ func FindNodeDnsByNodeId(nodeId int64, level int) ([]*model.TNodeDns, error) {
 	return list, err
 }
 
+func FindNodes(level int) ([]*model.TNode, error) {
+	var err error
+	var list []*model.TNode
+	err = global.Db.Where(" status = 1 and is_recommend = ?", level).Find(&list)
+	return list, err
+}
+
 func FindNodeDnsByLevel(level int) ([]*model.TNodeDns, error) {
 	var err error
 	var list []*model.TNodeDns

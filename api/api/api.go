@@ -1219,10 +1219,36 @@ func Connect(c *gin.Context) {
 	}
 	req.Uuid = user.V2rayUuid
 	req.Email = user.Email
+	req.Level = fmt.Sprintf("%d", user.Level)
 
 	//url := "https://node2.wuwuwu360.xyz/node/add_sub"
-	dnsList, _ := service.FindNodeDnsByLevel(user.Level + 1)
-	dns := dnsList[0].Dns
+	dnsList, _ := service.FindNodes(user.Level + 1)
+	for _, item := range dnsList {
+		//mType := item.Server // item["id"].(int32)
+		//period := item["period"].(int32)
+		//if period == 7 {
+		//	baseGoods[fmt.Sprint(mType, "_", period)] = item["price"]
+		//}
+		url := fmt.Sprintf("https://%s/site-api/node/add_sub", item.Server)
+		timestamp := fmt.Sprint(time.Now().Unix())
+		headerParam := make(map[string]string)
+		res := new(response.Response)
+		headerParam["timestamp"] = timestamp
+		headerParam["accessToken"] = util.MD5(fmt.Sprint(timestamp, constant.AccessTokenSalt))
+		fmt.Printf("33333:level:%d,req.Tag:%s,udid:%s,email:%s,url:%s,level:%s", user.Level, req.Tag, req.Uuid, req.Email, url, req.Level)
+		err = util.HttpClientPostV2(url, headerParam, req, res)
+		if err != nil {
+			global.Logger.Err(err).Msg("发送心跳包失败...")
+			fmt.Printf(",发送失败 %s", err.Error())
+			response.RespFail(c, "失败", nil)
+			return
+		}
+
+	}
+	response.RespOk(c, "成功", nil)
+	return
+
+	dns := dnsList[0].Server
 	//这里要加多台机器的url
 	url := fmt.Sprintf("https://%s/site-api/node/add_sub", dns)
 	res := new(response.Response)

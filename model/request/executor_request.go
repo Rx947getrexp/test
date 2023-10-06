@@ -14,5 +14,6 @@ type NodeRemoveEmailRequest struct {
 type NodeAddSubRequest struct {
 	Email string `form:"email" binding:"required" json:"email"`
 	Uuid  string `form:"uuid" binding:"required" json:"uuid"`
+	Level string `form:"level" binding:"required" json:"level"`
 	Tag   string `form:"tag" binding:"required" json:"tag"`
 }

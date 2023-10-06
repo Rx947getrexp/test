@@ -44,6 +44,39 @@ func AddSub(c *gin.Context) {
 		response.ResFail(c, "参数错误")
 		return
 	}
+	name := param.Uuid
+	path := ""
+	if param.Tag == "1" {
+		v2rayJson = fmt.Sprintf("{\"email\": \"%s\",\"password\": \"%s\"}", param.Email, param.Uuid)
+		path = fmt.Sprintf("/v2rayJsonAdd/%s.json", name)
+		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+		defer file.Close()
+		if err != nil {
+			global.Logger.Err(err).Msg("添加失败")
+			response.ResFail(c, "添加失败")
+			return
+		}
+	} else {
+		path = fmt.Sprintf("/v2rayJsonAdd/%s.json", name)
+		_ = os.Remove(path)
+	}
+	errs := Command("/usr/bin/python3 /shell/addAccount.py")
+	if errs != nil {
+
+		response.ResFail(c, "添加失败")
+		return
+	}
+	response.ResOk(c, "成功")
+	return
+}
+
+func AddSub2(c *gin.Context) {
+	param := new(request.NodeAddSubRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
 	response.ResOk(c, "成功")
 
 	path := ""
@@ -54,6 +87,7 @@ func AddSub(c *gin.Context) {
 		path = fmt.Sprintf("/v2rayJsonAdd/%s.json", name)
 	} else {
 		path = fmt.Sprintf("/v2rayJsonSub/%s.json", name)
+
 	}
 
 	//v2rayJson = strings.ReplaceAll(v2rayJson, "###", email)
