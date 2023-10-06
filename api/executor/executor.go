@@ -51,6 +51,7 @@ func AddSub(c *gin.Context) {
 		path = fmt.Sprintf("/v2rayJsonAdd/%s.json", name)
 		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 		wr := bufio.NewWriter(file)
+		fmt.Printf(v2rayJson)
 		_, err = wr.WriteString(v2rayJson) //注意这里是写在缓存中的，而不是直接落盘的
 		wr.Flush()                         //将缓存的内容写入文件
 		defer file.Close()
