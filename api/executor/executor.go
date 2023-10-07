@@ -67,15 +67,14 @@ func AddSub(c *gin.Context) {
 	}
 	errs := Command("/usr/bin/python3 /shell/addAccount.py")
 	if errs != nil {
-
 		response.ResFail(c, "添加失败")
 		return
 	}
-
+	fmt.Printf(v2rayJson)
 	dnsList, _ := service.FindExpireUsers()
 	fmt.Printf(v2rayJson)
 	for _, item := range dnsList {
-		os.Remove(fmt.Sprintf("/v2rayJsonAdd/%s", item.V2rayUuid))
+		_ = os.Remove(fmt.Sprintf("/v2rayJsonAdd/%s", item.V2rayUuid))
 	}
 	response.ResOk(c, "成功")
 	return
