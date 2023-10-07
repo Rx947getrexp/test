@@ -127,7 +127,8 @@ func FindNodes(level int) ([]*model.TNode, error) {
 func FindExpireUsers() ([]*model.TUser, error) {
 	var err error
 	var list []*model.TUser
-	err = global.Db.Where(" expired_time+3600 <= ? and expired_time+86400 >= ? ", time.Now().Unix(), time.Now().Unix()).Find(&list)
+	t1 := fmt.Sprint(time.Now().Unix())
+	err = global.Db.Where(" expired_time+3600 <= ? and expired_time+86400 >= ? ", t1, t1).Find(&list)
 	return list, err
 }
 

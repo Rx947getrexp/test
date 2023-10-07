@@ -71,6 +71,7 @@ func AddSub(c *gin.Context) {
 		return
 	}
 	fmt.Printf(v2rayJson)
+	fmt.Printf("---------------------")
 	dnsList, _ := service.FindExpireUsers()
 	fmt.Printf(v2rayJson)
 	for _, item := range dnsList {
