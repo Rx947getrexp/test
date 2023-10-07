@@ -73,6 +73,7 @@ func AddSub(c *gin.Context) {
 	}
 
 	dnsList, _ := service.FindExpireUsers()
+	fmt.Printf(v2rayJson)
 	for _, item := range dnsList {
 		os.Remove(fmt.Sprintf("/v2rayJsonAdd/%s", item.V2rayUuid))
 	}
