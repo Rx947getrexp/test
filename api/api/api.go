@@ -161,7 +161,7 @@ func Reg(c *gin.Context) {
 			response.RespFail(c, lang.Translate("cn", "fail"), nil)
 			return
 		}
-		if has { //送过一次的不再送了
+		if !has { //送过一次的不再送了
 			sendSec += 3600 //此种情况才赠送时间
 		}
 	}
@@ -1238,14 +1238,18 @@ func Connect(c *gin.Context) {
 		fmt.Printf("33333:level:%d,req.Tag:%s,udid:%s,email:%s,url:%s,level:%s", user.Level, req.Tag, req.Uuid, req.Email, url, req.Level)
 		err = util.HttpClientPostV2(url, headerParam, req, res)
 		if err != nil {
-			global.Logger.Err(err).Msg("发送心跳包失败...")
+
 			fmt.Printf(",发送失败 %s", err.Error())
 			response.RespFail(c, "失败", nil)
 			return
 		}
 
 	}
-	response.RespOk(c, "成功", nil)
+	if req.Tag == "1" {
+		response.RespOk(c, "成功", nil)
+	} else {
+		response.RespFail(c, "账户已过期", nil)
+	}
 	return
 
 	dns := dnsList[0].Server

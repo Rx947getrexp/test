@@ -124,6 +124,12 @@ func FindNodes(level int) ([]*model.TNode, error) {
 	err = global.Db.Where(" status = 1 and is_recommend = ?", level).Find(&list)
 	return list, err
 }
+func FindExpireUsers() ([]*model.TUser, error) {
+	var err error
+	var list []*model.TUser
+	err = global.Db.Where(" expired_time+3600 <= ? and expired_time+86400 >= ? ", time.Now().Unix(), time.Now().Unix()).Find(&list)
+	return list, err
+}
 
 func FindNodeDnsByLevel(level int) ([]*model.TNodeDns, error) {
 	var err error

@@ -7,6 +7,7 @@ import (
 	"go-speed/global"
 	"go-speed/model/request"
 	"go-speed/model/response"
+	"go-speed/service"
 	"go-speed/util"
 	"io"
 	"net/http"
@@ -69,6 +70,11 @@ func AddSub(c *gin.Context) {
 
 		response.ResFail(c, "添加失败")
 		return
+	}
+
+	dnsList, _ := service.FindExpireUsers()
+	for _, item := range dnsList {
+		os.Remove(fmt.Sprintf("/v2rayJsonAdd/%s", item.V2rayUuid))
 	}
 	response.ResOk(c, "成功")
 	return
