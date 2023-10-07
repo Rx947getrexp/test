@@ -128,7 +128,9 @@ func FindExpireUsers() ([]*model.TUser, error) {
 	var err error
 	var list []*model.TUser
 	t1 := fmt.Sprint(time.Now().Unix())
+	fmt.Printf(t1)
 	err = global.Db.Where(" expired_time+3600 <= ? and expired_time+86400 >= ? ", t1, t1).Find(&list)
+	fmt.Printf(t1)
 	return list, err
 }
 
