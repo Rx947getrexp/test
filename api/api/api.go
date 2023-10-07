@@ -153,17 +153,38 @@ func Reg(c *gin.Context) {
 	//查询库中是否有Client-Id
 	clientId := c.GetHeader("Client-Id")
 	fmt.Printf("---------clientid:%s", clientId)
+
 	if clientId != "" {
-		var bean model.TDev
-		has, err := global.Db.Where("client_id = ? and is_send = 2", clientId).Get(&bean)
-		if err != nil {
-			global.Logger.Err(err).Msg("db连接出错")
+
+		//查询
+		_, rx := global.Db.SQL("select count(*) as total from t_user where client_id = ?", clientId).Get(&sendSec)
+		if rx != nil {
+			global.Logger.Err(rx).Msg("db连接出错")
 			response.RespFail(c, lang.Translate("cn", "fail"), nil)
 			return
 		}
-		if !has { //送过一次的不再送了
-			sendSec += 3600 //此种情况才赠送时间
+		if sendSec == 0 {
+			sendSec += 3600
+		} else {
+			sendSec = 0
 		}
+		/*
+			var bean model.TDev
+				if !has { //送过一次的不再送了
+					sendSec += 3600 //此种情况才赠送时间
+				}
+
+				has, err := global.Db.Where("client_id = ? and is_send = 2", clientId).Get(&bean)
+
+				if err != nil {
+					global.Logger.Err(err).Msg("db连接出错")
+					response.RespFail(c, lang.Translate("cn", "fail"), nil)
+					return
+				}
+				if !has { //送过一次的不再送了
+					sendSec += 3600 //此种情况才赠送时间
+				}
+		*/
 	}
 
 	pwdDecode := util.AesDecrypt(param.Passwd)
@@ -188,6 +209,7 @@ func Reg(c *gin.Context) {
 		ChannelId:   1,
 		CreatedAt:   nowTime,
 		UpdatedAt:   nowTime,
+		ClientId:    clientId,
 		Comment:     "",
 	}
 	rows, err := sess.Insert(user)
