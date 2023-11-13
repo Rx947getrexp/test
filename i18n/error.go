@@ -7,6 +7,9 @@ import (
 
 func I18nTrans(c *gin.Context, msg string) string {
 	lang := c.GetHeader("Lang")
+	if lang == "rus" {
+		lang = "ru"
+	}
 	global.Logger.Info().Msgf("lang: %s, msg: %s", lang, msg)
 	//global.Logger.Info().Msgf("ReturnMsgMap: %v", ReturnMsgMap)
 	m, ok := ReturnMsgMap[msg]
