@@ -14,6 +14,7 @@ func initRedis() *redis.Client {
 	password := global.Config.Redis.Password
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     global.Config.Redis.Addr,
+		Username: "default",
 		Password: password,
 		DB:       global.Config.Redis.Db,
 	})

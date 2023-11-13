@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"go-speed/constant"
 	"go-speed/global"
 	"go-speed/model"
@@ -24,6 +25,39 @@ func GetUserByClaims(claims *CustomClaims) (*model.TUser, error) {
 		return nil, errors.New("您已被风控，请联系客服！")
 	}
 	return user, nil
+}
+
+func GetUserByUserName(userName string) (*model.TUser, error) {
+	user := new(model.TUser)
+	has, err := global.Db.Where("uname = ?", userName).Get(user)
+	if err != nil {
+		global.Logger.Err(err).Msg("查询用户出错！")
+		return nil, err
+	}
+	if !has {
+		return nil, nil
+	}
+	return user, nil
+}
+
+func CountUserByUserName(uname string) (int64, error) {
+	var counts int64
+	_, err := global.Db.SQL("select count(*) from t_user where uname = ?", uname).Get(&counts)
+	if err != nil {
+		global.Logger.Err(err).Msg("查询用户出错！")
+		return 0, err
+	}
+	return counts, nil
+}
+
+func CountUserByUserNameAndClientId(uname, clientId string) (int64, error) {
+	var counts int64
+	_, err := global.Db.SQL("select count(*) from t_user where uname = ?", uname).Get(&counts)
+	if err != nil {
+		global.Logger.Err(err).Msg("查询用户出错！")
+		return 0, err
+	}
+	return counts, nil
 }
 
 func TeamList(param *request.TeamListRequest, user *model.TUser) *xorm.Session {
@@ -142,6 +176,90 @@ func UpdateUserDev(devId int64, user *model.TUser) error {
 	return nil
 }
 
+// 检查登录设备是否到达上限
+func CheckDevNumLimits(devId int64, user *model.TUser) (bool, error) {
+	if !HasDev(devId) {
+		return false, errors.New("设备号不存在。")
+	}
+
+	// 登录设备数量上限，根据用户等级来定义
+	// TODO：先简单处理，目前还没有产品形态定义
+	limits := 2
+	switch user.Level {
+	case 0:
+		limits = 2
+	case 1:
+		limits = 5
+	case 2:
+		limits = 10
+	case 3:
+		limits = 20
+	default:
+		limits = 50
+	}
+
+	// 30天内登录过的设备数量
+	startTime := time.Now().Add(-1 * time.Hour * 30 * 24).Format("2006-01-02 15:04:05")
+
+	var list []map[string]interface{}
+	cols := "id,user_id,dev_id,status,created_at,updated_at,comment"
+	err := global.Db.Where("user_id = ? and status = 1 and updated_at >= ?", user.Id, startTime).
+		Table("t_user_dev").
+		Cols(cols).
+		OrderBy("id asc").
+		Find(&list)
+	if err != nil {
+		global.Logger.Err(err).Msg("数据库链接出错")
+		return false, err
+	}
+	devCount := 0
+	for _, item := range list {
+		dId := item["dev_id"].(int64)
+		if devId != dId {
+			devCount = devCount + 1
+		}
+	}
+	global.Logger.Info().Msgf("account: %s, level: %d, devCount: %d, limits: %d", user.Email, user.Level, devCount, limits)
+	if devCount >= limits {
+		global.Logger.Err(err).Msgf("dev limits error, account: %s, level: %d, devCount: %d, limits: %d",
+			user.Email, user.Level, devCount, limits)
+		return true, nil
+	}
+
+	// 插入数据
+	userDev := new(model.TUserDev)
+	has, err := global.Db.Where("user_id = ? and dev_id = ?", user.Id, devId).Get(userDev)
+	if err != nil {
+		global.Logger.Err(err).Msg("数据库链接出错")
+		return false, errors.New("查询设备出错")
+	}
+
+	var rows int64
+	if has {
+		//更新
+		userDev.UpdatedAt = time.Now()
+		userDev.Status = constant.UserDevNormalStatus
+		rows, err = global.Db.Cols("updated_at", "user_id", "status").Where("id = ?", userDev.Id).Update(userDev)
+	} else {
+		userDev.UserId = user.Id
+		userDev.DevId = devId
+		userDev.Status = constant.UserDevNormalStatus
+		userDev.CreatedAt = time.Now()
+		userDev.UpdatedAt = time.Now()
+		rows, err = global.Db.Insert(userDev)
+	}
+	if err != nil {
+		global.Logger.Err(err).Msg("数据库链接出错")
+		return false, errors.New("数据库链接出错")
+	}
+	if rows < 1 {
+		global.Logger.Err(err).Msg("数据库操作出错")
+		return false, errors.New("数据库操作出错")
+	}
+	return false, nil
+
+}
+
 func getUserDevs(user *model.TUser) (int64, error) {
 	var useCount int64
 	_, err := global.Db.SQL("select count(id) from t_user_dev where user_id = ? and status = 1", user.Id).Get(&useCount)
@@ -211,4 +329,88 @@ func GenerateRangeNum(min, max int) int {
 	rand.Seed(time.Now().UnixNano())
 	randNum := rand.Intn(max-min) + min
 	return randNum
+}
+
+func GetUserConfig(userId int64) (*model.TUserConfig, error) {
+	userConfig := new(model.TUserConfig)
+	has, err := global.Db.Where("user_id = ?", userId).Get(userConfig)
+	if err != nil {
+		global.Logger.Err(err).Msg("查询数据库出错！")
+		return nil, err
+	}
+	if !has {
+		return nil, nil
+	}
+	return userConfig, nil
+}
+
+func CreateUserConfig(userId, nodeId int64) error {
+	config := &model.TUserConfig{
+		UserId:    userId,
+		NodeId:    nodeId,
+		Status:    constant.UserConfigStatusNormal,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	rows, err := global.Db.Insert(config)
+	if err != nil {
+		global.Logger.Err(err).Msg("创建用户配置记录失败")
+		return err
+	}
+	if rows != 1 {
+		return fmt.Errorf("创建用户配置记录失败，rows:%d", rows)
+	}
+	return nil
+}
+
+func UpdateUserConfig(userId, nodeId int64) error {
+	config := &model.TUserConfig{
+		NodeId:    nodeId,
+		Status:    constant.UserConfigStatusNormal,
+		UpdatedAt: time.Now(),
+	}
+	rows, err := global.Db.Where("user_id = ?", userId).Update(config)
+	if err != nil {
+		global.Logger.Err(err).Msg("更新用户配置记录失败")
+		return err
+	}
+	if rows != 1 {
+		return fmt.Errorf("更新用户配置记录失败，rows:%d", rows)
+	}
+	return nil
+}
+
+//func GetLatestUserConfig(userId, devId int64) (*model.TUserConfig, error) {
+//	userConfig := new(model.TUserConfig)
+//	var ss *xorm.Session
+//	if devId == 0 {
+//		ss = global.Db.Where("user_id = ? and status = ?", userId, constant.UserConfigStatusNormal)
+//	} else {
+//		ss = global.Db.Where("user_id = ? and dev_id = ? and status = ?", userId, devId, constant.UserConfigStatusNormal)
+//	}
+//	has, err := ss.OrderBy("id desc").Get(userConfig)
+//	if err != nil {
+//		global.Logger.Err(err).Msg("查询数据库出错！")
+//		return nil, err
+//	}
+//	if !has {
+//		return nil, nil
+//	}
+//	return userConfig, nil
+//}
+
+func DeleteUserConfig(userId int64) error {
+	config := &model.TUserConfig{
+		Status:    constant.UserConfigStatusDeleted,
+		UpdatedAt: time.Now(),
+	}
+	rows, err := global.Db.Where("user_id = ?", userId).Update(config)
+	if err != nil {
+		global.Logger.Err(err).Msg("删除用户配置记录失败")
+		return err
+	}
+	if rows != 1 {
+		return fmt.Errorf("删除用户配置记录失败，rows:%d", rows)
+	}
+	return nil
 }

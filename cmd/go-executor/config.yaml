@@ -5,6 +5,8 @@ system:
   file_link: "http://localhost:13005"
   fs_site: "http://localhost:16002"
   admin_address: "http://10.10.10.222:13001"
+  v2ray_api_address: "127.0.0.1:10088"
+  v2ray_config_path: "/usr/local/etc/v2ray/config.json"
 db:
   host: localhost
   user: root

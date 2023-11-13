@@ -3,6 +3,7 @@ package response
 import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
+	"go-speed/i18n"
 	"net/http"
 	"strings"
 )
@@ -54,6 +55,8 @@ func RespFail(c *gin.Context, msg string, data interface{}) {
 	dataBytes, _ := json.Marshal(data)
 	if strings.Contains(msg, "pq") || strings.Contains(msg, "column") {
 		msg = "error"
+	} else {
+		msg = i18n.I18nTrans(c, msg)
 	}
 	c.JSON(http.StatusOK, Response{
 		Code: Fail,

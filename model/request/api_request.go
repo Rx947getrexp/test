@@ -53,7 +53,8 @@ type DevListRequest struct {
 }
 
 type BanDevRequest struct {
-	DevId string `form:"dev_id" binding:"required" json:"dev_id"`
+	DevId  string `form:"dev_id" binding:"required" json:"dev_id"`
+	NodeId int64  `form:"node_id" json:"node_id"`
 }
 
 type ChangeNetworkRequest struct {
@@ -74,4 +75,15 @@ type CreateOrderRequest struct {
 type OrderListRequest struct {
 	Page int `form:"page" binding:"required" json:"page"`
 	Size int `form:"size" binding:"required" json:"size"`
+}
+
+type SaveUserConfigRequest struct {
+	NodeId int64 `form:"node_id" binding:"required" json:"node_id"`
+}
+
+type GetUserConfigResponse struct {
+	UserId    int64  `json:"user_id"`
+	NodeId    int64  `json:"node_id"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
 }

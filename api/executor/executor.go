@@ -17,6 +17,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// TODO: 简单实现添加、删除账号时的串行处理，防止并发执行时的相互覆盖问题，但用锁会影响性能，后续成为瓶颈时需要优化处理。
+var addSubMutex sync.Mutex
+
 var v2rayJson = ""
 
 //"{\n\t\"inbounds\": [{\n\t\t\"tag\": \"tcp-ws\",\n\t\t\"port\": 11111,\n\t\t\"listen\": \"127.0.0.1\",\n\t\t\"protocol\": \"vmess\",\n\t\t\"settings\": {\n\t\t\t\"clients\": [{\n\t\t\t\t\t\"email\": \"%s\",\n\t\t\t\t\t\"id\": \"%s\",\n\t\t\t\t\t\"alterId\": 0,\n\t\t\t\t\t\"level\": 0\n\t\t\t\t}\n\n\t\t\t]\n\t\t},\n\t\t\"streamSettings\": {\n\t\t\t\"network\": \"ws\",\n\t\t\t\"wsSettings\": {\n\t\t\t\t\"path\": \"/work\"\n\t\t\t}\n\t\t}\n\t}]\n\n}\n"
@@ -38,6 +41,37 @@ func NodeAuth() gin.HandlerFunc {
 }
 
 func AddSub(c *gin.Context) {
+	// 加锁处理，防止配置文件并发请求处理时相互覆盖.
+	addSubMutex.Lock()
+	defer addSubMutex.Unlock()
+
+	param := new(request.NodeAddSubRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	global.Logger.Info().Msgf(">>>>>>>> Tag: %s, Email: %s, Uuid: %s, Level: %s", param.Tag, param.Email, param.Uuid, param.Level)
+	if param.Tag == "1" { // TODO： Tag定义是啥？
+		err := addUser(param)
+		if err != nil {
+			global.Logger.Err(err).Msg("添加失败")
+			response.ResFail(c, "添加失败, "+err.Error())
+			return
+		}
+	} else {
+		err := delUser(param)
+		if err != nil {
+			global.Logger.Err(err).Msg("删除失败")
+			response.ResFail(c, "删除失败, "+err.Error())
+			return
+		}
+	}
+	response.ResOk(c, "成功")
+	return
+}
+
+func AddSubBak(c *gin.Context) {
 	param := new(request.NodeAddSubRequest)
 	if err := c.ShouldBind(param); err != nil {
 		global.Logger.Err(err).Msg("绑定参数")

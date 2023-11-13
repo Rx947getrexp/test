@@ -20,9 +20,21 @@ const (
 )
 
 const (
+	TimeFormat = "2006-01-02 15:04:05"
+)
+const (
 	UserDevNormalStatus = 1
 	UserDevBanStatus    = 2
 
 	NetworkAutoMode   = 1
 	NetworkManualMode = 2
+
+	UserConfigStatusNormal  = 1
+	UserConfigStatusDeleted = 2
+)
+
+const (
+	UserStatusNormal    = 0  // 用户状态正常
+	UserStatusFrozen    = 1  // 冻结
+	UserStatusCancelled = 10 // 注销
 )

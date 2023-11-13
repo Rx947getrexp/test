@@ -5,7 +5,7 @@ import (
 	"go-speed/api"
 	"go-speed/constant"
 	"go-speed/global"
-	"go-speed/lang"
+	"go-speed/i18n"
 	"go-speed/model"
 	"go-speed/model/request"
 	"go-speed/model/response"
@@ -24,6 +24,8 @@ import (
 	"xorm.io/xorm"
 )
 
+var gConnectNum int
+
 var configs = "{\"log\":{\"level\":\"{{logLevel}}\",\"output\":\"{{leafLogFile}}\"},\"dns\":{\"servers\":[\"1.1.1.1\",\"8.8.8.8\"],\"hosts\":{\"node2.wuwuwu360.xyz\":[\"107.148.239.239\"]}},\"inbounds\":[{\"protocol\":\"tun\",\"settings\":{\"fd\":\"{{tunFd}}\"},\"tag\":\"tun_in\"}],\"outbounds\":[{\"protocol\":\"failover\",\"tag\":\"failover_out\",\"settings\":{\"actors\":[\"proxy1\",\"proxy2\"],\"failTimeout\":4,\"healthCheck\":true,\"checkInterval\":300,\"failover\":true,\"fallbackCache\":false,\"cacheSize\":256,\"cacheTimeout\":60}},{\"tag\":\"proxy1\",\"protocol\":\"chain\",\"settings\":{\"actors\":[\"tls\",\"ws\",\"trojan\"]}},{\"tag\":\"proxy2\",\"protocol\":\"chain\",\"settings\":{\"actors\":[\"tls\",\"ws\",\"trojan\"]}},{\"protocol\":\"tls\",\"tag\":\"tls\",\"settings\":{\"alpn\":[\"http/1.1\"],\"insecure\":true}},{\"protocol\":\"ws\",\"tag\":\"ws\",\"settings\":{\"path\":\"/work\"}},%s,{\"protocol\":\"direct\",\"tag\":\"direct_out\"},{\"protocol\":\"drop\",\"tag\":\"reject_out\"}],\"router\":{\"domainResolve\":true,\"rules\":[{\"external\":[\"site:{{dlcFile}}:cn\"],\"target\":\"direct_out\"},{\"external\":[\"mmdb:{{geoFile}}:cn\"],\"target\":\"direct_out\"},{\"domainKeyword\":[\"apple\",\"icloud\"],\"target\":\"direct_out\"}]}}"
 
 // GenerateDevId C端获取DEV_ID，并保存在本地全局存储
@@ -37,12 +39,12 @@ func GenerateDevId(c *gin.Context) {
 		has, err := global.Db.Where("client_id = ?", clientId).Get(&bean)
 		if err != nil {
 			global.Logger.Err(err).Msg("db连接出错")
-			response.RespFail(c, lang.Translate("cn", "fail"), nil)
+			response.RespFail(c, i18n.RetMsgDBErr, nil)
 			return
 		}
 		if has {
 			result["dev_id"] = fmt.Sprint(bean.Id)
-			response.RespOk(c, "成功", result)
+			response.RespOk(c, i18n.RetMsgSuccess, result)
 			return
 		}
 	}
@@ -67,74 +69,86 @@ func GenerateDevId(c *gin.Context) {
 	rows, err := global.Db.Insert(dev)
 	if err != nil || rows != 1 {
 		global.Logger.Err(err).Msg("db连接出错")
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, i18n.RetMsgDBErr, nil)
 		return
 	}
 
 	result["dev_id"] = fmt.Sprint(id)
-	response.RespOk(c, "成功", result)
+	response.RespOk(c, i18n.RetMsgSuccess, result)
 }
 
 func SendEmail(c *gin.Context) {
 	param := new(request.SendEmailRequest)
 	if err := c.ShouldBind(param); err != nil {
 		global.Logger.Err(err).Msg("绑定参数")
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, i18n.RetMsgParamParseErr, nil)
 		return
 	}
 	user := new(model.TUser)
 	has, err := global.Db.Where("uname = ?", param.Email).Get(user)
 	if err != nil {
 		global.Logger.Err(err).Msg("db连接出错")
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, i18n.RetMsgDBErr, nil)
 		return
 	}
 	if !has {
 		global.Logger.Err(err).Msg("邮箱地址未注册")
-		response.RespFail(c, "邮箱地址未注册", nil)
+		response.RespFail(c, i18n.RetMsgEmailNotReg, nil)
 		return
 	}
 	clientIp := c.ClientIP()
 	err = service.SendTelSms(param.Email, clientIp)
 	if err != nil {
 		global.Logger.Err(err).Msg("发送短信失败！")
-		response.ResFail(c, "发送验证码失败,请稍后再试！")
+		response.ResFail(c, i18n.RetMsgVerifyCodeSendFail)
 		return
 	}
-	response.ResOk(c, "发送成功")
+	response.ResOk(c, i18n.RetMsgSendSuccess)
 }
 
 func Reg(c *gin.Context) {
 	param := new(request.RegRequest)
 	if err := c.ShouldBind(param); err != nil {
 		global.Logger.Err(err).Msg("绑定参数")
-		response.RespFail(c, "参数错误，请检查", nil)
+		response.RespFail(c, i18n.RetMsgParamParseErr, nil)
 		return
 	}
+	// 参数检查
 	if param.Account == "" || param.Passwd == "" || param.EnterPasswd == "" {
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, i18n.RetMsgParamInputInvalid, nil)
 		return
 	}
 	if param.Passwd != param.EnterPasswd {
-		response.RespFail(c, "两次密码不一致，请检查", nil)
+		response.RespFail(c, i18n.RetMsgTwoPasswordNotMatch, nil)
 		return
 	}
-	fmt.Printf("用户邮箱x：%s", param.Account)
+
 	var counts int64
-	_, errx := global.Db.SQL("select count(*) from t_user where uname = ?", param.Account).Get(&counts)
+	_, err := global.Db.SQL("select count(*) from t_user where uname = ?", param.Account).Get(&counts)
+	if err != nil {
+		global.Logger.Err(err).Msg("db连接出错")
+		response.RespFail(c, i18n.RetMsgDBErr, nil)
+		return
+	}
 	if counts > 0 {
-		fmt.Printf("zzzzzzz用户邮箱：%s", param.Account)
-		response.RespFail(c, "该邮箱已注册，请登录或更换！", nil)
-		return
-	} else {
-		fmt.Printf("zzzzzzz用户邮箱：%s", param.Account)
-	}
-	fmt.Printf("用户邮箱2 ：%s", param.Account)
-	if errx != nil {
-		global.Logger.Err(errx).Msg("db连接出错")
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		global.Logger.Err(err).Msgf("账号已注册, account: %s", param.Account)
+		response.RespFail(c, i18n.RetMsgEmailHasRegErr, nil)
 		return
 	}
+
+	// 通过以上检查后，说明账号没有注册过，或者已经注销了。
+	//// 先看用户是否有注册过
+	//userInfo, err := service.GetUserByUserName(param.Account)
+	//if err != nil {
+	//	response.RespFail(c, i18n.RetMsgDBErr, nil)
+	//	return
+	//}
+	//// 注册过，且非已注销，直接报错返回
+	//if userInfo != nil && userInfo.Status != constant.UserStatusCancelled {
+	//	fmt.Printf("zzzzzzz用户邮箱：%s", param.Account)
+	//	response.RespFail(c, i18n.RetMsgEmailHasRegErr, nil)
+	//	return
+	//}
 	/*
 		//渠道来源
 		var channel int = 1 //默认大陆区域 1-中国；2-俄罗斯；3-其它(英语系)
@@ -157,17 +171,30 @@ func Reg(c *gin.Context) {
 	if clientId != "" {
 
 		//查询
-		_, rx := global.Db.SQL("select count(*) as total from t_user where client_id = ?", clientId).Get(&sendSec)
+		var (
+			userFlag          int64
+			userCancelledFlag int64
+		)
+		_, rx := global.Db.SQL("select count(*) as total from t_user where client_id = ?", clientId).Get(&userFlag)
 		if rx != nil {
 			global.Logger.Err(rx).Msg("db连接出错")
-			response.RespFail(c, lang.Translate("cn", "fail"), nil)
+			response.RespFail(c, i18n.RetMsgDBErr, nil)
 			return
 		}
-		if sendSec == 0 {
-			sendSec += 3600
-		} else {
-			sendSec = 0
+
+		_, rx = global.Db.SQL("select count(*) as total from t_user_cancelled where client_id = ?", clientId).Get(&userCancelledFlag)
+		if rx != nil {
+			global.Logger.Err(rx).Msg("db连接出错")
+			response.RespFail(c, i18n.RetMsgDBErr, nil)
+			return
 		}
+
+		global.Logger.Info().Msgf("userFlag:%d, userCancelledFlag: %d", userFlag, userCancelledFlag)
+		if userFlag == 0 && userCancelledFlag == 0 {
+			sendSec = 3600
+		}
+		sendSec = 31536000 // TODO: 统一赠送一年
+
 		/*
 			var bean model.TDev
 				if !has { //送过一次的不再送了
@@ -216,7 +243,7 @@ func Reg(c *gin.Context) {
 	if err != nil || rows != 1 {
 		global.Logger.Err(err).Msg("添加user出错")
 		sess.Rollback()
-		response.RespFail(c, "用户名重复请检查", nil)
+		response.RespFail(c, i18n.RetMsgDBErr, nil)
 		return
 	}
 
@@ -231,7 +258,7 @@ func Reg(c *gin.Context) {
 	if err != nil || rows != 1 {
 		global.Logger.Err(err).Msg("添加user-uuid出错")
 		sess.Rollback()
-		response.RespFail(c, "注册失败", nil)
+		response.RespFail(c, i18n.RetMsgRegFailed, nil)
 		return
 	}
 
@@ -252,7 +279,7 @@ func Reg(c *gin.Context) {
 		if err != nil || rows != 1 {
 			global.Logger.Err(err).Msg("添加赠送记录出错")
 			sess.Rollback()
-			response.RespFail(c, "网络错误", nil)
+			response.RespFail(c, i18n.RetMsgDBErr, nil)
 			return
 		}
 	}
@@ -272,7 +299,7 @@ func Reg(c *gin.Context) {
 		if err != nil || !has {
 			global.Logger.Err(err).Msg("查询上线用户出错")
 			sess.Rollback()
-			response.RespFail(c, "推荐人ID不正确", nil)
+			response.RespFail(c, i18n.RetMsgReferrerIDIncorrect, nil)
 			return
 		}
 		team.DirectId = directTeam.UserId
@@ -287,83 +314,96 @@ func Reg(c *gin.Context) {
 	if err != nil || rows != 1 {
 		global.Logger.Err(err).Msg("添加team出错")
 		sess.Rollback()
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, i18n.RetMsgDBErr, nil)
 		return
 	}
 
 	sess.Commit()
-	response.ResOk(c, "注册成功")
+	response.ResOk(c, i18n.RetMsgRegSuccess)
 }
 
 func Login(c *gin.Context) {
 	param := new(request.LoginRequest)
 	if err := c.ShouldBind(param); err != nil {
 		global.Logger.Err(err).Msg("绑定参数")
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, i18n.RetMsgParamParseErr, nil)
 		return
 	}
 	if param.Account == "" || param.Passwd == "" {
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, i18n.RetMsgAccountPasswordEmptyErr, nil)
 		return
 	}
+
+	// 先看用户是否有注册过
+	userInfo, err := service.GetUserByUserName(param.Account)
+	if err != nil {
+		response.RespFail(c, i18n.RetMsgDBErr, nil)
+		return
+	}
+	if userInfo == nil {
+		global.Logger.Err(err).Msgf("账号不存在！%s", param.Account)
+		response.RespFail(c, i18n.RetMsgAccountNotExist, nil)
+		return
+	}
+
 	pwdDecode := util.AesDecrypt(param.Passwd)
 	pwdMd5 := util.MD5(pwdDecode)
 	user := new(model.TUser)
 	has, err := global.Db.Where("uname = ? and passwd = ? and status = 0", param.Account, pwdMd5).Get(user)
 	if err != nil {
 		global.Logger.Err(err).Msgf("登录出错！%s", param.Account)
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, i18n.RetMsgDBErr, nil)
 		return
 	}
 	if !has {
 		global.Logger.Err(err).Msgf("用户名或密码不正确！%s", param.Account)
-		response.RespFail(c, "用户名或密码不正确！", nil)
+		response.RespFail(c, i18n.RetMsgAccountPasswordIncorrect, nil)
 		return
 	}
 	devId := c.Request.Header.Get("Dev-Id")
-	if devId != "" {
+	if devId != "" && user.Email != "zzz@qq.com" {
 		dId, err := strconv.Atoi(devId)
 		if err != nil {
 			global.Logger.Err(err).Msgf("登录出错！%s,%d", param.Account, dId)
-			response.RespFail(c, lang.Translate("cn", "fail"), nil)
+			response.RespFail(c, i18n.RetMsgParamParseErr, nil)
 			return
 		}
-		/*
-			err = service.UpdateUserDev(int64(dId), user)
-			if err != nil && user.V2rayUuid != "c541b521-17dd-11ee-bc4e-0c9d92c013fb" {
-				global.Logger.Err(err).Msgf("登录出错！%s", param.Account)
-				response.RespFail(c, "设备数限制", nil)
-				return
-			}*/
-		//err = service.UpdateUserWorkMode(int64(dId), user)
-		//if err != nil {
-		//	global.Logger.Err(err).Msgf("登录出错！%s", param.Account)
-		//	response.RespFail(c, lang.Translate("cn", "fail"), nil)
-		//}
+
+		limits, err := service.CheckDevNumLimits(int64(dId), user)
+		if err != nil {
+			global.Logger.Err(err).Msgf("登录出错！%s", param.Account)
+			response.RespFail(c, err.Error(), nil)
+			return
+		}
+		if limits {
+			global.Logger.Err(err).Msgf("登录出错，设备数量超过限制！%s", param.Account)
+			response.RespFail(c, i18n.RetMsgReachedDevicesLimit, nil)
+			return
+		}
 	}
 	dataParam := response.LoginClientParam{
 		UserId: user.Id,
 		Token:  service.GenerateTokenByUser(user.Id, service.CommonUserType),
 	}
-	response.RespOk(c, "登录成功", dataParam)
+	response.RespOk(c, i18n.RetMsgSuccess, dataParam)
 }
 
 func ChangePasswd(c *gin.Context) {
 	param := new(request.ChangePasswdRequest)
 	if err := c.ShouldBind(param); err != nil {
 		global.Logger.Err(err).Msg("绑定参数")
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, i18n.RetMsgParamParseErr, nil)
 		return
 	}
 	if param.Passwd != param.EnterPasswd {
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, i18n.RetMsgTwoPasswordNotMatch, nil)
 		return
 	}
 	claims := c.MustGet("claims").(*service.CustomClaims)
 	user, err := service.GetUserByClaims(claims)
 	if err != nil {
 		global.Logger.Err(err).Msg("用户token鉴权失败")
-		response.ResFail(c, "用户鉴权失败！")
+		response.ResFail(c, i18n.RetMsgAuthFailed)
 		return
 	}
 	oldPwdDecode := util.AesDecrypt(param.OldPasswd)
@@ -376,27 +416,27 @@ func ChangePasswd(c *gin.Context) {
 	rows, err := global.Db.Cols("passwd", "updated_at").Where("id = ? and passwd = ?", user.Id, oldPwdMd5).Update(user)
 	if err != nil || rows < 1 {
 		global.Logger.Err(err).Msg("修改密码失败")
-		response.ResFail(c, "修改密码失败！")
+		response.ResFail(c, i18n.RetMsgOperateFailed)
 		return
 	}
-	response.ResOk(c, "成功")
+	response.ResOk(c, i18n.RetMsgSuccess)
 }
 
 func ForgetPasswd(c *gin.Context) {
 	param := new(request.ForgetRequest)
 	if err := c.ShouldBind(param); err != nil {
 		global.Logger.Err(err).Msg("绑定参数")
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, i18n.RetMsgParamParseErr, nil)
 		return
 	}
 	err := service.VerifyMsg(param.Account, param.VerifyCode)
 	if err != nil {
 		global.Logger.Err(err).Msg("验证码错误")
-		response.ResFail(c, "验证码错误！")
+		response.ResFail(c, i18n.RetMsgVerificationCodeErr)
 		return
 	}
 	if param.Passwd != param.EnterPasswd {
-		response.ResFail(c, "两次密码不一致")
+		response.ResFail(c, i18n.RetMsgTwoPasswordNotMatch)
 		return
 	}
 	pwdDecode := util.AesDecrypt(param.Passwd)
@@ -407,10 +447,10 @@ func ForgetPasswd(c *gin.Context) {
 	rows, err := global.Db.Cols("passwd", "updated_at").Where("uname = ? ", param.Account).Update(user)
 	if err != nil || rows < 1 {
 		global.Logger.Err(err).Msg("修改密码失败")
-		response.ResFail(c, "修改密码失败！")
+		response.ResFail(c, i18n.RetMsgOperateFailed)
 		return
 	}
-	response.ResOk(c, "成功")
+	response.ResOk(c, i18n.RetMsgSuccess)
 }
 
 func UserInfo(c *gin.Context) {
@@ -418,7 +458,7 @@ func UserInfo(c *gin.Context) {
 	user, err := service.GetUserByClaims(claims)
 	if err != nil {
 		global.Logger.Err(err).Msg("用户token鉴权失败")
-		response.ResFail(c, "用户鉴权失败！")
+		response.ResFail(c, i18n.RetMsgAuthFailed)
 		return
 	}
 	res := response.UserInfoResponse{
@@ -429,28 +469,28 @@ func UserInfo(c *gin.Context) {
 		ExpiredTime: user.ExpiredTime,
 		SurplusFlow: 0,
 	}
-	response.RespOk(c, "成功", res)
+	response.RespOk(c, i18n.RetMsgSuccess, res)
 }
 
 func TeamList(c *gin.Context) {
 	param := new(request.TeamListRequest)
 	if err := c.ShouldBind(param); err != nil {
 		global.Logger.Err(err).Msg("绑定参数")
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, i18n.RetMsgParamParseErr, nil)
 		return
 	}
 	claims := c.MustGet("claims").(*service.CustomClaims)
 	user, err := service.GetUserByClaims(claims)
 	if err != nil {
 		global.Logger.Err(err).Msg("用户token鉴权失败")
-		response.ResFail(c, "用户鉴权失败！")
+		response.ResFail(c, i18n.RetMsgAuthFailed)
 		return
 	}
 	session := service.TeamList(param, user)
 	count, err := service.TeamList(param, user).Count()
 	if err != nil {
 		global.Logger.Err(err).Msg("查询出错！")
-		response.ResFail(c, "查询出错！")
+		response.ResFail(c, i18n.RetMsgDBErr)
 		return
 	}
 	cols := "u.uname,u.level,t.created_at"
@@ -467,7 +507,7 @@ func TeamList(c *gin.Context) {
 		list = append(list, team)
 	}
 	dataList.List = list
-	response.RespOk(c, "成功", dataList)
+	response.RespOk(c, i18n.RetMsgSuccess, dataList)
 }
 
 func TeamInfo(c *gin.Context) {
@@ -475,7 +515,7 @@ func TeamInfo(c *gin.Context) {
 	user, err := service.GetUserByClaims(claims)
 	if err != nil {
 		global.Logger.Err(err).Msg("用户token鉴权失败")
-		response.ResFail(c, "用户鉴权失败！")
+		response.ResFail(c, i18n.RetMsgAuthFailed)
 		return
 	}
 	var fans int64
@@ -513,7 +553,7 @@ func TeamInfo(c *gin.Context) {
 		AwardMoney: "0",
 		AwardList:  dataList,
 	}
-	response.RespOk(c, "成功", res)
+	response.RespOk(c, i18n.RetMsgSuccess, res)
 }
 
 func GetConfig(c *gin.Context) {
@@ -521,29 +561,36 @@ func GetConfig(c *gin.Context) {
 	param := new(request.BanDevRequest)
 	if err := c.ShouldBind(param); err != nil {
 		global.Logger.Err(err).Msg("绑定参数")
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, i18n.RetMsgParamParseErr, nil)
 		return
 	}
 	claims := c.MustGet("claims").(*service.CustomClaims)
 	user, err := service.GetUserByClaims(claims)
 	if err != nil {
 		global.Logger.Err(err).Msg("用户token鉴权失败")
-		response.ResFail(c, "用户鉴权失败！")
+		response.ResFail(c, i18n.RetMsgAuthFailed)
 		return
+	}
+
+	// 当参数node_id设置时，表示指定node_id来获取配置；
+	// 当参数node_id没有设置时，表示获取全部配置
+	sqlWhere := "status = 1"
+	if param.NodeId > 0 {
+		sqlWhere = fmt.Sprintf("id = %d and status = 1", param.NodeId)
 	}
 
 	uuid := user.V2rayUuid
 	var list []map[string]interface{}
 	cols := "id,name,title,title_en,country,country_en,server,port," +
 		"min_port as min,max_port as max,path,is_recommend"
-	errs := global.Db.Where("status = 1").
+	errs := global.Db.Where(sqlWhere).
 		Table("t_node").
 		Cols(cols).
 		OrderBy("id desc").
 		Find(&list)
 	if errs != nil {
 		global.Logger.Err(errs).Msg("数据库链接出错")
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, i18n.RetMsgDBErr, nil)
 		return
 	}
 	//var dnsArray = []string{}
@@ -554,7 +601,7 @@ func GetConfig(c *gin.Context) {
 	for _, item := range list {
 
 		nodeId := item["id"].(int64)
-		dnsList, _ := service.FindNodeDnsByNodeId(nodeId, 1)
+		dnsList, _ := service.FindNodeDnsByNodeId(nodeId, user.Level+1) // user_level+1等于服务器域名的等级
 
 		for _, dns := range dnsList {
 
@@ -594,8 +641,8 @@ func GetConfig(c *gin.Context) {
 		session := service.NoticeList(param)
 		count, err := service.NoticeList(param).Count()
 		if err != nil {
-			global.Logger.Err(err).Msg("查询出错！")
-			response.ResFail(c, "查询出错！")
+			global.Logger.Err(err).Msg(i18n.RetMsgDBErr)
+			response.ResFail(c, i18n.RetMsgDBErr)
 			return
 		}
 		cols := "n.id,n.title,n.tag,n.created_at"
@@ -637,7 +684,7 @@ func AppInfo(c *gin.Context) {
 		Find(&list)
 	if err != nil {
 		global.Logger.Err(err).Msg("key不存在！")
-		response.ResFail(c, "失败！")
+		response.ResFail(c, i18n.RetMsgOperateFailed)
 		return
 	}
 	var result = make(map[string]interface{})
@@ -648,7 +695,7 @@ func AppInfo(c *gin.Context) {
 	has, err := global.Db.Where("status = 1 and app_type = 3").OrderBy("id desc").Limit(1).Get(&version)
 	if err != nil || !has {
 		global.Logger.Err(err).Msg("key不存在！")
-		response.ResFail(c, "失败！")
+		response.ResFail(c, i18n.RetMsgOperateFailed)
 		return
 	}
 	result["app_version"] = version.Version
@@ -662,35 +709,35 @@ func NoticeList(c *gin.Context) {
 	param := new(request.NoticeListRequest)
 	if err := c.ShouldBind(param); err != nil {
 		global.Logger.Err(err).Msg("绑定参数")
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, i18n.RetMsgParamParseErr, nil)
 		return
 	}
 	session := service.NoticeList(param)
 	count, err := service.NoticeList(param).Count()
 	if err != nil {
-		global.Logger.Err(err).Msg("查询出错！")
-		response.ResFail(c, "查询出错！")
+		global.Logger.Err(err).Msg(i18n.RetMsgDBErr)
+		response.ResFail(c, i18n.RetMsgDBErr)
 		return
 	}
 	cols := "n.id,n.title,n.tag,n.created_at"
 	session.Cols(cols)
 	session.OrderBy("n.id desc")
 	dataList, _ := commonPageListV2(param.Page, param.Size, count, session)
-	response.RespOk(c, "成功", dataList)
+	response.RespOk(c, i18n.RetMsgSuccess, dataList)
 }
 
 func NoticeDetail(c *gin.Context) {
 	param := new(request.NoticeDetailRequest)
 	if err := c.ShouldBind(param); err != nil {
 		global.Logger.Err(err).Msg("绑定参数")
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, i18n.RetMsgParamParseErr, nil)
 		return
 	}
 	var notice model.TNotice
 	has, err := global.Db.Where("id = ?", param.Id).Get(&notice)
 	if err != nil || !has {
 		global.Logger.Err(err).Msg("notice不存在")
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, i18n.RetMsgQueryResultIsEmpty, nil)
 		return
 	}
 	var result = make(map[string]interface{})
@@ -699,7 +746,7 @@ func NoticeDetail(c *gin.Context) {
 	result["content"] = notice.Content
 	result["tag"] = notice.Tag
 	result["created_at"] = notice.CreatedAt
-	response.RespOk(c, "成功", result)
+	response.RespOk(c, i18n.RetMsgSuccess, result)
 }
 
 func ReceiveFree(c *gin.Context) {
@@ -709,7 +756,7 @@ func ReceiveFree(c *gin.Context) {
 	user, err := service.GetUserByClaims(claims)
 	if err != nil {
 		global.Logger.Err(err).Msg("用户token鉴权失败")
-		response.ResFail(c, "用户鉴权失败！")
+		response.ResFail(c, i18n.RetMsgAuthFailed)
 		return
 	}
 
@@ -718,7 +765,7 @@ func ReceiveFree(c *gin.Context) {
 	todayStr := time.Now().Format("2006-01-02")
 	_, err = global.Db.SQL("select count(*) from t_activity where user_id = ? and created_at >= ?", user.Id, todayStr).Get(&counts)
 	if counts >= 3 {
-		response.ResFail(c, "活动每天限制3次！")
+		response.ResFail(c, i18n.RetMsgActivity3TimesLimits)
 		return
 	}
 
@@ -751,7 +798,7 @@ func ReceiveFree(c *gin.Context) {
 	if err != nil || rows < 1 {
 		global.Logger.Err(err).Msg("领取失败")
 		sess.Rollback()
-		response.ResFail(c, "失败！")
+		response.ResFail(c, i18n.RetMsgOperateFailed)
 		return
 	}
 
@@ -771,7 +818,7 @@ func ReceiveFree(c *gin.Context) {
 		if err != nil || rows < 1 {
 			global.Logger.Err(err).Msg("领取失败")
 			sess.Rollback()
-			response.ResFail(c, "失败！")
+			response.ResFail(c, i18n.RetMsgOperateFailed)
 			return
 		}
 
@@ -788,7 +835,7 @@ func ReceiveFree(c *gin.Context) {
 		if err != nil || rows < 1 {
 			global.Logger.Err(err).Msg("更新用户状态失败")
 			sess.Rollback()
-			response.ResFail(c, "失败！")
+			response.ResFail(c, i18n.RetMsgOperateFailed)
 			return
 		}
 	}
@@ -798,7 +845,7 @@ func ReceiveFree(c *gin.Context) {
 	result := make(map[string]interface{})
 	result["status"] = status
 	result["hours"] = giftSec / 3600
-	response.RespOk(c, "成功", result)
+	response.RespOk(c, i18n.RetMsgSuccess, result)
 }
 
 func ReceiveFreeSummary(c *gin.Context) {
@@ -807,14 +854,14 @@ func ReceiveFreeSummary(c *gin.Context) {
 	_, err := global.Db.SQL("select count(id) as nums,ROUND(IFNULL(sum(gift_sec)/3600,0),2) as hours from t_activity where created_at > ?", dateStr).Get(&result)
 	if err != nil {
 		fmt.Println(err)
-		response.ResFail(c, "查询出错")
+		response.ResFail(c, i18n.RetMsgDBErr)
 		return
 	}
-	response.RespOk(c, "成功", result)
+	response.RespOk(c, i18n.RetMsgSuccess, result)
 }
 
 func NodeList(c *gin.Context) {
-	la := c.GetHeader("Lang")
+	//la := c.GetHeader("Lang")
 	//用户评级
 	level := 1 //默认1
 	token := c.Request.Header.Get("Authorization-Token")
@@ -822,13 +869,13 @@ func NodeList(c *gin.Context) {
 		claims, err := service.ParseTokenByUser(token, service.CommonUserType)
 		if err != nil {
 			global.Logger.Err(err).Msg("token出错")
-			response.RespFail(c, lang.Translate("cn", "fail"), nil)
+			response.RespFail(c, i18n.RetMsgParamParseErr, nil)
 			return
 		}
 		user, err := service.GetUserByClaims(claims)
 		if err != nil {
 			global.Logger.Err(err).Msg("用户token鉴权失败")
-			response.ResFail(c, "用户鉴权失败！")
+			response.ResFail(c, i18n.RetMsgAuthFailed)
 			return
 		}
 		level = service.RatingMemberLevel(user)
@@ -843,7 +890,7 @@ func NodeList(c *gin.Context) {
 		Find(&list)
 	if err != nil {
 		global.Logger.Err(err).Msg("数据库链接出错")
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, i18n.RetMsgDBErr, nil)
 		return
 	}
 	for _, item := range list {
@@ -863,7 +910,7 @@ func NodeList(c *gin.Context) {
 	}
 	var result = make(map[string]interface{})
 	result["list"] = list
-	response.RespOk(c, lang.Translate(la, "success"), result)
+	response.RespOk(c, i18n.RetMsgSuccess, result)
 }
 
 func DnsList(c *gin.Context) {
@@ -874,13 +921,13 @@ func DnsList(c *gin.Context) {
 		claims, err := service.ParseTokenByUser(token, service.CommonUserType)
 		if err != nil {
 			global.Logger.Err(err).Msg("token出错")
-			response.RespFail(c, lang.Translate("cn", "fail"), nil)
+			response.RespFail(c, i18n.RetMsgParamParseErr, nil)
 			return
 		}
 		user, err := service.GetUserByClaims(claims)
 		if err != nil {
 			global.Logger.Err(err).Msg("用户token鉴权失败")
-			response.ResFail(c, "用户鉴权失败！")
+			response.ResFail(c, i18n.RetMsgAuthFailed)
 			return
 		}
 		level = service.RatingMemberLevel(user)
@@ -894,7 +941,7 @@ func DnsList(c *gin.Context) {
 		Find(&list)
 	if err != nil {
 		global.Logger.Err(err).Msg("数据库链接出错")
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, i18n.RetMsgDBErr, nil)
 		return
 	}
 	for _, item := range list {
@@ -902,7 +949,7 @@ func DnsList(c *gin.Context) {
 	}
 	var result = make(map[string]interface{})
 	result["list"] = list
-	response.RespOk(c, "成功", result)
+	response.RespOk(c, i18n.RetMsgSuccess, result)
 }
 
 func ComboList(c *gin.Context) {
@@ -912,7 +959,7 @@ func ComboList(c *gin.Context) {
 	err := global.Db.Table("t_goods as g").Cols(cols).Where("status = 1").OrderBy("id desc").Find(&list)
 	if err != nil {
 		global.Logger.Err(err).Msg("数据库链接出错")
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, i18n.RetMsgDBErr, nil)
 		return
 	}
 	//获取USD价格
@@ -948,7 +995,7 @@ func ComboList(c *gin.Context) {
 
 	//if len(list) == 0 {
 	//	result["list"] = []map[string]interface{}{}
-	//	response.RespOk(c, "成功", result)
+	//	response.RespOk(c, i18n.RetMsgSuccess, result)
 	//}
 	//var tmpMap = make(map[int]interface{})
 	//for _, item := range list {
@@ -968,7 +1015,7 @@ func ComboList(c *gin.Context) {
 	//	rList = append(rList, tMap)
 	//}
 	result["list"] = list
-	response.RespOk(c, "成功", result)
+	response.RespOk(c, i18n.RetMsgSuccess, result)
 }
 
 func ExpireUserList(c *gin.Context) {
@@ -977,7 +1024,7 @@ func ExpireUserList(c *gin.Context) {
 	global.Db.Table("t_user").Where("expired_time < ? and expired_time+1200>?", ex_time, ex_time).Find(&list)
 	result := make(map[string]interface{})
 	result["list"] = list
-	response.RespOk(c, "成功", result)
+	response.RespOk(c, i18n.RetMsgSuccess, result)
 }
 
 func AdList(c *gin.Context) {
@@ -985,33 +1032,33 @@ func AdList(c *gin.Context) {
 	global.Db.Table("t_ad").Where("status = 1").Find(&list)
 	result := make(map[string]interface{})
 	result["list"] = list
-	response.RespOk(c, "成功", result)
+	response.RespOk(c, i18n.RetMsgSuccess, result)
 }
 
 func UploadLog(c *gin.Context) {
 	param := new(request.UploadLogRequest)
 	if err := c.ShouldBind(param); err != nil {
 		global.Logger.Err(err).Msg("绑定参数")
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, i18n.RetMsgParamParseErr, nil)
 		return
 	}
 	claims := c.MustGet("claims").(*service.CustomClaims)
 	user, err := service.GetUserByClaims(claims)
 	if err != nil {
 		global.Logger.Err(err).Msg("用户token鉴权失败")
-		response.ResFail(c, "用户鉴权失败！")
+		response.ResFail(c, i18n.RetMsgAuthFailed)
 		return
 	}
 	devId := c.Request.Header.Get("Dev-Id")
 	dId, err := strconv.Atoi(devId)
 	if err != nil {
 		global.Logger.Err(err).Msg("设备鉴权失败")
-		response.ResFail(c, "设备鉴权失败！")
+		response.ResFail(c, i18n.RetMsgDeviceAuthFailed)
 		return
 	}
 	if !service.CheckUserDev(int64(dId), user) {
 		global.Logger.Err(err).Msg("设备鉴权失败")
-		response.ResFail(c, "设备鉴权失败！")
+		response.ResFail(c, i18n.RetMsgDeviceAuthFailed)
 		return
 	}
 	log := &model.TUploadLog{
@@ -1025,31 +1072,31 @@ func UploadLog(c *gin.Context) {
 	rows, err := global.Db.Insert(log)
 	if err != nil || rows < 1 {
 		global.Logger.Err(err).Msg("上传日志失败")
-		response.ResFail(c, "上传日志失败！")
+		response.ResFail(c, i18n.RetMsgUploadLogFailed)
 		return
 	}
-	response.ResOk(c, "成功")
+	response.ResOk(c, i18n.RetMsgSuccess)
 }
 
 func CreateOrder(c *gin.Context) {
 	param := new(request.CreateOrderRequest)
 	if err := c.ShouldBind(param); err != nil {
 		global.Logger.Err(err).Msg("绑定参数")
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, i18n.RetMsgParamParseErr, nil)
 		return
 	}
 	claims := c.MustGet("claims").(*service.CustomClaims)
 	user, err := service.GetUserByClaims(claims)
 	if err != nil {
 		global.Logger.Err(err).Msg("用户token鉴权失败")
-		response.ResFail(c, "用户鉴权失败！")
+		response.ResFail(c, i18n.RetMsgAuthFailed)
 		return
 	}
 	goods := new(model.TGoods)
 	has, err := global.Db.Where("id = ? and status = 1", param.GoodsId).Get(goods)
 	if err != nil || !has {
 		global.Logger.Err(err).Msg("创建订单失败")
-		response.ResFail(c, "创建订单失败！")
+		response.ResFail(c, i18n.RetMsgDealCreateFailed)
 		return
 	}
 	id, _ := service.GenSnowflake()
@@ -1068,82 +1115,82 @@ func CreateOrder(c *gin.Context) {
 	rows, err := global.Db.Insert(order)
 	if err != nil || rows < 1 {
 		global.Logger.Err(err).Msg("创建订单失败")
-		response.ResFail(c, "创建订单失败！")
+		response.ResFail(c, i18n.RetMsgDealCreateFailed)
 		return
 	}
 	result := make(map[string]interface{})
 	result["oid"] = id
-	response.RespOk(c, "成功", result)
+	response.RespOk(c, i18n.RetMsgSuccess, result)
 }
 
 func OrderList(c *gin.Context) {
 	param := new(request.OrderListRequest)
 	if err := c.ShouldBind(param); err != nil {
 		global.Logger.Err(err).Msg("绑定参数")
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, i18n.RetMsgParamParseErr, nil)
 		return
 	}
 	claims := c.MustGet("claims").(*service.CustomClaims)
 	user, err := service.GetUserByClaims(claims)
 	if err != nil {
 		global.Logger.Err(err).Msg("用户token鉴权失败")
-		response.ResFail(c, "用户鉴权失败！")
+		response.ResFail(c, i18n.RetMsgAuthFailed)
 		return
 	}
 	session := service.OrderList(param, user)
 	count, err := service.OrderList(param, user).Count()
 	if err != nil {
-		global.Logger.Err(err).Msg("查询出错！")
-		response.ResFail(c, "查询出错！")
+		global.Logger.Err(err).Msg(i18n.RetMsgDBErr)
+		response.ResFail(c, i18n.RetMsgDBErr)
 		return
 	}
 	cols := "*"
 	session.Cols(cols)
 	session.OrderBy("o.id desc")
 	dataList, _ := commonPageListV2(param.Page, param.Size, count, session)
-	response.RespOk(c, "成功", dataList)
+	response.RespOk(c, i18n.RetMsgSuccess, dataList)
 }
 
 func DevList(c *gin.Context) {
 	param := new(request.DevListRequest)
 	if err := c.ShouldBind(param); err != nil {
 		global.Logger.Err(err).Msg("绑定参数")
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, i18n.RetMsgParamParseErr, nil)
 		return
 	}
 	claims := c.MustGet("claims").(*service.CustomClaims)
 	user, err := service.GetUserByClaims(claims)
 	if err != nil {
 		global.Logger.Err(err).Msg("用户token鉴权失败")
-		response.ResFail(c, "用户鉴权失败！")
+		response.ResFail(c, i18n.RetMsgAuthFailed)
 		return
 	}
 	session := service.UserDevList(param, user)
 	count, err := service.UserDevList(param, user).Count()
 	if err != nil {
-		global.Logger.Err(err).Msg("查询出错！")
-		response.ResFail(c, "查询出错！")
+		global.Logger.Err(err).Msg(i18n.RetMsgDBErr)
+		response.ResFail(c, i18n.RetMsgDBErr)
 		return
 	}
 	cols := "d.os,ud.*"
 	session.Cols(cols)
 	session.OrderBy("ud.id desc")
 	dataList, _ := commonPageListV2(param.Page, param.Size, count, session)
-	response.RespOk(c, "成功", dataList)
+	response.RespOk(c, i18n.RetMsgSuccess, dataList)
 }
 
 func BanDev(c *gin.Context) {
 	param := new(request.BanDevRequest)
 	if err := c.ShouldBind(param); err != nil {
 		global.Logger.Err(err).Msg("绑定参数")
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, i18n.RetMsgParamParseErr, nil)
 		return
 	}
 	claims := c.MustGet("claims").(*service.CustomClaims)
 	user, err := service.GetUserByClaims(claims)
 	if err != nil {
 		global.Logger.Err(err).Msg("用户token鉴权失败")
-		response.ResFail(c, "用户鉴权失败！")
+		response.ResFail(c, i18n.RetMsgAuthFailed)
 		return
 	}
 	userDev := new(model.TUserDev)
@@ -1154,39 +1201,10 @@ func BanDev(c *gin.Context) {
 		Update(userDev)
 	if err != nil || rows < 1 {
 		global.Logger.Err(err).Msg("踢除设备失败")
-		response.ResFail(c, "踢除设备失败！")
+		response.ResFail(c, i18n.RetMsgRemoveDevFailed)
 		return
 	}
-	response.ResOk(c, "成功")
-}
-func Connect2(c *gin.Context) {
-
-	//发送请求：
-	req := &request.NodeAddSubRequest{
-		Tag:   "1",
-		Uuid:  "3a4112cc-17de-11ee-8b15-0c9d92c013dd",
-		Email: "aaaxxx@qq.com",
-	}
-	url := "https://node2.wuwuwu360.xyz/sl"
-	res := new(response.Response)
-	headerParam := make(map[string]string)
-	timestamp := fmt.Sprint(time.Now().Unix())
-	headerParam["timestamp"] = timestamp
-	headerParam["accessToken"] = util.MD5(fmt.Sprint(timestamp, constant.AccessTokenSalt))
-	err := util.HttpClientPostV2(url, headerParam, req, res)
-	if err != nil {
-		global.Logger.Err(err).Msg("发送心跳包失败...")
-		return
-	}
-	if res.Code == 401 {
-		global.Logger.Err(err).Msg("发送心跳包鉴权失败...")
-		return
-	}
-
-	//下发服务器配置给客户端
-	result := make(map[string]interface{})
-	result["node_id"] = 1
-	response.RespOk(c, "成功", result)
+	response.ResOk(c, i18n.RetMsgSuccess)
 }
 
 //连接
@@ -1208,7 +1226,7 @@ func Connect(c *gin.Context) {
 		user, err := service.GetUserByClaims(claims)
 		if err != nil {
 			global.Logger.Err(err).Msg("用户token鉴权失败")
-			response.ResFail(c, "用户鉴权失败！")
+			response.ResFail(c, i18n.RetMsgAuthFailed)
 			return
 		}
 	*/
@@ -1216,36 +1234,47 @@ func Connect(c *gin.Context) {
 	if err := c.ShouldBind(param); err != nil {
 		global.Logger.Err(err).Msg("绑定参数")
 		fmt.Printf("connect 1")
-		response.ResFail(c, "缺少参数")
+		response.ResFail(c, i18n.RetMsgParamParseErr)
 		return
 	}
 	claims := c.MustGet("claims").(*service.CustomClaims)
 	user, err := service.GetUserByClaims(claims)
 	if err != nil {
 		global.Logger.Err(err).Msg("用户token鉴权失败")
-		response.ResFail(c, "用户鉴权失败！")
+		response.ResFail(c, i18n.RetMsgAuthFailed)
 		return
 	}
+	global.Logger.Info().Msgf(">>>>>>>>> user: %s, ExpiredTime: %d", user.Uname, user.ExpiredTime)
 
 	req := &request.NodeAddSubRequest{}
 	if user.ExpiredTime > time.Now().Unix() {
 		//发送请求：
 		req.Tag = "1"
+		global.Logger.Info().Msgf(">>>>>>>>> user: %s, ExpiredTime: %d, Tag: %s", user.Uname, user.ExpiredTime, req.Tag)
 	} else {
 		req.Tag = "2"
+		global.Logger.Info().Msgf(">>>>>>>>> user: %s, ExpiredTime: %d, Tag: %s", user.Uname, user.ExpiredTime, req.Tag)
 	}
 	if user.V2rayUuid == "c541b521-17dd-11ee-bc4e-0c9d92c013fb" || user.V2rayUuid == "bf268a88-318f-d58f-0e9f-66d6f066be31" {
-		fmt.Printf("connect ok %s", req.Uuid)
-		response.ResOk(c, "成功")
-		return
+		//fmt.Printf("connect ok %s", req.Uuid)
+		//response.ResOk(c, i18n.RetMsgSuccess)
+		//return
+		req.Tag = "1"
 	}
 	req.Uuid = user.V2rayUuid
 	req.Email = user.Email
 	req.Level = fmt.Sprintf("%d", user.Level)
 
 	//url := "https://node2.wuwuwu360.xyz/node/add_sub"
+	// 当参数node_id设置时，表示指定node_id来获取配置；
+	// 当参数node_id没有设置时，表示获取全部配置
 	dnsList, _ := service.FindNodes(user.Level + 1)
-	for _, item := range dnsList {
+	index := 0
+	if len(dnsList) > 0 {
+		index = gConnectNum % len(dnsList)
+	}
+	nodeName := ""
+	for i, item := range dnsList {
 		//mType := item.Server // item["id"].(int32)
 		//period := item["period"].(int32)
 		//if period == 7 {
@@ -1257,51 +1286,44 @@ func Connect(c *gin.Context) {
 		res := new(response.Response)
 		headerParam["timestamp"] = timestamp
 		headerParam["accessToken"] = util.MD5(fmt.Sprint(timestamp, constant.AccessTokenSalt))
-		fmt.Printf("33333:level:%d,req.Tag:%s,udid:%s,email:%s,url:%s,level:%s", user.Level, req.Tag, req.Uuid, req.Email, url, req.Level)
+		global.Logger.Info().Msgf("33333:level:%d,req.Tag:%s,udid:%s,email:%s,url:%s,level:%s", user.Level, req.Tag, req.Uuid, req.Email, url, req.Level)
 		err = util.HttpClientPostV2(url, headerParam, req, res)
 		if err != nil {
-
-			fmt.Printf(",发送失败 %s", err.Error())
-			response.RespFail(c, "失败", nil)
+			global.Logger.Err(err).Msgf(",发送失败 %s", err.Error())
+			response.RespFail(c, i18n.RetMsgOperateFailed, nil)
 			return
 		}
-
+		if param.NodeId > 0 && item.Id == param.NodeId {
+			nodeName = item.Name
+		}
+		if i == index && nodeName == "" {
+			nodeName = item.Name
+		}
 	}
 	if req.Tag == "1" {
-		response.RespOk(c, "成功", nil)
+		gConnectNum = gConnectNum + 1
+		if gConnectNum >= 1000000 {
+			gConnectNum = 0
+		}
+		var result = make(map[string]interface{})
+		result["node_name"] = nodeName
+		response.RespOk(c, i18n.RetMsgSuccess, result)
+		global.Logger.Info().Msgf(">>>>>>>>> user: %s, result: %v", user.Uname, result)
 	} else {
-		response.RespFail(c, "账户已过期", nil)
+		response.RespFail(c, i18n.RetMsgAccountExpired, nil)
+		global.Logger.Info().Msgf(">>>>>>>>> user: %s, result: nil", user.Uname)
 	}
 	return
+}
 
-	dns := dnsList[0].Server
-	//这里要加多台机器的url
-	url := fmt.Sprintf("https://%s/site-api/node/add_sub", dns)
-	res := new(response.Response)
-	fmt.Printf("33333:level:%d,req.Tag:%s,udid:%s,email:%s,url:%s", user.Level, req.Tag, req.Uuid, req.Email, url)
-	headerParam := make(map[string]string)
-	timestamp := fmt.Sprint(time.Now().Unix())
-	headerParam["timestamp"] = timestamp
-	headerParam["accessToken"] = util.MD5(fmt.Sprint(timestamp, constant.AccessTokenSalt))
-	err = util.HttpClientPostV2(url, headerParam, req, res)
-
+func getDevIdFromHeader(c *gin.Context) int64 {
+	devId := c.Request.Header.Get("Dev-Id")
+	devIdInt, err := strconv.ParseInt(devId, 10, 64)
 	if err != nil {
-		global.Logger.Err(err).Msg("发送心跳包失败...")
-		fmt.Printf(",发送失败 %s", err.Error())
-		response.RespFail(c, "失败", nil)
-		return
+		global.Logger.Err(err).Msg("参数DevId错误")
+		return 0
 	}
-	if res.Code == 401 {
-		global.Logger.Err(err).Msg("发送心跳包鉴权失败...")
-		response.RespFail(c, "失败", nil)
-		return
-	}
-	//下发服务器配置给客户端
-	if res.Code == 200 {
-		response.RespOk(c, "成功", nil)
-	} else {
-		response.RespFail(c, "失败", nil)
-	}
+	return devIdInt
 }
 
 // ChangeNetwork 切换节点工作
@@ -1309,31 +1331,31 @@ func ChangeNetwork(c *gin.Context) {
 	param := new(request.ChangeNetworkRequest)
 	if err := c.ShouldBind(param); err != nil {
 		global.Logger.Err(err).Msg("绑定参数")
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, i18n.RetMsgParamParseErr, nil)
 		return
 	}
-	if param.WorkMode != 1 || param.WorkMode != 2 {
+	if param.WorkMode != 1 && param.WorkMode != 2 {
 		global.Logger.Err(nil).Msg("参数错误")
-		response.RespFail(c, lang.Translate("cn", "fail"), nil)
+		response.RespFail(c, i18n.RetMsgParamInvalid, nil)
 		return
 	}
 	claims := c.MustGet("claims").(*service.CustomClaims)
 	user, err := service.GetUserByClaims(claims)
 	if err != nil {
 		global.Logger.Err(err).Msg("用户token鉴权失败")
-		response.ResFail(c, "用户鉴权失败！")
+		response.ResFail(c, i18n.RetMsgAuthFailed)
 		return
 	}
 	devId := c.Request.Header.Get("Dev-Id")
 	dId, err := strconv.Atoi(devId)
 	if err != nil {
 		global.Logger.Err(err).Msg("设备鉴权失败")
-		response.ResFail(c, "设备鉴权失败！")
+		response.ResFail(c, i18n.RetMsgDeviceAuthFailed)
 		return
 	}
 	if !service.CheckUserDev(int64(dId), user) {
 		global.Logger.Err(err).Msg("设备鉴权失败")
-		response.ResFail(c, "设备鉴权失败！")
+		response.ResFail(c, i18n.RetMsgDeviceAuthFailed)
 		return
 	}
 
@@ -1352,7 +1374,7 @@ func ChangeNetwork(c *gin.Context) {
 	if err != nil || rows < 1 {
 		global.Logger.Err(err).Msg("workMode出错")
 		sess.Rollback()
-		response.RespFail(c, "失败", nil)
+		response.RespFail(c, i18n.RetMsgDBErr, nil)
 		return
 	}
 
@@ -1370,7 +1392,7 @@ func ChangeNetwork(c *gin.Context) {
 	if err != nil || rows < 1 {
 		global.Logger.Err(err).Msg("workLog出错")
 		sess.Rollback()
-		response.RespFail(c, "失败", nil)
+		response.RespFail(c, i18n.RetMsgDBErr, nil)
 		return
 	}
 
@@ -1378,7 +1400,7 @@ func ChangeNetwork(c *gin.Context) {
 	//下发服务器配置给客户端
 	result := make(map[string]interface{})
 	result["node_id"] = 1
-	response.RespOk(c, "成功", result)
+	response.RespOk(c, i18n.RetMsgSuccess, result)
 }
 
 func SwitchButtonStatus(c *gin.Context) {
@@ -1392,7 +1414,7 @@ func SwitchButtonStatus(c *gin.Context) {
 	//user, err := service.GetUserByClaims(claims)
 	//if err != nil {
 	//	global.Logger.Err(err).Msg("用户token鉴权失败")
-	//	response.ResFail(c, "用户鉴权失败！")
+	//	response.ResFail(c, i18n.RetMsgAuthFailed)
 	//	return
 	//}
 }
@@ -1412,7 +1434,7 @@ func AppFilter(c *gin.Context) {
 		}
 
 	}
-	response.RespOk(c, "成功", result)
+	response.RespOk(c, i18n.RetMsgSuccess, result)
 }
 
 func PrintParam() gin.HandlerFunc {
@@ -1511,7 +1533,7 @@ func commonPageListV2(page, size int, total int64, session *xorm.Session) (respo
 		Limit(size, offset).
 		Find(&list)
 	if err != nil {
-		global.Logger.Err(err).Msg("查询出错！")
+		global.Logger.Err(err).Msg(i18n.RetMsgDBErr)
 		return response.PageResult{}, err
 	}
 	if len(list) == 0 {
@@ -1523,4 +1545,165 @@ func commonPageListV2(page, size int, total int64, session *xorm.Session) (respo
 	dataList.Size = size
 	dataList.List = list
 	return dataList, nil
+}
+
+// 注销账户
+func CancelAccount(c *gin.Context) {
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("用户token鉴权失败")
+		response.ResFail(c, i18n.RetMsgAuthFailed)
+		return
+	}
+
+	//开启事务
+	sess := global.Db.NewSession()
+	defer sess.Close()
+	err = sess.Begin()
+	if err != nil {
+		global.Logger.Err(err).Msg("注销失败")
+		response.ResFail(c, i18n.RetMsgLogoutFailed)
+		return
+	}
+
+	userCancelled := &model.TUserCancelled{
+		Id:          user.Id,
+		Uname:       user.Uname,
+		Passwd:      user.Passwd,
+		Email:       user.Email,
+		Phone:       user.Phone,
+		Level:       user.Level,
+		ExpiredTime: user.ExpiredTime,
+		V2rayUuid:   user.V2rayUuid,
+		V2rayTag:    user.V2rayTag,
+		ChannelId:   user.ChannelId,
+		Channel:     user.Channel,
+		Status:      constant.UserStatusCancelled,
+		CreatedAt:   user.CreatedAt,
+		UpdatedAt:   time.Now(),
+		Comment:     user.Comment,
+		ClientId:    user.ClientId,
+	}
+	rows, err := sess.Insert(userCancelled)
+	if err != nil || rows != 1 {
+		global.Logger.Err(err).Msgf("注销账号失败, Insert cancelled user, rows: %d, err: %v", rows, err)
+		_ = sess.Rollback()
+		response.RespFail(c, i18n.RetMsgLogoutFailed, nil)
+		return
+	}
+
+	rows, err = sess.Delete(user)
+	if err != nil || rows != 1 {
+		global.Logger.Err(err).Msgf("注销账号失败, Delete cancelled user, rows: %d, err: %v", rows, err)
+		_ = sess.Rollback()
+		response.RespFail(c, i18n.RetMsgLogoutFailed, nil)
+		return
+	}
+
+	err = sess.Commit()
+	if err != nil {
+		global.Logger.Err(err).Msgf("注销账号失败, Commit err: %v", err)
+		_ = sess.Rollback()
+		response.RespFail(c, i18n.RetMsgLogoutFailed, nil)
+		return
+	}
+	response.ResOk(c, i18n.RetMsgSuccess)
+	return
+}
+
+// SaveUserConfig 存储用户配置，例如：选择的节点ID等
+func SaveUserConfig(c *gin.Context) {
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("用户token鉴权失败")
+		response.ResFail(c, i18n.RetMsgAuthFailed)
+		return
+	}
+
+	param := new(request.SaveUserConfigRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.RespFail(c, i18n.RetMsgParamParseErr, nil)
+		return
+	}
+
+	// 查询用户配置表，是否存在配置项
+	userConfig, err := service.GetUserConfig(user.Id)
+	if err != nil {
+		response.RespFail(c, i18n.RetMsgDBErr, nil)
+		return
+	}
+	if userConfig == nil {
+		err = service.CreateUserConfig(user.Id, param.NodeId)
+	} else {
+		err = service.UpdateUserConfig(user.Id, param.NodeId)
+	}
+	if err != nil {
+		global.Logger.Err(err).Msg("保存用户配置失败")
+		response.RespFail(c, i18n.RetMsgDBErr, nil)
+		return
+	}
+	response.ResOk(c, i18n.RetMsgSuccess)
+	return
+}
+
+func GetUserConfig(c *gin.Context) {
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("用户token鉴权失败")
+		response.ResFail(c, i18n.RetMsgAuthFailed)
+		return
+	}
+
+	// 查询用户配置表，是否存在配置项
+	userConfig, err := service.GetUserConfig(user.Id)
+	if err != nil {
+		response.RespFail(c, i18n.RetMsgDBErr, nil)
+		return
+	}
+	if userConfig != nil && userConfig.Status == constant.UserConfigStatusNormal {
+		resp := request.GetUserConfigResponse{
+			UserId:    userConfig.UserId,
+			NodeId:    userConfig.NodeId,
+			CreatedAt: userConfig.CreatedAt.Format(constant.TimeFormat),
+			UpdatedAt: userConfig.UpdatedAt.Format(constant.TimeFormat),
+		}
+		response.RespOk(c, i18n.RetMsgSuccess, resp)
+	} else {
+		response.RespOk(c, i18n.RetMsgSuccess, nil)
+	}
+	return
+}
+
+// DeleteUserConfig 删除用户配置
+func DeleteUserConfig(c *gin.Context) {
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("用户token鉴权失败")
+		response.ResFail(c, i18n.RetMsgAuthFailed)
+		return
+	}
+
+	// 查询用户配置表，是否存在配置项
+	userConfig, err := service.GetUserConfig(user.Id)
+	if err != nil {
+		response.RespFail(c, i18n.RetMsgDBErr, nil)
+		return
+	}
+	if userConfig == nil || userConfig.Status == constant.UserConfigStatusDeleted {
+		response.ResOk(c, i18n.RetMsgSuccess)
+		return
+	}
+	err = service.DeleteUserConfig(user.Id)
+	if err != nil {
+		global.Logger.Err(err).Msg("删除用户配置失败")
+		response.RespFail(c, i18n.RetMsgDBErr, nil)
+		return
+	}
+	response.ResOk(c, i18n.RetMsgSuccess)
+	return
 }

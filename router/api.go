@@ -24,7 +24,6 @@ func ApiRoute(group *gin.RouterGroup) {
 	group.GET("expire_user", api.ExpireUserList)
 	group.GET("app_info", api.AppInfo)
 
-	
 	group.GET("app_filter", api.AppFilter) //策略审核
 	//group.GET("connect", api.Connect)
 
@@ -50,7 +49,10 @@ func ApiRoute(group *gin.RouterGroup) {
 		group.POST("change_network", api.ChangeNetwork) //暂没用到
 		group.POST("connect", api.Connect)
 		group.GET("get_conf", api.GetConfig)
-
+		group.GET("cancel_account", api.CancelAccount)
+		group.POST("save_user_config", api.SaveUserConfig)
+		group.POST("get_user_config", api.GetUserConfig)
+		group.POST("delete_user_config", api.DeleteUserConfig)
 	}
 
 }
