@@ -9,6 +9,7 @@ import (
 func AdminRoute(group *gin.RouterGroup) {
 	group.POST("login", admin.LoginAdmin)
 	group.POST("upload", admin.Upload)
+	group.POST("edit_member_expired_time", admin.EditMemberExpiredTime)
 
 	nodeReportGroup := group.Group("node_report")
 	nodeReportGroup.Use(admin.NodeReportAuth())
@@ -53,6 +54,7 @@ func AdminRoute(group *gin.RouterGroup) {
 		memberGroup.GET("member_dev_list", admin.MemberDevList)
 		memberGroup.POST("edit_member", admin.EditMember)
 		memberGroup.POST("edit_member_dev", admin.EditMemberDev)
+		memberGroup.POST("edit_member_expired_time", admin.EditMemberExpiredTime)
 
 		//套餐管理
 		comboGroup := group.Group("combo")

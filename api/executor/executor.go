@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go-speed/constant"
 	"go-speed/global"
+	"go-speed/i18n"
 	"go-speed/model/request"
 	"go-speed/model/response"
 	"go-speed/util"
@@ -12,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strings"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -260,4 +262,107 @@ func RemoveEmail(c *gin.Context) {
 		return
 	}
 	response.ResOk(c, "成功")
+}
+
+func GetUserList(c *gin.Context) {
+	conf, err := ReadV2rayConfig(global.Config.System.V2rayConfigPath)
+	if err != nil {
+		global.Logger.Err(err).Msg("read v2ray config failed, err: " + err.Error())
+		response.ResFail(c, "read v2ray config failed, "+err.Error())
+		return
+	}
+	var items []response.ClientItem
+	for _, client := range conf.GetClients() {
+		items = append(items, response.ClientItem{
+			Email:    client.Email,
+			Password: client.Password,
+		})
+	}
+	resp := response.GetUserListResponse{Items: items}
+	response.RespOk(c, i18n.RetMsgSuccess, resp)
+	return
+}
+
+func GetUserTraffic(c *gin.Context) {
+	param := new(request.GetUserTrafficRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	global.Logger.Info().Msgf(">>>>>>>> param: %+v", *param)
+	clientEmails := param.Emails
+	if len(param.Emails) == 0 && param.All {
+		conf, err := ReadV2rayConfig(global.Config.System.V2rayConfigPath)
+		if err != nil {
+			global.Logger.Err(err).Msg("read v2ray config failed, err: " + err.Error())
+			response.ResFail(c, "read v2ray config failed, "+err.Error())
+			return
+		}
+		for _, client := range conf.GetClients() {
+			clientEmails = append(clientEmails, client.Email)
+		}
+	}
+	global.Logger.Info().Msgf(">>>>>>>> clientEmails: %+v", clientEmails)
+	resp := response.GetUserTrafficResponse{}
+	if len(clientEmails) == 0 {
+		response.RespOk(c, i18n.RetMsgSuccess, resp)
+		return
+	}
+
+	var patterns []string
+	for _, email := range clientEmails {
+		patterns = append(patterns, fmt.Sprintf("user>>>%s>>>traffic>>>uplink", email))
+		patterns = append(patterns, fmt.Sprintf("user>>>%s>>>traffic>>>downlink", email))
+	}
+	stats, err := QueryUserStats(nil, patterns, param.Reset)
+	if err != nil {
+		response.ResFail(c, "查询用户Traffic失败, "+err.Error())
+		return
+	}
+
+	userTrafficMap := make(map[string]*response.UserTrafficItem)
+	for _, stat := range stats {
+		splits := strings.Split(stat.Name, ">>>")
+		if len(splits) != 4 {
+			global.Logger.Warn().Msgf("traffic data invalid, %s : %d", stat.Name, stat.Value)
+			continue
+		}
+		var (
+			prefix      string
+			tag         string
+			email       string
+			trafficType string
+			ok          bool
+			userTraffic *response.UserTrafficItem
+		)
+		prefix = splits[0]
+		email = splits[1]
+		tag = splits[2]
+		trafficType = splits[3]
+		if prefix != "user" || tag != "traffic" {
+			global.Logger.Warn().Msgf("traffic data invalid, %s : %d", stat.Name, stat.Value)
+			continue
+		}
+
+		userTraffic, ok = userTrafficMap[email]
+		if !ok {
+			userTraffic = &response.UserTrafficItem{Email: email}
+			userTrafficMap[email] = userTraffic
+		}
+		if trafficType == "uplink" {
+			userTraffic.UpLink = uint64(stat.Value)
+		} else if trafficType == "downlink" {
+			userTraffic.DownLink = uint64(stat.Value)
+		}
+	}
+
+	var items []response.UserTrafficItem
+	for key, _ := range userTrafficMap {
+		items = append(items, *userTrafficMap[key])
+	}
+
+	resp = response.GetUserTrafficResponse{Items: items}
+	response.RespOk(c, i18n.RetMsgSuccess, resp)
+	return
 }

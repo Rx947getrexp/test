@@ -17,3 +17,9 @@ type NodeAddSubRequest struct {
 	Level string `form:"level" binding:"required" json:"level"`
 	Tag   string `form:"tag" binding:"required" json:"tag"`
 }
+
+type GetUserTrafficRequest struct {
+	Emails []string `form:"emails" json:"emails"`
+	All    bool     `form:"all" json:"all"`
+	Reset  bool     `form:"reset" json:"reset"`
+}

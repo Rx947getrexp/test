@@ -16,8 +16,8 @@ import (
 
 const (
 	leaderLockKey    = "hs-fly-DeleteExpiredUser-leader-lock"
-	lockTimeout      = 60 * time.Second
-	electionInterval = 60 * time.Second
+	electionInterval = 15 * time.Minute
+	lockTimeout      = electionInterval + 10*time.Minute
 )
 
 // 踢掉已经过期的账号
@@ -26,14 +26,14 @@ func DeleteExpiredUser() {
 	global.Logger.Info().Msg("DeleteExpiredUser start...")
 	ctx := context.Background()
 	for {
-		isLeader, err := tryAcquireLock(ctx)
+		isLeader, err := tryAcquireLock(ctx, leaderLockKey, lockTimeout)
 		if err != nil {
 			global.Logger.Err(err).Msg("tryAcquireLock failed")
 		} else if isLeader {
 			global.Logger.Info().Msg("I am the leader")
 			// 在这里执行主进程的逻辑
 			DoDeleteExpiredUser()
-			releaseLock(ctx)
+			releaseLock(ctx, leaderLockKey)
 		} else {
 			global.Logger.Info().Msg("I am a follower")
 			// 在这里执行从进程的逻辑
@@ -119,7 +119,7 @@ func UpdateUserStatus(user *model.TUser) error {
 	return nil
 }
 
-func tryAcquireLock(ctx context.Context) (bool, error) {
+func tryAcquireLock(ctx context.Context, leaderLockKey string, lockTimeout time.Duration) (bool, error) {
 	// 尝试获取锁
 	ok, err := global.Redis.SetNX(ctx, leaderLockKey, os.Getpid(), lockTimeout).Result()
 	if err != nil {
@@ -139,6 +139,6 @@ func tryAcquireLock(ctx context.Context) (bool, error) {
 	return true, nil
 }
 
-func releaseLock(ctx context.Context) {
+func releaseLock(ctx context.Context, leaderLockKey string) {
 	_, _ = global.Redis.Del(ctx, leaderLockKey).Result()
 }

@@ -184,12 +184,12 @@ func CheckDevNumLimits(devId int64, user *model.TUser) (bool, error) {
 
 	// 登录设备数量上限，根据用户等级来定义
 	// TODO：先简单处理，目前还没有产品形态定义
-	limits := 2
+	limits := 6
 	switch user.Level {
 	case 0:
-		limits = 2
+		limits = 6
 	case 1:
-		limits = 5
+		limits = 8
 	case 2:
 		limits = 10
 	case 3:

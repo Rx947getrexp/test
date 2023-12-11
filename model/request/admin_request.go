@@ -1,6 +1,6 @@
 package request
 
-//登陆后台
+// 登陆后台
 type LoginAdminRequest struct {
 	UserName string `form:"user_name" binding:"required"`
 	Pass     string `form:"pass" binding:"required"`
@@ -365,6 +365,11 @@ type MemberDevListAdminRequest struct {
 type EditMemberAdminRequest struct {
 	Id     int64  `form:"id" binding:"required" json:"id"` //用户ID
 	Status string `form:"status" json:"status"`            //状态
+}
+
+type EditMemberExpiredTimeRequest struct {
+	Id          int64 `form:"id" binding:"required" json:"id"`  //用户ID
+	ExpiredTime int64 `form:"expired_time" json:"expired_time"` //会员过期时间，时间戳秒，最大支持当前时间+5年
 }
 
 type EditMemberDevAdminRequest struct {

@@ -345,6 +345,19 @@ func (c *V2rayConfig) ToString() string {
 	return string(b)
 }
 
+func (c *V2rayConfig) GetClients() []InboundSettingsClient {
+	var items []InboundSettingsClient
+	for _, inbound := range c.Inbounds {
+		for _, client := range inbound.Settings.Clients {
+			items = append(items, InboundSettingsClient{
+				Email:    client.Email,
+				Password: client.Password,
+			})
+		}
+	}
+	return items
+}
+
 // 读取v2ray配置文件
 func ReadV2rayConfig(filePath string) (c V2rayConfig, err error) {
 	var content []byte

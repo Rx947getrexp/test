@@ -15,4 +15,5 @@ type TNodeDns struct {
 	UpdatedAt time.Time `xorm:"comment('更新时间') TIMESTAMP"`
 	Author    string    `xorm:"comment('作者') VARCHAR(255)"`
 	Comment   string    `xorm:"comment('备注信息') VARCHAR(255)"`
+	IsMachine int       `xorm:"not null comment('是否为真实机器') INT"`
 }

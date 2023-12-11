@@ -143,6 +143,62 @@ func EditMemberDev(c *gin.Context) {
 	response.ResOk(c, "成功")
 }
 
+func EditMemberExpiredTime(c *gin.Context) {
+	param := new(request.EditMemberExpiredTimeRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	global.Logger.Err(err).Msgf("Admin uname: %s", user.Uname)
+
+	if !isValidTimestamp(param.ExpiredTime) {
+		global.Logger.Err(nil).Msgf("ExpiredTime: (%d) 参数无效！不能超过5年时间长度。", param.ExpiredTime)
+		response.ResFail(c, "用户过期参数无效！不能超过5年时间长度。")
+		return
+	}
+
+	bean := new(model.TUser)
+	bean.UpdatedAt = time.Now()
+	bean.ExpiredTime = param.ExpiredTime
+	cols := []string{"updated_at", "expired_time"}
+	rows, err := global.Db.Cols(cols...).Where("id = ?", param.Id).Update(bean)
+	if err != nil || rows != 1 {
+		global.Logger.Err(err).Msg("操作失败！")
+		response.ResFail(c, "操作失败！")
+		return
+	}
+	response.ResOk(c, "成功")
+}
+
+func isValidTimestamp(expiredTime int64) bool {
+	// 将 ExpiredTime 转换为 time.Time 类型
+	expiredTimeInTime := time.Unix(expiredTime, 0)
+
+	// 获取当前时间
+	now := time.Now()
+
+	// 获取1年前的时间
+	oneYearAgo := now.AddDate(-1, 0, 0)
+
+	// 获取5年后的时间
+	fiveYearsLater := now.AddDate(5, 0, 0)
+
+	// 判断 ExpiredTime 是否在有效范围内
+	if expiredTimeInTime.After(oneYearAgo) && expiredTimeInTime.Before(fiveYearsLater) {
+		return true
+	}
+	return false
+}
+
 func ComboList(c *gin.Context) {
 	param := new(request.GoodsListAdminRequest)
 	if err := c.ShouldBind(param); err != nil {

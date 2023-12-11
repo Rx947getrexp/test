@@ -12,5 +12,7 @@ func ExecutorRoute(group *gin.RouterGroup) {
 		nodeGroup.POST("add_email", executor.AddEmail)
 		nodeGroup.POST("remove_email", executor.RemoveEmail)
 		nodeGroup.POST("add_sub", executor.AddSub)
+		nodeGroup.POST("get_user_list", executor.GetUserList)
+		nodeGroup.POST("get_user_traffic", executor.GetUserTraffic)
 	}
 }

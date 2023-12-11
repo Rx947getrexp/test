@@ -1,6 +1,7 @@
 package i18n
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"go-speed/global"
 )
@@ -10,8 +11,9 @@ func I18nTrans(c *gin.Context, msg string) string {
 	if lang == "rus" {
 		lang = "ru"
 	}
-	global.Logger.Info().Msgf("lang: %s, msg: %s", lang, msg)
-	//global.Logger.Info().Msgf("ReturnMsgMap: %v", ReturnMsgMap)
+	claims, claimsExist := c.Get("claims")
+	global.MyLogger(c).Err(fmt.Errorf(msg)).Msgf("lang: %s, msg: %s, Client-Id: %+v, Dev-Id: %+v, claims: %+v, claimsExist: %+v",
+		lang, msg, c.GetHeader("Client-Id"), c.GetHeader("Dev-Id"), claims, claimsExist)
 	m, ok := ReturnMsgMap[msg]
 	if !ok {
 		return unknownError(lang)
@@ -20,7 +22,7 @@ func I18nTrans(c *gin.Context, msg string) string {
 		return msg
 	}
 	ret, ok := m[lang]
-	global.Logger.Info().Msgf("ok: %v, ret: %v", ok, ret)
+	global.MyLogger(c).Info().Msgf("ok: %v, ret: %v", ok, ret)
 	if !ok {
 		return unknownError(lang)
 	}
@@ -47,36 +49,40 @@ const (
 	LangEN = "en" // 英语
 	LangRU = "ru" // 俄语
 
-	RetMsgSuccess                  = "成功"
-	RetMsgDBErr                    = "查询失败" //"数据库访问失败。"
-	RetMsgDevIdNotExitsErr         = "设备号不存在。"
-	RetMsgParamParseErr            = "参数解析失败。"
-	RetMsgParamInvalid             = "参数错误。"
-	RetMsgEmailNotReg              = "邮箱地址未注册。"
-	RetMsgVerifyCodeSendFail       = "发送验证码失败,请稍后再试。"
-	RetMsgSendSuccess              = "发送成功。"
-	RetMsgParamInputInvalid        = "请检查输入参数。"
-	RetMsgTwoPasswordNotMatch      = "两次输入的密码不一致。"
-	RetMsgEmailHasRegErr           = "该邮箱已注册。"
-	RetMsgRegFailed                = "注册失败。"
-	RetMsgReferrerIDIncorrect      = "推荐人ID不正确。"
-	RetMsgRegSuccess               = "注册成功。"
-	RetMsgAccountNotExist          = "账号不存在。"
-	RetMsgAccountPasswordEmptyErr  = "账号、密码都不可以为空。"
-	RetMsgAccountPasswordIncorrect = "用户名或密码不正确。"
-	RetMsgReachedDevicesLimit      = "达到登录设备上限。"
-	RetMsgLoginError               = "登录出错。"
-	RetMsgAuthFailed               = "用户鉴权失败。"
-	RetMsgOperateFailed            = "操作失败。"
-	RetMsgVerificationCodeErr      = "验证码错误。"
-	RetMsgQueryResultIsEmpty       = "查询结果为空。"
-	RetMsgActivity3TimesLimits     = "每天参与活动限制3次。"
-	RetMsgDeviceAuthFailed         = "设备鉴权失败。"
-	RetMsgUploadLogFailed          = "上传日志失败。"
-	RetMsgDealCreateFailed         = "创建订单失败。"
-	RetMsgRemoveDevFailed          = "踢除设备失败。"
-	RetMsgAccountExpired           = "账户已过期。"
-	RetMsgLogoutFailed             = "注销失败。"
+	RetMsgSuccess                   = "成功"
+	RetMsgDBErr                     = "查询失败" //"数据库访问失败。"
+	RetMsgDevIdNotExitsErr          = "设备号不存在。"
+	RetMsgParamParseErr             = "参数解析失败。"
+	RetMsgParamInvalid              = "参数错误。"
+	RetMsgEmailNotReg               = "邮箱地址未注册。"
+	RetMsgVerifyCodeSendFail        = "发送验证码失败,请稍后再试。"
+	RetMsgSendSuccess               = "发送成功。"
+	RetMsgParamInputInvalid         = "请检查输入参数。"
+	RetMsgTwoPasswordNotMatch       = "两次输入的密码不一致。"
+	RetMsgEmailHasRegErr            = "该邮箱已注册。"
+	RetMsgRegFailed                 = "注册失败。"
+	RetMsgReferrerIDIncorrect       = "推荐人ID不正确。"
+	RetMsgRegSuccess                = "注册成功。"
+	RetMsgAccountNotExist           = "账号不存在。"
+	RetMsgAccountPasswordEmptyErr   = "账号、密码都不可以为空。"
+	RetMsgAccountPasswordIncorrect  = "用户名或密码不正确。"
+	RetMsgReachedDevicesLimit       = "达到登录设备上限。"
+	RetMsgLoginError                = "登录出错。"
+	RetMsgAuthFailed                = "用户鉴权失败。"
+	RetMsgOperateFailed             = "操作失败。"
+	RetMsgVerificationCodeErr       = "验证码错误。"
+	RetMsgQueryResultIsEmpty        = "查询结果为空。"
+	RetMsgActivity3TimesLimits      = "每天参与活动限制3次。"
+	RetMsgDeviceAuthFailed          = "设备鉴权失败。"
+	RetMsgUploadLogFailed           = "上传日志失败。"
+	RetMsgDealCreateFailed          = "创建订单失败。"
+	RetMsgRemoveDevFailed           = "踢除设备失败。"
+	RetMsgAccountExpired            = "账户已过期。"
+	RetMsgLogoutFailed              = "注销失败。"
+	RetMsgAuthExpired               = "授权已过期"
+	RetMsgDevIdInvalid              = "Dev-Id无效"
+	RetMsgUserIdInvalid             = "User-Id无效"
+	RetMsgAuthorizationTokenInvalid = "Token无效"
 )
 
 func Init() {
@@ -197,4 +203,21 @@ func Init() {
 		LangEN: "Logout failed.",
 		LangRU: "Не удалось выйти из системы.",
 	}
+	ReturnMsgMap[RetMsgAuthExpired] = map[string]string{
+		LangEN: "Auth expired.",
+		LangRU: "Авторизация истекла.",
+	}
+	ReturnMsgMap[RetMsgDevIdInvalid] = map[string]string{
+		LangEN: "Dev-Id invalid.",
+		LangRU: "Dev-Id недействителен.",
+	}
+	ReturnMsgMap[RetMsgUserIdInvalid] = map[string]string{
+		LangEN: "User-Id invalid.",
+		LangRU: "User-Id недействителен.",
+	}
+	ReturnMsgMap[RetMsgAuthorizationTokenInvalid] = map[string]string{
+		LangEN: "Token invalid.",
+		LangRU: "Token недействителен.",
+	}
+
 }
