@@ -1,0 +1,1 @@
+go build -o ./go-job main.go && cp ./go-job /wwwroot/go/go-job/backup/ && ps -ef | grep go-job | grep -v 'grep' | awk '{print $2}' | xargs kill && cd /wwwroot/go/go-job/ && cp -rf backup/go-job ./ && ./restart.sh

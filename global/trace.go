@@ -74,6 +74,9 @@ func SprintAllHeader(c *gin.Context) string {
 	for _, key := range constant.HeaderKeys {
 		items = append(items, GetHeaderKV(c, key))
 	}
+	items = append(items, fmt.Sprintf(`{"URL":"%s"}"`, c.Request.URL.String()))
+	items = append(items, fmt.Sprintf(`{"Method":"%s"}"`, c.Request.Method))
+	items = append(items, fmt.Sprintf(`{"ClientIP":"%s"}"`, c.ClientIP()))
 	return fmt.Sprintf("[%s]", strings.Join(items, ","))
 }
 

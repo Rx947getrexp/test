@@ -11,6 +11,7 @@ import (
 	"go-speed/service"
 	"go-speed/util"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -90,6 +91,10 @@ func DeleteUser(user *model.TUser) error {
 	nodeList, _ := service.FindNodes(user.Level + 1)
 	for _, node := range nodeList {
 		url := fmt.Sprintf("https://%s/site-api/node/add_sub", node.Server)
+		if strings.Contains(node.Server, "http") {
+			url = fmt.Sprintf("%s/node/add_sub", node.Server)
+		}
+
 		timestamp := fmt.Sprint(time.Now().Unix())
 		headerParam := make(map[string]string)
 		res := new(response.Response)

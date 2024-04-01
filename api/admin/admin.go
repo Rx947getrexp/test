@@ -19,7 +19,7 @@ import (
 	"xorm.io/xorm"
 )
 
-//登陆后台
+// 登陆后台
 func LoginAdmin(c *gin.Context) {
 	param := new(request.LoginAdminRequest)
 	if err := c.ShouldBind(param); err != nil {
@@ -649,6 +649,7 @@ func Upload(ctx *gin.Context) {
 		response.RespFail(ctx, lang.Translate("cn", "fail"), nil)
 		return
 	}
+	global.MyLogger(ctx).Info().Msgf("param: %+v", *param)
 
 	if param.FileType != constant.ImgFileType &&
 		param.FileType != constant.OtherFileType {
@@ -682,6 +683,7 @@ func Upload(ctx *gin.Context) {
 		fileMap[".pptx"] = true
 		fileMap[".zip"] = true
 	}
+	global.MyLogger(ctx).Info().Msgf("fileMap: %+v", fileMap)
 	fmt.Println("upload请求：", param.FileType)
 	resUrl, err := service.Upload(param, fileMap)
 	if err != nil {
@@ -689,6 +691,7 @@ func Upload(ctx *gin.Context) {
 		response.RespFail(ctx, lang.Translate("cn", "fail"), nil)
 		return
 	}
+	global.MyLogger(ctx).Info().Msgf("resUrl: %+v", resUrl)
 	fmt.Println("upload请求：", param.FileType)
 	data := new(response.DataResponse)
 	data.Data.Url = resUrl

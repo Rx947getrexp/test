@@ -21,8 +21,9 @@ func ApiRoute(group *gin.RouterGroup) {
 	group.GET("combo_list", api.ComboList)
 	group.GET("ad_list", api.AdList)
 	group.GET("expire_user", api.ExpireUserList)
-	group.GET("app_info", api.AppInfo)     // call
-	group.GET("app_filter", api.AppFilter) //策略审核
+	group.GET("app_info", api.AppInfo)      // call
+	group.GET("pc_app_info", api.PCAppInfo) // call
+	group.GET("app_filter", api.AppFilter)  //策略审核
 
 	group.Use(api.JWTAuth())
 	{

@@ -10,6 +10,8 @@ func AdminRoute(group *gin.RouterGroup) {
 	group.POST("login", admin.LoginAdmin)
 	group.POST("upload", admin.Upload)
 	group.POST("edit_member_expired_time", admin.EditMemberExpiredTime)
+	group.GET("get_report_user_day_list", admin.GetReportUserDayList)
+	group.GET("get_online_user_day_list", admin.GetOnlineUserDayList)
 
 	nodeReportGroup := group.Group("node_report")
 	nodeReportGroup.Use(admin.NodeReportAuth())

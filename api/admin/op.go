@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"go-speed/global"
+	"go-speed/i18n"
 	"go-speed/model"
 	"go-speed/model/request"
 	"go-speed/model/response"
@@ -197,6 +198,69 @@ func isValidTimestamp(expiredTime int64) bool {
 		return true
 	}
 	return false
+}
+
+func GetReportUserDayList(c *gin.Context) {
+	param := new(request.GetReportUserDayListRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+
+	total, list, err := service.QueryUserReportDay(c, param.Date, param.ChannelId, param.OrderType, param.Page, param.Size)
+	if err != nil {
+		global.Logger.Err(err).Msg("查询出错！")
+		response.ResFail(c, "查询出错！")
+		return
+	}
+	items := make([]response.ReportUserDay, 0)
+	for _, item := range list {
+		items = append(items, response.ReportUserDay{
+			Id:        item.Id,
+			Date:      item.Date,
+			ChannelId: item.ChannelId,
+			Total:     item.Total,
+			New:       item.New,
+			Retained:  item.Retained,
+			CreatedAt: item.CreatedAt.String(),
+		})
+	}
+	resp := response.GetReportUserDayListResponse{Total: total, Items: items}
+	response.RespOk(c, i18n.RetMsgSuccess, resp)
+	return
+}
+
+func GetOnlineUserDayList(c *gin.Context) {
+	param := new(request.GetOnlineUserDayListRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+
+	total, list, err := service.QueryOnlineUserDay(c, param.Date, param.ChannelId, param.Email, param.OrderType, param.Page, param.Size)
+	if err != nil {
+		global.Logger.Err(err).Msg("查询出错！")
+		response.ResFail(c, "查询出错！")
+		return
+	}
+	items := make([]response.OnlineUserDay, 0)
+	for _, item := range list {
+		items = append(items, response.OnlineUserDay{
+			Id:             item.Id,
+			Date:           item.Date,
+			Email:          item.Email,
+			ChannelId:      item.ChannelId,
+			OnlineDuration: item.OnlineDuration,
+			Uplink:         item.Uplink,
+			Downlink:       item.Downlink,
+			CreatedAt:      item.CreatedAt.String(),
+		})
+	}
+	resp := response.GetOnlineUserDayListResponse{Total: total, Items: items}
+	response.RespOk(c, i18n.RetMsgSuccess, resp)
+	return
 }
 
 func ComboList(c *gin.Context) {
@@ -1209,6 +1273,7 @@ func AddAppVersion(c *gin.Context) {
 		response.ResFail(c, "参数错误")
 		return
 	}
+	global.MyLogger(c).Info().Msgf("param: %+v", *param)
 	claims := c.MustGet("claims").(*service.CustomClaims)
 	user, err := service.GetAdminUserByClaims(claims)
 	if err != nil {

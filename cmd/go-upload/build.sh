@@ -1,0 +1,1 @@
+go build -o ./go-upload main.go && cp ./go-upload /wwwroot/go/go-upload/backup/ && ps -ef | grep go-upload | grep -v 'grep' | awk '{print $2}' | xargs kill && cd /wwwroot/go/go-upload/ && cp -rf backup/go-upload ./ && ./restart.sh

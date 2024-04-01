@@ -27,3 +27,5 @@ CREATE TABLE `t_user_traffic_log`
     PRIMARY KEY (`id`) USING BTREE,
     KEY `k_1` (`email`, `ip`, `date_time`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='用户流量采集流水记录';
+
+

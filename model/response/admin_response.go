@@ -1,6 +1,6 @@
 package response
 
-//登陆后台
+// 登陆后台
 type LoginAdminParam struct {
 	UserId int64 `json:"user_id"`
 	//IsReset   int               `json:"is_reset"`
@@ -83,4 +83,35 @@ type UserInfo struct {
 
 type GenerateAuth2KeyAdminResponse struct {
 	Auth2Key string `json:"auth2_key"` //谷歌两步验证器私钥
+}
+
+type GetReportUserDayListResponse struct {
+	Total int64           `json:"total" dc:"数据总条数"`
+	Items []ReportUserDay `json:"items" dc:"数据明细"`
+}
+
+type ReportUserDay struct {
+	Id        int64  `json:"id" dc:"自增主键ID"`
+	Date      int    `json:"date" dc:"报表日期，eg:20240101"`
+	ChannelId int    `json:"channel_id" dc:"渠道ID"`
+	Total     int    `json:"total" dc:"截止到Date，通过渠道ID注册的用户总量"`
+	New       int    `json:"new" dc:"Date日期，通过渠道ID注册的新增用户量"`
+	Retained  int    `json:"retained" dc:"通过渠道ID注册的用户，Date日期内有使用APP的用户量（留存）"`
+	CreatedAt string `json:"created_at" dc:"报表数据统计时间"`
+}
+
+type GetOnlineUserDayListResponse struct {
+	Total int64           `json:"total" dc:"数据总条数"`
+	Items []OnlineUserDay `json:"items" dc:"数据明细"`
+}
+
+type OnlineUserDay struct {
+	Id             int64  `json:"id" dc:"自增主键ID"`
+	Date           int    `json:"date" dc:"报表日期，eg:20240101"`
+	Email          string `json:"email" dc:"账号email"`
+	ChannelId      int    `json:"channel_id" dc:"渠道ID"`
+	OnlineDuration int    `json:"online_duration" dc:"用户在线时间戳长度，单位：秒"`
+	Uplink         int64  `json:"uplink" dc:"上行流量，单位：字节"`
+	Downlink       int64  `json:"downlink" dc:"下行流量，单位：字节"`
+	CreatedAt      string `json:"created_at" dc:"报表数据统计时间"`
 }

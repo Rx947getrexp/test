@@ -123,7 +123,6 @@ func Reg(c *gin.Context) {
 		response.RespFail(c, i18n.RetMsgTwoPasswordNotMatch, nil)
 		return
 	}
-
 	var counts int64
 	_, err := global.Db.SQL("select count(*) from t_user where uname = ?", param.Account).Get(&counts)
 	if err != nil {
@@ -189,9 +188,10 @@ func Reg(c *gin.Context) {
 
 		global.MyLogger(c).Info().Msgf("userFlag:%d, userCancelledFlag: %d", userFlag, userCancelledFlag)
 		if userFlag == 0 && userCancelledFlag == 0 {
-			sendSec = 3600
+			//sendSec = 3600
+			sendSec = 15 * 24 * 60 * 60 // 统一赠送15天 (之前没有送过的)
 		}
-		sendSec = 31536000 // TODO: 统一赠送一年
+		//sendSec = 31536000 // TODO: 统一赠送一年
 
 		/*
 			var bean model.TDev
@@ -210,6 +210,8 @@ func Reg(c *gin.Context) {
 					sendSec += 3600 //此种情况才赠送时间
 				}
 		*/
+	} else if channel != "" {
+		sendSec = 15 * 24 * 60 * 60 // 统一赠送15天 (通过渠道推广来的)，TODO: 目前没办法校验渠道的有效性
 	}
 
 	pwdDecode := util.AesDecrypt(param.Passwd)
@@ -563,6 +565,7 @@ func GetConfig(c *gin.Context) {
 		response.RespFail(c, i18n.RetMsgParamParseErr, nil)
 		return
 	}
+	global.MyLogger(c).Info().Msgf(">>> param: %+v", *param)
 	claims := c.MustGet("claims").(*service.CustomClaims)
 	user, err := service.GetUserByClaims(claims)
 	if err != nil {
@@ -576,7 +579,11 @@ func GetConfig(c *gin.Context) {
 	sqlWhere := "status = 1"
 	if param.NodeId > 0 {
 		sqlWhere = fmt.Sprintf("id = %d and status = 1", param.NodeId)
-	}
+	} else if user.Email == "ru100@qq.com" {
+		sqlWhere = fmt.Sprintf("status = 1")
+	} /*else {
+		sqlWhere = fmt.Sprintf("id not in (100003) and status = 1")
+	}*/
 
 	uuid := user.V2rayUuid
 	var list []map[string]interface{}
@@ -600,32 +607,45 @@ func GetConfig(c *gin.Context) {
 	for _, item := range list {
 
 		nodeId := item["id"].(int64)
+		nodePorts := []int{443, 13001, 13002, 13003, 13004, 13005}
+		//nodePorts := make([]int64, 0)
+		//nodePorts = append(nodePorts, item["port"].(int64))
+		//for _no := item["min"].(int64); _no <= item["max"].(int64); _no++ {
+		//	nodePorts = append(nodePorts, _no)
+		//}
+		global.MyLogger(c).Info().Msgf(">>>>> nodePorts: %+v", nodePorts)
+
 		dnsList, _ := service.FindNodeDnsByNodeId(nodeId, user.Level+1) // user_level+1等于服务器域名的等级
 
 		for _, dns := range dnsList {
+			for _, nodePort := range nodePorts {
+				i = i + 1
+				mproxy := "\"proxy" + strconv.Itoa(i) + "\""
 
-			i = i + 1
-			mproxy := "\"proxy" + strconv.Itoa(i) + "\""
+				//d_proxy = append(d_proxy, mproxy)
+				m := fmt.Sprintf("{\"tag\": %s,\"protocol\": \"chain\",\"settings\": {\"actors\": [\"tls\",\"ws\",\"trojan%d\"]}}", mproxy, i)
+				d_data = append(d_data, m)
+				np := fmt.Sprintf("{\"protocol\": \"trojan\",\"settings\": {\"address\": \"%s\",\"port\": %d,\"password\": \"%s\"},\"tag\": \"trojan%d\"}", dns.Dns, nodePort, uuid, i)
+				d_proto = append(d_proto, np)
+				//name := fmt.Sprintf("trojan%d", i)
+				//name := "trojan"
+				//retstr := fmt.Sprintf("{\"protocol\": \"trojan\",\"settings\": {\"address\": \"%s\",\"port\": 443,\"password\": \"%s\"},\"tag\": \"%s\"}", dns.Dns, uuid, name)
 
-			//d_proxy = append(d_proxy, mproxy)
-			m := fmt.Sprintf("{\"tag\": %s,\"protocol\": \"chain\",\"settings\": {\"actors\": [\"tls\",\"ws\",\"trojan%d\"]}}", mproxy, i)
-			d_data = append(d_data, m)
-			np := fmt.Sprintf("{\"protocol\": \"trojan\",\"settings\": {\"address\": \"%s\",\"port\": 443,\"password\": \"%s\"},\"tag\": \"trojan%d\"}", dns.Dns, uuid, i)
-			d_proto = append(d_proto, np)
-			//name := fmt.Sprintf("trojan%d", i)
-			//name := "trojan"
-			//retstr := fmt.Sprintf("{\"protocol\": \"trojan\",\"settings\": {\"address\": \"%s\",\"port\": 443,\"password\": \"%s\"},\"tag\": \"%s\"}", dns.Dns, uuid, name)
+				//dnsArray = append(dnsArray, retstr)
 
-			//dnsArray = append(dnsArray, retstr)
-
-			mproxy = fmt.Sprintf("{\"password\": \"%s\",\"port\": 443,\"email\": \"\",\"level\": 0,\"flow\": \"\",\"address\": \"%s\"}", uuid, dns.Dns)
-			d_proxy = append(d_proxy, mproxy)
-
+				mproxy = fmt.Sprintf("{\"password\": \"%s\",\"port\": %d,\"email\": \"\",\"level\": 0,\"flow\": \"\",\"address\": \"%s\"}", uuid, nodePort, dns.Dns)
+				d_proxy = append(d_proxy, mproxy)
+			}
 		}
-
 	}
+	global.MyLogger(c).Info().Msgf(">>>>> d_proxy: %+v", d_proxy)
 	//mystring := "{\"log\":{\"level\":\"{{logLevel}}\",\"output\":\"{{leafLogFile}}\"},\"dns\":{\"servers\":[\"1.1.1.1\",\"8.8.8.8\"],\"hosts\":{\"node2.wuwuwu360.xyz\":[\"107.148.239.239\"]}},\"inbounds\":[{\"protocol\":\"tun\",\"settings\":{\"fd\":\"{{tunFd}}\"},\"tag\":\"tun_in\"}],\"outbounds\":[{\"protocol\":\"failover\",\"tag\":\"failover_out\",\"settings\":{\"actors\":[%s],\"failTimeout\":4,\"healthCheck\":true,\"checkInterval\":300,\"failover\":true,\"fallbackCache\":false,\"cacheSize\":256,\"cacheTimeout\":60}},%s,{\"protocol\":\"tls\",\"tag\":\"tls\",\"settings\":{\"alpn\":[\"http/1.1\"],\"insecure\":true}},{\"protocol\":\"ws\",\"tag\":\"ws\",\"settings\":{\"path\":\"/work\"}},%s,{\"protocol\":\"direct\",\"tag\":\"direct_out\"},{\"protocol\":\"drop\",\"tag\":\"reject_out\"}],\"router\":{\"domainResolve\":true,\"rules\":[{\"external\":[\"site:{{dlcFile}}:cn\"],\"target\":\"direct_out\"},{\"external\":[\"mmdb:{{geoFile}}:cn\"],\"target\":\"direct_out\"},{\"domainKeyword\":[\"apple\",\"icloud\"],\"target\":\"direct_out\"}]}}"
 	mystring := "{\"routing\":{\"rules\":[{\"type\":\"field\",\"outboundTag\":\"direct\",\"domain\":[\"icloud\",\"apple\",\"geosite:private\",\"geosite:cn\"]},{\"ip\":[\"geoip:private\",\"geoip:cn\"],\"outboundTag\":\"direct\",\"type\":\"field\"}],\"domainMatcher\":\"hybrid\",\"domainStrategy\":\"AsIs\",\"balancers\":[]},\"log\":{\"loglevel\":\"warning\",\"dnsLog\":false},\"outbounds\":[{\"tag\":\"proxy\",\"mux\":{\"enabled\":false,\"concurrency\":50},\"protocol\":\"trojan\",\"streamSettings\":{\"wsSettings\":{\"path\":\"/work\",\"headers\":{\"host\":\"\"}},\"tlsSettings\":{\"alpn\":[\"http/1.1\"],\"allowInsecure\":true,\"fingerprint\":\"\"},\"security\":\"tls\",\"network\":\"ws\"},\"settings\":{\"servers\":[%s]}},{\"tag\":\"direct\",\"protocol\":\"freedom\"},{\"tag\":\"reject\",\"protocol\":\"blackhole\"}]}"
+	//mystring := "{\"routing\":{\"rules\":[{\"type\":\"field\",\"outboundTag\":\"direct\",\"domain\":[\"icloud\",\"apple\",\"geosite:private\"]},{\"ip\":[\"geoip:private\"],\"outboundTag\":\"direct\",\"type\":\"field\"}],\"domainMatcher\":\"hybrid\",\"domainStrategy\":\"AsIs\",\"balancers\":[]},\"log\":{\"loglevel\":\"warning\",\"dnsLog\":false},\"outbounds\":[{\"tag\":\"proxy\",\"mux\":{\"enabled\":false,\"concurrency\":50},\"protocol\":\"trojan\",\"streamSettings\":{\"wsSettings\":{\"path\":\"/work\",\"headers\":{\"host\":\"\"}},\"tlsSettings\":{\"alpn\":[\"http/1.1\"],\"allowInsecure\":true,\"fingerprint\":\"\"},\"security\":\"tls\",\"network\":\"ws\"},\"settings\":{\"servers\":[%s]}},{\"tag\":\"direct\",\"protocol\":\"freedom\"},{\"tag\":\"reject\",\"protocol\":\"blackhole\"}]}"
+	if user.Email == "ru101@qq.com" {
+		mystring = "{\"routing\":{\"rules\":[{\"type\":\"field\",\"outboundTag\":\"proxy\",\"domain\":[\"regexp:.*\"]}],\"domainMatcher\":\"hybrid\",\"domainStrategy\":\"AsIs\",\"balancers\":[]},\"log\":{\"loglevel\":\"warning\",\"dnsLog\":false},\"outbounds\":[{\"tag\":\"proxy\",\"mux\":{\"enabled\":false,\"concurrency\":50},\"protocol\":\"trojan\",\"streamSettings\":{\"wsSettings\":{\"path\":\"/work\",\"headers\":{\"host\":\"\"}},\"tlsSettings\":{\"alpn\":[\"http/1.1\"],\"allowInsecure\":true,\"fingerprint\":\"\"},\"security\":\"tls\",\"network\":\"ws\"},\"settings\":{\"servers\":[%s]}},{\"tag\":\"direct\",\"protocol\":\"freedom\"},{\"tag\":\"reject\",\"protocol\":\"blackhole\"}]}"
+	}
+	global.MyLogger(c).Info().Msgf(">>> get_conf >>> user.Email: %s, mystring: %+v", user.Email, mystring)
 	c.String(http.StatusOK, fmt.Sprintf(mystring, strings.Join(d_proxy, ",")))
 
 	//	d_proxy,d_data,d_proto)
@@ -692,6 +712,57 @@ func AppInfo(c *gin.Context) {
 	}
 	var version model.TAppVersion
 	has, err := global.Db.Where("status = 1 and app_type = 3").OrderBy("id desc").Limit(1).Get(&version)
+	if err != nil || !has {
+		global.MyLogger(c).Err(fmt.Errorf("err: %+v", err)).Msgf("key不存在！clientId: %s", getClientId(c))
+		response.ResFail(c, i18n.RetMsgOperateFailed)
+		return
+	}
+	result["app_version"] = version.Version
+	result["app_js_zip"] = gateWay + version.Link
+	result["app_zip_hash"] = "xxx"
+	response.RespOk(c, gateWay+version.Link, result)
+
+}
+
+func PCAppInfo(c *gin.Context) {
+	/*
+		host := "http://" + c.Request.Host
+		gateWay := host + "/app-upload"
+		var version model.TAppVersion
+		has, err := global.Db.Where("status = 1 and app_type = 3").OrderBy("id desc").Limit(1).Get(&version)
+		if err != nil || !has {
+			global.MyLogger(c).Err(err).Msg("key不存在！")
+			response.ResFail(c, "失败！")
+			return
+		}
+		type Result struct {
+			Code int    `json:"code"`
+			Msg  string `json:"message"`
+		}
+		c.JSON(http.StatusOK, Result{
+			Code: -1,
+			Msg:  gateWay + version.Link,
+		})
+		return
+	*/
+	host := "http://" + c.Request.Host
+	gateWay := host + "/app-upload"
+	var list []*model.TDict
+	err := global.Db.Where("key_id = ?", "app_link").
+		//Or("key_id = ?", "app_js_zip").
+		//Or("key_id = ?", "app_version").
+		Find(&list)
+	if err != nil {
+		global.MyLogger(c).Err(err).Msgf("key不存在！clientId: %s", getClientId(c))
+		response.ResFail(c, i18n.RetMsgOperateFailed)
+		return
+	}
+	var result = make(map[string]interface{})
+	for _, item := range list {
+		result[item.KeyId] = item.Value
+	}
+	var version model.TAppVersion
+	has, err := global.Db.Where("status = 1 and app_type = 4").OrderBy("id desc").Limit(1).Get(&version)
 	if err != nil || !has {
 		global.MyLogger(c).Err(fmt.Errorf("err: %+v", err)).Msgf("key不存在！clientId: %s", getClientId(c))
 		response.ResFail(c, i18n.RetMsgOperateFailed)
@@ -917,6 +988,7 @@ func NodeList(c *gin.Context) {
 func DnsList(c *gin.Context) {
 	//用户评级
 	level := 1 //默认1
+	status := 1
 	token := c.Request.Header.Get("Authorization-Token")
 	if token != "" {
 		claims, err := service.ParseTokenByUser(token, service.CommonUserType)
@@ -933,9 +1005,14 @@ func DnsList(c *gin.Context) {
 		}
 		level = service.RatingMemberLevel(user)
 	}
+	if global.GetDevId(c) == "1733336209297510400" || global.GetClientId(c) == "9782DC21-7EC9-46FA-A70F-3D37FBF5AED0" {
+		level = 100
+		status = 100
+	}
+
 	var list []map[string]interface{}
 	cols := "id,site_type,dns"
-	err := global.Db.Where("status = 1 and level = ?", level).
+	err := global.Db.Where("status = ? and level = ?", status, level).
 		Table("t_app_dns").
 		Cols(cols).
 		OrderBy("id desc").
@@ -950,6 +1027,7 @@ func DnsList(c *gin.Context) {
 	}
 	var result = make(map[string]interface{})
 	result["list"] = list
+	global.MyLogger(c).Info().Msgf("list: %+v", result)
 	response.RespOk(c, i18n.RetMsgSuccess, result)
 }
 
@@ -1282,7 +1360,15 @@ func Connect(c *gin.Context) {
 		//if period == 7 {
 		//	baseGoods[fmt.Sprint(mType, "_", period)] = item["price"]
 		//}
+		//if user.Email != "ru100@qq.com" {
+		//	global.MyLogger(c).Info().Msgf(">>>>>>>>> user: %s is not whitelist, skip %s", user.Email, item.Server)
+		//	continue
+		//}
+
 		url := fmt.Sprintf("https://%s/site-api/node/add_sub", item.Server)
+		if strings.Contains(item.Server, "http") {
+			url = fmt.Sprintf("%s/node/add_sub", item.Server)
+		}
 		timestamp := fmt.Sprint(time.Now().Unix())
 		headerParam := make(map[string]string)
 		res := new(response.Response)
@@ -1316,6 +1402,10 @@ func Connect(c *gin.Context) {
 		global.MyLogger(c).Error().Msgf(">>>>>>>>> 过期 email: %s, user: %s, result: nil", user.Email, user.Uname)
 	}
 	return
+}
+
+func CLoseConnect(c *gin.Context) {
+
 }
 
 func getDevIdFromHeader(c *gin.Context) int64 {
@@ -1743,7 +1833,7 @@ func TrafficList(c *gin.Context) {
 	//
 	//}
 	//result["list"] = lis
-	response.RespOk(c, i18n.RetMsgSuccess, result)
+	response.RespOk(c, i18n.RetMsgSuccess, nil)
 }
 
 func getClientId(c *gin.Context) string {

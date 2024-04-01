@@ -12,6 +12,7 @@ import (
 	"go-speed/service"
 	"go-speed/util"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -101,6 +102,9 @@ func CollectNodeTraffic(wg *sync.WaitGroup, node *model.TNode) {
 
 func GetUserTrafficByNodeDns(server string) (items []response.UserTrafficItem, err error) {
 	url := fmt.Sprintf("https://%s/site-api/node/get_user_traffic", server)
+	if strings.Contains(server, "http") {
+		url = fmt.Sprintf("%s/node/get_user_traffic", server)
+	}
 	req := &request.GetUserTrafficRequest{
 		All:   true,
 		Reset: true,

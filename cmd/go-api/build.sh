@@ -1,0 +1,1 @@
+go build -o ./go-api main.go && cp ./go-api /wwwroot/go/go-api/backup/ && ps -ef | grep go-api | grep -v 'grep' | awk '{print $2}' | xargs kill && cd /wwwroot/go/go-api/ && cp -rf backup/go-api ./ && ./restart.sh
