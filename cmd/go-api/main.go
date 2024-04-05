@@ -1,6 +1,8 @@
 package main
 
 import (
+	_ "github.com/gogf/gf/contrib/drivers/mysql/v2"
+
 	"go-speed/global"
 	"go-speed/i18n"
 	"go-speed/initialize"

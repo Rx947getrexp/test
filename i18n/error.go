@@ -68,7 +68,7 @@ const (
 	RetMsgAccountPasswordIncorrect  = "用户名或密码不正确。"
 	RetMsgReachedDevicesLimit       = "达到登录设备上限。"
 	RetMsgLoginError                = "登录出错。"
-	RetMsgAuthFailed                = "用户鉴权失败。"
+	RetMsgAuthFailed                = "用户鉴权失败，请重新登陆！"
 	RetMsgOperateFailed             = "操作失败。"
 	RetMsgVerificationCodeErr       = "验证码错误。"
 	RetMsgQueryResultIsEmpty        = "查询结果为空。"
@@ -160,8 +160,8 @@ func Init() {
 		LangRU: "Ошибка входа.",
 	}
 	ReturnMsgMap[RetMsgAuthFailed] = map[string]string{
-		LangEN: "User authentication failed.",
-		LangRU: "Ошибка аутентификации пользователя.",
+		LangEN: "User authentication failed, please login again.",
+		LangRU: "Аутентификация пользователя не удалась, пожалуйста, войдите снова.",
 	}
 	ReturnMsgMap[RetMsgOperateFailed] = map[string]string{
 		LangEN: "Operation failed.",
@@ -204,8 +204,8 @@ func Init() {
 		LangRU: "Не удалось выйти из системы.",
 	}
 	ReturnMsgMap[RetMsgAuthExpired] = map[string]string{
-		LangEN: "Auth expired.",
-		LangRU: "Авторизация истекла.",
+		LangEN: "Auth expired. please login again.",
+		LangRU: "Авторизация истекла. пожалуйста, войдите снова.",
 	}
 	ReturnMsgMap[RetMsgDevIdInvalid] = map[string]string{
 		LangEN: "Dev-Id invalid.",

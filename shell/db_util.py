@@ -42,25 +42,25 @@ class Speed:
         self.config = load_config("/shell/report/config.yaml")
         self.conn = mysql_connect(self.config["speed-db"])
 
-    def count_user_by_create_time(self, channel_id, st, et):
-        sql = """select count(*) as cnt from t_user where channel_id= %d and created_at >= '%s' and created_at <= '%s';""" % (channel_id, st, et)
+    def count_user_by_create_time(self, channel, st, et):
+        sql = """select count(*) as cnt from t_user where channel= '%s' and created_at >= '%s' and created_at <= '%s';""" % (channel, st, et)
         rows = mysql_query_db(self.conn, sql)
         if len(rows) != 1:
             logging.error("sql: %s, rows: %d != 1" % (sql, len(rows)))
             sys.exit(1)
         return rows[0]["cnt"]
 
-    def count_user_online(self, channel_id, date, et):
-        sql = """select count(distinct email) as cnt from t_user_traffic where date = '%s' and email in (select email from t_user where channel_id=%d and created_at <= '%s');""" % (
-            date.replace("-", ""), channel_id, et)
+    def count_user_online(self, channel, date, et):
+        sql = """select count(distinct email) as cnt from t_user_traffic where date = '%s' and email in (select email from t_user where channel='%s' and created_at <= '%s');""" % (
+            date.replace("-", ""), channel, et)
         rows = mysql_query_db(self.conn, sql)
         if len(rows) != 1:
             logging.error("sql: %s, rows: %d != 1" % (sql, len(rows)))
             sys.exit(1)
         return rows[0]["cnt"]
 
-    def count_total_user(self, channel_id, et):
-        sql = """select count(*) as cnt from t_user where channel_id = %d and created_at <= '%s';""" % (channel_id, et)
+    def count_total_user(self, channel, et):
+        sql = """select count(*) as cnt from t_user where channel = '%s' and created_at <= '%s';""" % (channel, et)
         rows = mysql_query_db(self.conn, sql)
         if len(rows) != 1:
             logging.error("sql: %s, rows: %d != 1" % (sql, len(rows)))
@@ -68,7 +68,7 @@ class Speed:
         return rows[0]["cnt"]
 
     def query_channel_id_list(self, et):
-        sql = """select distinct channel_id as channel_id from t_user where created_at <= '%s';""" % et
+        sql = """select distinct channel as channel from t_user where created_at <= '%s';""" % et
         rows = mysql_query_db(self.conn, sql)
         return rows
 

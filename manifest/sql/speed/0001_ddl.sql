@@ -1,0 +1,20 @@
+CREATE TABLE `t_user` (
+                          `id` bigint NOT NULL AUTO_INCREMENT COMMENT '自增id',
+                          `uname` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '用户名',
+                          `passwd` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '用户密码',
+                          `email` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '邮件',
+                          `phone` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '电话',
+                          `level` int DEFAULT NULL COMMENT '等级：0-vip0；1-vip1；2-vip2',
+                          `expired_time` bigint DEFAULT NULL COMMENT 'vip到期时间',
+                          `v2ray_uuid` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '节点UUID',
+                          `v2ray_tag` int DEFAULT NULL COMMENT 'v2ray存在UUID标签:1-有；2-无',
+                          `channel` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+                          `channel_id` int DEFAULT NULL COMMENT '渠道id',
+                          `status` int DEFAULT NULL COMMENT '冻结状态：0-正常；1-冻结',
+                          `created_at` timestamp NULL DEFAULT NULL COMMENT '创建时间',
+                          `updated_at` timestamp NULL DEFAULT NULL COMMENT '更新时间',
+                          `comment` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT '备注信息',
+                          `client_id` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+                          PRIMARY KEY (`id`) USING BTREE,
+                          UNIQUE KEY `p_uname_index` (`uname`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=219123406 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='用户表'

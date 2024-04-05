@@ -42,3 +42,11 @@ type ComboListResponse struct {
 
 type ComboInfo struct {
 }
+
+type ListNodeForReport struct {
+	Items []NodeItem `json:"items"`
+}
+
+type NodeItem struct {
+	Ip string `json:"ip"`
+}

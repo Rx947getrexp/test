@@ -38,3 +38,7 @@ const (
 	UserStatusFrozen    = 1  // 冻结
 	UserStatusCancelled = 10 // 注销
 )
+
+const (
+	NodeRecommendFlag = 1 // 推荐节点
+)

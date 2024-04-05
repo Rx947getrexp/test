@@ -87,3 +87,15 @@ type GetUserConfigResponse struct {
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
 }
+
+type ReportNodePingResultRequest struct {
+	UserId     int64            `form:"user_id" binding:"required" json:"UserId"`
+	ReportTime string           `form:"report_time" json:"ReportTime"`
+	Items      []PingResultItem `form:"items" json:"Items"`
+}
+
+type PingResultItem struct {
+	Ip   string `form:"ip" json:"Ip"`
+	Code string `form:"code" json:"Code" dc:"ping结果"`
+	Cost string `form:"cost" json:"Cost" dc:"ping耗时"`
+}
