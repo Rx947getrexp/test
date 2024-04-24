@@ -11,7 +11,6 @@ import (
 	"go-speed/model/do"
 	"go-speed/model/entity"
 	"go-speed/model/response"
-	"go-speed/service"
 	"net/http"
 )
 
@@ -56,8 +55,11 @@ func GetServerConfig(ctx *gin.Context) {
 			nodePorts = append(nodePorts, x)
 		}
 		global.MyLogger(ctx).Info().Msgf(">>>>> nodeId:%d, nodePorts: %+v", nodeId, nodePorts)
-
-		dnsList, err := service.FindNodeDnsByNodeId(nodeId, userEntity.Level+1) // user_level+1等于服务器域名的等级
+		var dnsList []entity.TNodeDns
+		err = dao.TNodeDns.Ctx(ctx).Where(do.TNodeDns{
+			NodeId: nodeId,
+			Level:  userEntity.Level + 1,
+		}).Scan(&dnsList)
 		if err != nil {
 			global.MyLogger(ctx).Err(err).Msgf(">>>>> FindNodeDnsByNodeId failed: %+v", err.Error())
 			continue
