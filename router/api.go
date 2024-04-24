@@ -1,10 +1,13 @@
 package router
 
 import (
-	"go-speed/api/api"
-	"go-speed/api/api/node"
-
 	"github.com/gin-gonic/gin"
+	"go-speed/api/api"
+	"go-speed/api/api/config"
+	"go-speed/api/api/country"
+	"go-speed/api/api/node"
+	"go-speed/api/api/report"
+	"go-speed/api/api/user"
 )
 
 func ApiRoute(group *gin.RouterGroup) {
@@ -27,7 +30,7 @@ func ApiRoute(group *gin.RouterGroup) {
 	group.GET("app_filter", api.AppFilter)                           //策略审核
 	group.GET("list_node_for_report", node.ListNodeForReport)        //获取节点ip列表，上报ping结果
 	group.POST("report_node_ping_result", node.ReportNodePingResult) //上报ping结果
-
+	group.POST("report_user_op_log", report.ReportUserOpLog)         // 连接代理
 	group.Use(api.JWTAuth())
 	{
 		group.POST("change_passwd", api.ChangePasswd)
@@ -49,6 +52,12 @@ func ApiRoute(group *gin.RouterGroup) {
 		group.POST("get_user_config", api.GetUserConfig)       // call
 		group.POST("delete_user_config", api.DeleteUserConfig) // call
 		group.GET("get_traffic_list", api.TrafficList)
+
+		// 新版本接口
+		group.GET("get_serving_country_list", country.ServingCountryList) // 查询在线的国家列表
+		group.POST("set_default_country", user.SetPreferredCountry)       // 用户设置默认国家
+		group.GET("get_server_config", config.GetServerConfig)            // 查询v2ray代理配置
+		group.POST("connect_server", config.ConnectServer)                // 连接代理
 	}
 
 }

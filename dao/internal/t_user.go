@@ -20,42 +20,48 @@ type TUserDao struct {
 
 // TUserColumns defines and stores column names for table t_user.
 type TUserColumns struct {
-	Id          string // 自增id
-	Uname       string // 用户名
-	Passwd      string // 用户密码
-	Email       string // 邮件
-	Phone       string // 电话
-	Level       string // 等级：0-vip0；1-vip1；2-vip2
-	ExpiredTime string // vip到期时间
-	V2RayUuid   string // 节点UUID
-	V2RayTag    string // v2ray存在UUID标签:1-有；2-无
-	Channel     string //
-	ChannelId   string // 渠道id
-	Status      string // 冻结状态：0-正常；1-冻结
-	CreatedAt   string // 创建时间
-	UpdatedAt   string // 更新时间
-	Comment     string // 备注信息
-	ClientId    string //
+	Id               string // 自增id
+	Uname            string // 用户名
+	Passwd           string // 用户密码
+	Email            string // 邮件
+	Phone            string // 电话
+	Level            string // 等级：0-vip0；1-vip1；2-vip2
+	ExpiredTime      string // vip到期时间
+	V2RayUuid        string // 节点UUID
+	V2RayTag         string // v2ray存在UUID标签:1-有；2-无
+	Channel          string //
+	ChannelId        string // 渠道id
+	Status           string // 冻结状态：0-正常；1-冻结
+	CreatedAt        string // 创建时间
+	UpdatedAt        string // 更新时间
+	Comment          string // 备注信息
+	ClientId         string //
+	LastLoginIp      string // 最近一次登录的ip
+	LastLoginCountry string // 最近一次登录的国家
+	PreferredCountry string // 用户选择的国家（国家名称）
 }
 
 // tUserColumns holds the columns for table t_user.
 var tUserColumns = TUserColumns{
-	Id:          "id",
-	Uname:       "uname",
-	Passwd:      "passwd",
-	Email:       "email",
-	Phone:       "phone",
-	Level:       "level",
-	ExpiredTime: "expired_time",
-	V2RayUuid:   "v2ray_uuid",
-	V2RayTag:    "v2ray_tag",
-	Channel:     "channel",
-	ChannelId:   "channel_id",
-	Status:      "status",
-	CreatedAt:   "created_at",
-	UpdatedAt:   "updated_at",
-	Comment:     "comment",
-	ClientId:    "client_id",
+	Id:               "id",
+	Uname:            "uname",
+	Passwd:           "passwd",
+	Email:            "email",
+	Phone:            "phone",
+	Level:            "level",
+	ExpiredTime:      "expired_time",
+	V2RayUuid:        "v2ray_uuid",
+	V2RayTag:         "v2ray_tag",
+	Channel:          "channel",
+	ChannelId:        "channel_id",
+	Status:           "status",
+	CreatedAt:        "created_at",
+	UpdatedAt:        "updated_at",
+	Comment:          "comment",
+	ClientId:         "client_id",
+	LastLoginIp:      "last_login_ip",
+	LastLoginCountry: "last_login_country",
+	PreferredCountry: "preferred_country",
 }
 
 // NewTUserDao creates and returns a new DAO object for table data access.

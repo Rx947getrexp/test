@@ -38,4 +38,5 @@ type TNode struct {
 	UpdatedAt   *gtime.Time // 更新时间
 	Author      interface{} // 作者
 	Comment     interface{} // 备注信息
+	Weight      interface{} // 权重
 }

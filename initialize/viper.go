@@ -7,6 +7,7 @@ import (
 
 func initViper() *viper.Viper {
 	path := "./config.yaml"
+	//path = "/Users/Shared/src/hs/go-speed/cmd/go-admin/config.yaml"
 	v := viper.New()
 	v.SetConfigFile(path)
 	v.SetConfigType("yaml")

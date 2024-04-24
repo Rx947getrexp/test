@@ -13,12 +13,13 @@ type TUserReportDay struct {
 }
 
 type TUserOnlineDay struct {
-	Id             int64     `xorm:"pk autoincr comment('自增id') BIGINT"`
-	Date           int       `xorm:"INT"`
-	Email          string    `xorm:"INT"`
-	ChannelId      int       `xorm:"INT"`
-	OnlineDuration int       `xorm:"INT"`
-	Uplink         int64     `xorm:"INT"`
-	Downlink       int64     `xorm:"INT"`
-	CreatedAt      time.Time `xorm:"comment('创建时间') TIMESTAMP"`
+	Id               int64     `xorm:"pk autoincr comment('自增id') BIGINT"`
+	Date             int       `xorm:"INT"`
+	Email            string    `xorm:"INT"`
+	ChannelId        int       `xorm:"INT"`
+	OnlineDuration   int       `xorm:"INT"`
+	Uplink           int64     `xorm:"INT"`
+	Downlink         int64     `xorm:"INT"`
+	CreatedAt        time.Time `xorm:"comment('创建时间') TIMESTAMP"`
+	LastLoginCountry string    `xorm:"comment('最后登陆国家') VARCHAR(64)"`
 }

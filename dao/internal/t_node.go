@@ -46,6 +46,7 @@ type TNodeColumns struct {
 	UpdatedAt   string // 更新时间
 	Author      string // 作者
 	Comment     string // 备注信息
+	Weight      string // 权重
 }
 
 // tNodeColumns holds the columns for table t_node.
@@ -76,6 +77,7 @@ var tNodeColumns = TNodeColumns{
 	UpdatedAt:   "updated_at",
 	Author:      "author",
 	Comment:     "comment",
+	Weight:      "weight",
 }
 
 // NewTNodeDao creates and returns a new DAO object for table data access.

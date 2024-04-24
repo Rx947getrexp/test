@@ -106,12 +106,13 @@ type GetOnlineUserDayListResponse struct {
 }
 
 type OnlineUserDay struct {
-	Id             int64  `json:"id" dc:"自增主键ID"`
-	Date           int    `json:"date" dc:"报表日期，eg:20240101"`
-	Email          string `json:"email" dc:"账号email"`
-	ChannelId      int    `json:"channel_id" dc:"渠道ID"`
-	OnlineDuration int    `json:"online_duration" dc:"用户在线时间戳长度，单位：秒"`
-	Uplink         int64  `json:"uplink" dc:"上行流量，单位：字节"`
-	Downlink       int64  `json:"downlink" dc:"下行流量，单位：字节"`
-	CreatedAt      string `json:"created_at" dc:"报表数据统计时间"`
+	Id               int64  `json:"id" dc:"自增主键ID"`
+	Date             int    `json:"date" dc:"报表日期，eg:20240101"`
+	Email            string `json:"email" dc:"账号email"`
+	ChannelId        int    `json:"channel_id" dc:"渠道ID"`
+	OnlineDuration   int    `json:"online_duration" dc:"用户在线时间戳长度，单位：秒"`
+	Uplink           int64  `json:"uplink" dc:"上行流量，单位：字节"`
+	Downlink         int64  `json:"downlink" dc:"下行流量，单位：字节"`
+	CreatedAt        string `json:"created_at" dc:"报表数据统计时间"`
+	LastLoginCountry string `json:"last_login_country" dc:"最后登陆的国家"`
 }

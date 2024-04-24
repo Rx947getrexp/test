@@ -1,0 +1,121 @@
+{
+	"log": {
+		"loglevel": "debug",
+		"access": "./access.log",
+		"error": "./error.log"
+	},
+	"stats": {},
+	"api": {
+		"tag": "api",
+		"services": [
+			"HandlerService",
+			"LoggerService",
+			"StatsService"
+		]
+	},
+	"policy": {
+		"levels": {
+			"0": {
+				"statsUserUplink": true,
+				"statsUserDownlink": true,
+				"handshake": 2,
+				"connIdle": 128,
+				"bufferSize": 1024
+			}
+		},
+		"system": {
+			"statsInboundUplink": true,
+			"statsInboundDownlink": true,
+			"statsOutboundUplink": true,
+			"statsOutboundDownlink": true
+		}
+	},
+	"inbounds": [
+		{
+			"port": 10085,
+			"listen": "0.0.0.0",
+			"protocol": "trojan",
+			"settings": {
+				"decryption": "none",
+				"clients": [
+					{
+						"email": "ru100@qq.com",
+						"password": "86feb637-5c9d-4bb0-ba28-112345"
+					}
+				]
+			},
+			"streamSettings": {
+				"network": "ws",
+				"security": "none",
+				"tlsSettings": {
+					"alpn": [
+						"http/1.1"
+					],
+					"certificates": [
+						{
+							"certificateFile": "/usr/local/cert/cert.crt",
+							"keyFile": "/usr/local/cert/private.key"
+						}
+					]
+				},
+				"wsSettings": {
+					"path": "/work",
+					"headers": {}
+				}
+			},
+			"tag": "tcp-ws",
+			"sniffing": {
+				"enabled": true,
+				"destOverride": [
+					"http",
+					"tls"
+				]
+			}
+		},
+		{
+			"port": 10088,
+			"listen": "127.0.0.1",
+			"protocol": "dokodemo-door",
+			"settings": {
+				"address": "127.0.0.1"
+			},
+			"streamSettings": {
+				"tlsSettings": {},
+				"wsSettings": {
+					"headers": {}
+				}
+			},
+			"tag": "api",
+			"sniffing": {}
+		}
+	],
+	"outbounds": [
+		{
+			"protocol": "freedom",
+			"settings": {}
+		},
+		{
+			"protocol": "blackhole",
+			"settings": {},
+			"tag": "blocked"
+		}
+	],
+	"routing": {
+		"rules": [
+			{
+				"inboundTag": [
+					"api"
+				],
+				"outboundTag": "api",
+				"type": "field"
+			},
+			{
+				"outboundTag": "blocked",
+				"type": "field",
+				"protocol": [
+					"bittorrent"
+				]
+			}
+		]
+	}
+}

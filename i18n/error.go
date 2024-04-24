@@ -79,7 +79,7 @@ const (
 	RetMsgRemoveDevFailed           = "踢除设备失败。"
 	RetMsgAccountExpired            = "账户已过期。"
 	RetMsgLogoutFailed              = "注销失败。"
-	RetMsgAuthExpired               = "授权已过期"
+	RetMsgAuthExpired               = "授权已过期，请重新登陆！"
 	RetMsgDevIdInvalid              = "Dev-Id无效"
 	RetMsgUserIdInvalid             = "User-Id无效"
 	RetMsgAuthorizationTokenInvalid = "Token无效"

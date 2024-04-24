@@ -248,14 +248,15 @@ func GetOnlineUserDayList(c *gin.Context) {
 	items := make([]response.OnlineUserDay, 0)
 	for _, item := range list {
 		items = append(items, response.OnlineUserDay{
-			Id:             item.Id,
-			Date:           item.Date,
-			Email:          item.Email,
-			ChannelId:      item.ChannelId,
-			OnlineDuration: item.OnlineDuration,
-			Uplink:         item.Uplink,
-			Downlink:       item.Downlink,
-			CreatedAt:      item.CreatedAt.String(),
+			Id:               item.Id,
+			Date:             item.Date,
+			Email:            item.Email,
+			ChannelId:        item.ChannelId,
+			OnlineDuration:   item.OnlineDuration,
+			Uplink:           item.Uplink,
+			Downlink:         item.Downlink,
+			CreatedAt:        item.CreatedAt.String(),
+			LastLoginCountry: item.LastLoginCountry,
 		})
 	}
 	resp := response.GetOnlineUserDayListResponse{Total: total, Items: items}

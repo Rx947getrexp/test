@@ -89,13 +89,13 @@ type GetUserConfigResponse struct {
 }
 
 type ReportNodePingResultRequest struct {
-	UserId     int64            `form:"user_id" binding:"required" json:"UserId"`
-	ReportTime string           `form:"report_time" json:"ReportTime"`
-	Items      []PingResultItem `form:"items" json:"Items"`
+	UserId     int64            `form:"user_id" binding:"required" json:"user_id"`
+	ReportTime string           `form:"report_time" json:"report_time"`
+	Items      []PingResultItem `form:"items" json:"items"`
 }
 
 type PingResultItem struct {
-	Ip   string `form:"ip" json:"Ip"`
-	Code string `form:"code" json:"Code" dc:"ping结果"`
-	Cost string `form:"cost" json:"Cost" dc:"ping耗时"`
+	Ip   string `form:"ip" json:"ip"`
+	Code string `form:"code" json:"code" dc:"ping结果"`
+	Cost string `form:"cost" json:"cost" dc:"ping耗时"`
 }

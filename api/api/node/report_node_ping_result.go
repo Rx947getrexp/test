@@ -17,7 +17,7 @@ import (
 
 func ReportNodePingResult(c *gin.Context) {
 	param := new(request.ReportNodePingResultRequest)
-	if err := c.ShouldBindJSON(param); err != nil {
+	if err := c.ShouldBind(param); err != nil {
 		global.MyLogger(c).Err(err).Msgf("绑定参数失败")
 		response.RespFail(c, i18n.RetMsgParamParseErr, nil)
 		return
