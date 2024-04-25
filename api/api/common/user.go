@@ -31,9 +31,9 @@ func CheckUserByUserId(ctx *gin.Context, userId uint64) (userEntity *entity.TUse
 	return userEntity, nil
 }
 
-func CheckDevId(ctx *gin.Context, devId string) (devEntity *entity.TUserDev, err error) {
-	err = dao.TUserDev.Ctx(ctx).Where(do.TUserDev{
-		DevId: devId,
+func CheckDevId(ctx *gin.Context, devId string) (devEntity *entity.TDev, err error) {
+	err = dao.TDev.Ctx(ctx).Where(do.TDev{
+		Id: devId,
 	}).Scan(&devEntity)
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("devId %d 查询db失败", devId)
