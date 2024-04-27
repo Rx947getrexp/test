@@ -13,3 +13,5 @@ public/
 *.yaml
 .idea/go-speed.iml
 
+cmd/go-api/go-api
+

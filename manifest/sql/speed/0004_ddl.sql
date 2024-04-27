@@ -13,3 +13,8 @@ CREATE TABLE `t_user_ping`
     PRIMARY KEY (`id`) USING BTREE,
     KEY `key1` (`email`, `created_at`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='用户ping节点结果上报数据';
+
+
+
+
+ALTER TABLE `speed_report`.`t_user_online_day` ADD COLUMN `last_login_country` varchar(64) DEFAULT "" COMMENT '最后登陆的国家';
