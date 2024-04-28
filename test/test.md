@@ -86,6 +86,9 @@ curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:
 
 curl -X GET -H "Lang: cn" http://localhost:13002/get_server_config?user_id=219122623
 
+curl -X GET -H "Lang: cn" http://localhost:13002/get_server_config_without_rules?user_id=219122623
+curl -X GET -H "Lang: cn" http://localhost:13002/get_rules?user_id=219122623
+
 # 3
 curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13002/set_default_country -d '{
     "user_id": 219122623,

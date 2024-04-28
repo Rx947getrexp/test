@@ -9,10 +9,10 @@ const (
 	GeoDomainFilePath = "/wwwroot/go/go-api/geo/geo.domain"
 )
 
-func GenV2rayConfig(ctx *gin.Context, servers []Server, country string) V2rayConfig {
+func GenV2rayConfig(ctx *gin.Context, servers []Server, country string, withoutRules bool) V2rayConfig {
 	return V2rayConfig{
 		Routing: Routing{
-			Rules:          genRules(ctx, country),
+			Rules:          genRules(ctx, country, withoutRules),
 			DomainMatcher:  "hybrid",
 			DomainStrategy: "AsIs",
 			Balancers:      []string{},
@@ -25,22 +25,22 @@ func GenV2rayConfig(ctx *gin.Context, servers []Server, country string) V2rayCon
 	}
 }
 
-func genRules(ctx *gin.Context, country string) []Rule {
+func genRules(ctx *gin.Context, country string, withoutRules bool) []Rule {
 	rules := make([]Rule, 0)
 	rules = append(rules, Rule{
 		Type:        "field",
 		OutboundTag: "direct",
-		Domain:      genRuleDomain(ctx, country),
+		Domain:      GenRuleDomain(ctx, country, withoutRules),
 	})
 	rules = append(rules, Rule{
 		Type:        "field",
 		OutboundTag: "direct",
-		Ip:          genRuleIp(ctx, country),
+		Ip:          GenRuleIp(ctx, country, withoutRules),
 	})
 	return rules
 }
 
-func genRuleIp(ctx *gin.Context, country string) (ips []string) {
+func GenRuleIp(ctx *gin.Context, country string, withoutRules bool) (ips []string) {
 	// private
 	ips = []string{
 		//"0.0.0.0/8",
@@ -63,6 +63,9 @@ func genRuleIp(ctx *gin.Context, country string) (ips []string) {
 		//"ff00::/8",
 		"geoip:private",
 	}
+	if withoutRules {
+		return ips
+	}
 	var (
 		err   error
 		lines []string
@@ -76,12 +79,15 @@ func genRuleIp(ctx *gin.Context, country string) (ips []string) {
 	return
 }
 
-func genRuleDomain(ctx *gin.Context, country string) (domains []string) {
+func GenRuleDomain(ctx *gin.Context, country string, withoutRules bool) (domains []string) {
 	// private
 	domains = []string{
 		"icloud",
 		"apple",
 		"geosite:private",
+	}
+	if withoutRules {
+		return domains
 	}
 	var (
 		err   error

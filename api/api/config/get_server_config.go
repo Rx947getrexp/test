@@ -72,7 +72,7 @@ func GetServerConfig(ctx *gin.Context) {
 	}
 	global.MyLogger(ctx).Info().Msgf(">>>>> v2rayServers: %+v", v2rayServers)
 
-	v, err := json.Marshal(GenV2rayConfig(ctx, v2rayServers, winCountry.Name))
+	v, err := json.Marshal(GenV2rayConfig(ctx, v2rayServers, winCountry.Name, false))
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("GenV2rayConfig failed")
 		response.RespFail(ctx, i18n.RetMsgDBErr, nil)

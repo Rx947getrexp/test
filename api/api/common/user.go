@@ -19,11 +19,13 @@ func CheckUserByUserId(ctx *gin.Context, userId uint64) (userEntity *entity.TUse
 		return
 	}
 	if userEntity == nil {
+		err = fmt.Errorf("userId %d 无效", userId)
 		global.MyLogger(ctx).Err(err).Msgf("userId %d 无效", userId)
 		response.RespFail(ctx, i18n.RetMsgAccountNotExist, nil)
 		return
 	}
 	if userEntity.Status != 0 {
+		err = fmt.Errorf("user(%d) 用户状态(%d)无效", userId, userEntity.Status)
 		global.MyLogger(ctx).Err(err).Msgf("user(%d) 用户状态(%d)无效", userId, userEntity.Status)
 		response.RespFail(ctx, i18n.RetMsgUserIdInvalid, nil)
 		return

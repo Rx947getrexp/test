@@ -690,7 +690,7 @@ func GetConfig(c *gin.Context) {
 	//	mystring = "{\"routing\":{\"rules\":[{\"type\":\"field\",\"outboundTag\":\"proxy\",\"domain\":[\"regexp:.*\"]}],\"domainMatcher\":\"hybrid\",\"domainStrategy\":\"AsIs\",\"balancers\":[]},\"log\":{\"loglevel\":\"warning\",\"dnsLog\":false},\"outbounds\":[{\"tag\":\"proxy\",\"mux\":{\"enabled\":false,\"concurrency\":50},\"protocol\":\"trojan\",\"streamSettings\":{\"wsSettings\":{\"path\":\"/work\",\"headers\":{\"host\":\"\"}},\"tlsSettings\":{\"alpn\":[\"http/1.1\"],\"allowInsecure\":true,\"fingerprint\":\"\"},\"security\":\"tls\",\"network\":\"ws\"},\"settings\":{\"servers\":[%s]}},{\"tag\":\"direct\",\"protocol\":\"freedom\"},{\"tag\":\"reject\",\"protocol\":\"blackhole\"}]}"
 	//}
 	//if user.Email == "test12345@qq.com" {
-	v, err := json.Marshal(v2rayConfig.GenV2rayConfig(c, v2rayServs, nodeEntity.CountryEn))
+	v, err := json.Marshal(v2rayConfig.GenV2rayConfig(c, v2rayServs, nodeEntity.CountryEn, false))
 	if err != nil {
 		global.MyLogger(c).Err(err).Msgf("GenV2rayConfig failed, email: %s", user.Email)
 		response.RespFail(c, i18n.RetMsgDBErr, nil)
