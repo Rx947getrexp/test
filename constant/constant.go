@@ -42,3 +42,9 @@ const (
 const (
 	NodeRecommendFlag = 1 // 推荐节点
 )
+
+const (
+	SecretKey   = "3f5202f0-4ed3-4456-80dd-13638c975bda" // 签名验证
+	HealthCode1 = "1"
+	HealthCode2 = "2"
+)
