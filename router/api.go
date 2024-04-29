@@ -1,13 +1,14 @@
 package router
 
 import (
-	"github.com/gin-gonic/gin"
 	"go-speed/api/api"
 	"go-speed/api/api/config"
 	"go-speed/api/api/country"
 	"go-speed/api/api/node"
 	"go-speed/api/api/report"
 	"go-speed/api/api/user"
+
+	"github.com/gin-gonic/gin"
 )
 
 func ApiRoute(group *gin.RouterGroup) {
@@ -31,7 +32,7 @@ func ApiRoute(group *gin.RouterGroup) {
 	group.GET("list_node_for_report", node.ListNodeForReport)        //获取节点ip列表，上报ping结果
 	group.POST("report_node_ping_result", node.ReportNodePingResult) //上报ping结果
 	group.POST("report_user_op_log", report.ReportUserOpLog)         // 连接代理
-	group.Use(api.JWTAuth())
+	//group.Use(api.JWTAuth())
 	{
 		group.POST("change_passwd", api.ChangePasswd)
 		group.GET("user_info", api.UserInfo) // call
@@ -58,6 +59,11 @@ func ApiRoute(group *gin.RouterGroup) {
 		group.POST("set_default_country", user.SetPreferredCountry)       // 用户设置默认国家
 		group.GET("get_server_config", config.GetServerConfig)            // 查询v2ray代理配置
 		group.POST("connect_server", config.ConnectServer)                // 连接代理
+	}
+	//签名验证
+	group.Use(api.Verify)
+	{
+		group.POST("machine_states_witching", api.ServerStateSwitchingItem) //踢机器的接口
 	}
 
 }
