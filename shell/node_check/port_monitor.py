@@ -1,114 +1,127 @@
 import concurrent.futures
-import json
 import telnetlib
 import time
 import logging
+import json
+import hashlib
+import hmac
+
+import requests
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 with open("health_scores.json", "r") as f:
     health_scores = json.load(f)
 
-# 健康阈值
-HEALTH_THRESHOLD = 90
-# 恢复阈值
-RECOVERY_THRESHOLD = 100
+# 连续失败的阈值
+FAILURE_THRESHOLD = 3
 
 
+def send_requests(siteName, status):
+    url = "http://127.0.0.1:13002/machine_states_witching"
+    secret_key = "3f5202f0-4ed3-4456-80dd-13638c975bda"
+    params = {'Ip': siteName, 'status': status}
+    signature = hmac.new(secret_key.encode(), secret_key.encode(), hashlib.sha256).hexdigest()
+    headers = {"X-Signature": signature}
+    response = requests.post(url, headers=headers, params=params)
+    return response
+
+
+# 检查端口是否开放
 def check_port(ip, port):
     try:
-        with telnetlib.Telnet(ip, port, timeout=3) as telnet:
+        with telnetlib.Telnet(ip, port, timeout=2) as telnet:
             logging.info(f"成功连接到 {ip}:{port}")
             return True
     except Exception as e:
-        logging.warning(f"连接到 {ip}:{port} 失败")
+        logging.warning(f"连接到 {ip}:{port} 失败: {e}")
         return False
+    finally:
+        if 'telnet' in locals():
+            telnet.close()
 
 
-def update_health_score(node, ip, port, success):
-    # 根据探测结果更新健康值
+# 更新失败次数
+def update_failure_count(siteName, ip, port, success):
+    # 初始化键
+    if str(port) not in health_scores[siteName][ip]:
+        health_scores[siteName][ip][str(port)] = {"failure_count": 0}
+    # 根据成功与否更新失败次数
     if success:
-        health_scores[node][ip]["health_score"] += 1
+        if health_scores[siteName][ip][str(port)]["failure_count"] > 0:
+            health_scores[siteName][ip][str(port)]["failure_count"] = 0
+            recommission(siteName, ip)
+        else:
+            health_scores[siteName][ip][str(port)]["failure_count"] = 0
     else:
-        health_scores[node][ip]["health_score"] -= 1
+        # 如果失败，增加失败次数
+        health_scores[siteName][ip][str(port)]["failure_count"] += 1
 
-    # 确保健康值在 0 到 100 之间
-    health_scores[node][ip]["health_score"] = max(0, min(100, health_scores[node][ip]["health_score"]))
+    # 检查是否需要下架
+    if health_scores[siteName][ip][str(port)]["failure_count"] >= FAILURE_THRESHOLD:
+        print(health_scores[siteName][ip])
+        decommission(siteName, ip)
 
-    with open("health_scores.json", "w") as f:
-        json.dump(health_scores, f)
 
 
+
+def recommission(siteName, siteNameIp):
+    send_requests(siteNameIp, "1")
+    logging.warning(f"对 {siteName}进行上架架操作")
+
+
+def decommission(siteName, siteNameIp):
+    send_requests(siteNameIp, "2")
+    logging.warning(f"对 {siteName}进行下架操作")
+
+
+# 主函数
 def main():
-    nodes = {
+    siteNames = {
         "Hong Kong": ["103.84.110.102"],
         "Moscow": ["185.143.220.131"],
         "Latvia": ["193.124.22.221"],
         "Inner Mongolia": ["211.101.233.165"],
+        "Germany": ["91.149.222.79"],
     }
-    ports = [80, 443, 10085, 15003, 13001, 13002, 13003, 13004, 13005]
+    batch_ports = [13001, 13002, 13003, 13004, 13005]
+    single_ports = [15003, 443]
     with concurrent.futures.ThreadPoolExecutor() as executor:
         tasks = []
-        for node, ips in nodes.items():
+        for siteName, ips in siteNames.items():
             for ip in ips:
-                for port in ports:
-                    task = executor.submit(check_port, ip, port)
-                    tasks.append((task, node, ip, port))
-        concurrent.futures.wait([task[0] for task in tasks])
-
-    # 更新健康值
-    for task in tasks:
-        success = task[0].result()
-        node = task[1]
-        ip = task[2]
-        port = task[3]
-        if ip not in health_scores.get(node, {}):
-            health_scores[node][ip] = {"health_score": 0}
-        update_health_score(node, ip, port, success)
-
-    # 检查所有端口是否成功
-    for node, ips in nodes.items():
-        for ip in ips:
-            for port in ports:
-                if is_unhealthy(node, ip, port):
-                    # 检查机器是否处于上架状态
-                    # 处于上架状态进行下架操作
-                    # 处于下架状态不作操作
-                    # 进行切换逻辑
-                    message="""
-                    节点异常需要进行切换
-                    检查机器是否处于上架状态
-                    处于上架状态进行下架操作
-                    处于下架状态不作操作
-                    进行切换逻辑
-                    """
-                    logging.info(message)
-                    pass
-                else:
-                    # 检查机器是否处于上架状态
-                    # 处于上架状态不作操作
-                    # 处于下架状态恢复上架操作
-                    message="""
-                    节点正常需要进行恢复
-                    检查机器是否处于上架状态
-                    处于上架状态进行下架操作
-                    处于下架状态不作操作
-                    进行切换逻辑
-                    """
-                    logging.info(message)
-                    pass
-
-
-def is_unhealthy(node, ip, port):
-    health_score = health_scores[node][ip]["health_score"]
-
-    # 检查健康得分是否低于健康阈值
-    return health_score < HEALTH_THRESHOLD
+                for port in single_ports:
+                    future = executor.submit(check_port, ip, port)
+                    tasks.append({
+                        'future': future,
+                        'siteName': siteName,
+                        'ip': ip,
+                        'port': port
+                    })
+                # 批量端口探测
+                batch_success = False
+                for port in batch_ports:
+                    success = check_port(ip, port)
+                    batch_success |= success
+                    # 调用位运算符判断13001~13005的结果
+                    if success:
+                        break
+                update_failure_count(siteName, ip, "13001~13005", batch_success)
+        concurrent.futures.wait([task['future'] for task in tasks])
+        # 更新单独端口的失败次数
+        for task in tasks:
+            success = task['future'].result()
+            siteName = task['siteName']
+            ip = task['ip']
+            port = task['port']
+            update_failure_count(siteName, ip, port, success)
+    with open("health_scores.json", "w") as f:
+        json.dump(health_scores, f)
 
 
 if __name__ == "__main__":
-    start_time = int(time.time())
+    start_time = time.time()
     main()
-    end_time = int(time.time())
+    end_time = time.time()
     logging.info(f"运行时间：{end_time - start_time}s")
-    logging.info(f"各节点健康状态：{health_scores}s")
+    logging.info(f"各节点健康状态：{json.dumps(health_scores)}")
