@@ -1,6 +1,6 @@
 package request
 
-//登陆后台
+// 登陆后台
 type LoginAdminRequest struct {
 	UserName string `form:"user_name" binding:"required"`
 	Pass     string `form:"pass" binding:"required"`
@@ -367,6 +367,11 @@ type EditMemberAdminRequest struct {
 	Status string `form:"status" json:"status"`            //状态
 }
 
+type EditMemberExpiredTimeRequest struct {
+	Id          int64 `form:"id" binding:"required" json:"id"`  //用户ID
+	ExpiredTime int64 `form:"expired_time" json:"expired_time"` //会员过期时间，时间戳秒，最大支持当前时间+5年
+}
+
 type EditMemberDevAdminRequest struct {
 	Id     int64  `form:"id" binding:"required" json:"id"` //用户ID
 	Status string `form:"status" json:"status"`            //状态
@@ -484,4 +489,22 @@ type EditNodeDnsAdminRequest struct {
 	NodeId int64  `form:"node_id" json:"node_id"`
 	Level  int    `form:"level" json:"level"`
 	Status int    `form:"status" json:"status"`
+}
+
+type GetReportUserDayListRequest struct {
+	Date      int    `form:"date" json:"date" dc:"报表日期，eg:20240101"`
+	ChannelId int    `form:"channel_id" json:"channel_id" dc:"渠道ID"`
+	OrderType string `form:"order_type" json:"order_type" dc:"排序类型，eg: asc|desc"`
+	Page      int    `form:"page" json:"page" dc:"分页查询page, 从1开始"`
+	Size      int    `form:"size" json:"size" dc:"分页查询size, 最大1000"`
+}
+
+type GetOnlineUserDayListRequest struct {
+	Date      int    `form:"date" json:"date" dc:"报表日期，eg:20240101"`
+	Email     string `form:"email" json:"email" dc:"用户email"`
+	ChannelId int    `form:"channel_id" json:"channel_id" dc:"渠道ID"`
+	OrderBy   string `form:"order_by" json:"order_by" dc:"排序字段，eg: id|online_duration|uplink|downlink"`
+	OrderType string `form:"order_type" json:"order_type" dc:"排序类型，eg: asc|desc"`
+	Page      int    `form:"page" json:"page" dc:"分页查询page, 从1开始"`
+	Size      int    `form:"size" json:"size" dc:"分页查询size, 最大1000"`
 }

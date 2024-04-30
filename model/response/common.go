@@ -3,6 +3,7 @@ package response
 import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
+	"go-speed/i18n"
 	"net/http"
 	"strings"
 )
@@ -39,6 +40,8 @@ type ResultList struct {
 const (
 	Success = 200
 	Fail    = 100
+
+	CodeTokenExpired = 301 // 登录态已失效，请重新登陆
 )
 
 func RespOk(c *gin.Context, msg string, data interface{}) {
@@ -50,13 +53,19 @@ func RespOk(c *gin.Context, msg string, data interface{}) {
 	})
 }
 
-func RespFail(c *gin.Context, msg string, data interface{}) {
+func RespFail(c *gin.Context, msg string, data interface{}, code ...int) {
 	dataBytes, _ := json.Marshal(data)
 	if strings.Contains(msg, "pq") || strings.Contains(msg, "column") {
 		msg = "error"
+	} else {
+		msg = i18n.I18nTrans(c, msg)
+	}
+	retCode := Fail
+	if len(code) > 0 {
+		retCode = code[0]
 	}
 	c.JSON(http.StatusOK, Response{
-		Code: Fail,
+		Code: retCode,
 		Msg:  msg,
 		Data: dataBytes,
 	})
@@ -69,9 +78,16 @@ func ResOk(c *gin.Context, msg string) {
 	})
 }
 
-func ResFail(c *gin.Context, msg string) {
-	c.JSON(http.StatusOK, Response{
-		Code: Fail,
-		Msg:  msg,
-	})
+func ResFail(c *gin.Context, msg string, code ...int) {
+	if len(code) > 0 {
+		c.JSON(http.StatusOK, Response{
+			Code: code[0],
+			Msg:  msg,
+		})
+	} else {
+		c.JSON(http.StatusOK, Response{
+			Code: Fail,
+			Msg:  msg,
+		})
+	}
 }

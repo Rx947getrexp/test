@@ -1,0 +1,102 @@
+
+
+
+insert into t_country set name = 'China-HK',name_cn='中国香港',created_at=now(),updated_at=now();
+insert into t_country set name = 'Russia',name_cn='俄罗斯',created_at=now(),updated_at=now();
+
+# 2
+curl -X GET -H "Lang: cn" http://localhost:13001/country/list
+
+curl -X GET -H "Lang: cn" http://localhost:13001/country_list
+
+
+# 3
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13001/serving_country_add -d '{"name":"China-HK", "name_display":"hk", "logo_link":"http://123", "ping_url":"http://123", "is_recommend":1, "weight":100}'
+
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13001/serving_country_add -d '{"name":"Russia", "name_display":"russia", "logo_link":"http://123", "ping_url":"http://123", "is_recommend":0, "weight":50}'
+
+# 4
+curl -X GET -H "Lang: cn" http://localhost:13001/serving_country_list
+
+# 5
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13001/serving_country_edit -d '{"name":"Russia", "name_display":"russia1", "logo_link":"http://1234", "ping_url":"http://1234", "is_recommend":0, "weight":50, "status":2}'
+
+# 6
+curl -X GET -H "Lang: cn" http://localhost:13001/machine_list
+
+
+# 7
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13001/machine_add -d '{
+    "country_name": "Russia",
+    "ip": "1.1.1.1",
+    "server": "www.xxx",
+    "port": 443,
+    "min_port": 13001,
+    "max_port": 13005,
+    "weight": 50,
+    "comment": "测试测试"
+}'
+
+# 8
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13001/machine_edit -d '{
+    "id": 100004,
+    "ip": "1.1.1.2",
+    "server": "1.www.xxx",
+    "port":    1443,
+    "min_port": 23001,
+    "max_port": 23005,
+    "weight": 60,
+    "comment": "测试测试1",
+    "status": 2
+}'
+
+# 9
+curl -X GET -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13001/get_user_op_log_list?device_type=11@qq.com&result=success  -d '{
+    "email": "11@qq.com",
+    "device_type": "1.1.1.2",
+    "page_name": "1.www.xxx",
+    "result": "1.www.xxx",
+    "order_by": "create_time",
+    "order_type": "desc",
+    "page":    1443,
+    "size": 2
+}'
+
+
+curl -X GET -H "Content-Type: application/json" -H "Lang: cn" 'http://localhost:13001/get_user_op_log_list?device_type=11@qq.com&result=success&order_by=create_time&page=2&order_type=desc'
+
+curl -X GET -H "Content-Type: application/json" -H "Lang: cn" 'http://localhost:13001/get_user_op_log_list?order_by=created_at&page=0&order_type=desc'
+
+
+
+/////////////
+# 1
+curl -X GET -H "Lang: cn" http://localhost:13002/get_serving_country_list?user_id=219122623
+
+# 2
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13002/report_user_op_log -d '{
+    "user_id": 219122692,
+    "device_id": "1770423763070881792",
+    "device_type": "ios",
+    "page_name": "1",
+    "content": "xx",
+    "create_time": "2024-01-01 00:00:01",
+    "result": "success"
+}'
+
+curl -X GET -H "Lang: cn" http://localhost:13002/get_server_config?user_id=219122623
+
+curl -X GET -H "Lang: cn" http://localhost:13002/get_server_config_without_rules?user_id=219122623
+curl -X GET -H "Lang: cn" http://localhost:13002/get_rules?user_id=219122623
+
+# 3
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13002/set_default_country -d '{
+    "user_id": 219122623,
+    "country_name": "China-HK"
+}'
+
+# 4
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13002/connect_server -d '{
+"user_id": 219122692,
+"country_name": "China-HK"
+}'

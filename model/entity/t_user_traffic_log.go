@@ -1,0 +1,20 @@
+// =================================================================================
+// Code generated and maintained by GoFrame CLI tool. DO NOT EDIT.
+// =================================================================================
+
+package entity
+
+import (
+	"github.com/gogf/gf/v2/os/gtime"
+)
+
+// TUserTrafficLog is the golang structure for table t_user_traffic_log.
+type TUserTrafficLog struct {
+	Id        uint64      `description:"自增id"`
+	Email     string      `description:"邮件"`
+	Ip        string      `description:"ip地址"`
+	DateTime  string      `description:"数据采集时间"`
+	Uplink    uint64      `description:"上行流量"`
+	Downlink  uint64      `description:"下行流量"`
+	CreatedAt *gtime.Time `description:"记录创建时间"`
+}

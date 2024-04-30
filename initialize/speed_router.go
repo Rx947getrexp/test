@@ -14,6 +14,7 @@ func AdminRouters() *gin.Engine {
 	routers.Use(Cors()) //解决跨域
 	routers.Use(api.PrintRequest)
 	routers.Use(api.FilteredSQLInject)
+	routers.Use(global.TraceIdMiddleware())
 	//routers.Use(api.RateMiddleware(api.NewLimiterV2()))
 	routers.GET("test", api.Test)
 	publicGroup := routers.Group("")
@@ -27,6 +28,7 @@ func ApiRouters() *gin.Engine {
 	routers.Use(Cors()) //解决跨域
 	//routers.Use(api.PrintRequest)
 	//routers.Use(api.FilteredSQLInject)
+	routers.Use(global.TraceIdMiddleware())
 	routers.Use(api.RateMiddleware(api.NewLimiterV2()))
 	routers.GET("test", api.Test)
 	publicGroup := routers.Group("")
@@ -64,7 +66,7 @@ func Cors() gin.HandlerFunc {
 	return func(context *gin.Context) {
 		method := context.Request.Method
 		context.Header("Access-Control-Allow-Origin", "*")
-		context.Header("Access-Control-Allow-Headers", "Content-Type,AccessToken,X-CSRF-Token,Authorization,Token,Authorization-Token,xx-device-type,Dev-Id,Lang,Channel,Client-Id")
+		context.Header("Access-Control-Allow-Headers", "Content-Type,AccessToken,X-CSRF-Token,Authorization,Token,Authorization-Token,xx-device-type,Dev-Id,Lang,Channel,Client-Id,Trace-Id")
 		context.Header("Access-Control-Allow-Methods", "POST,GET,OPTIONS")
 		context.Header("Access-Control-Expose-Headers", "Content-Length,Access-Control-Allow-Origin,Access-Control-Allow-Headers,Content-Type")
 		context.Header("Access-Control-Allow-Credentials", "True")

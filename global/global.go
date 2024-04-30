@@ -3,6 +3,7 @@ package global
 import (
 	"fmt"
 	"github.com/Shopify/sarama"
+	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
@@ -29,4 +30,13 @@ var Recovery = func() {
 		Logger.Error().Msgf("%v\n\n%v", r, string(debug.Stack()))
 		fmt.Printf("%v\n\n%v\n", r, string(debug.Stack()))
 	}
+}
+
+const (
+	LoggerTraceIdKey = "TraceId"
+)
+
+func MyLogger(c *gin.Context) *zerolog.Logger {
+	l := Logger.With().Str(LoggerTraceIdKey, c.GetString(LoggerTraceIdKey)).Logger()
+	return &l
 }

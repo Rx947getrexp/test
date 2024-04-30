@@ -4,11 +4,18 @@ import (
 	"github.com/gin-gonic/gin"
 	"go-speed/api"
 	"go-speed/api/admin"
+	"go-speed/api/admin/country"
+	"go-speed/api/admin/node"
+	"go-speed/api/admin/report"
 )
 
 func AdminRoute(group *gin.RouterGroup) {
 	group.POST("login", admin.LoginAdmin)
 	group.POST("upload", admin.Upload)
+	group.POST("edit_member_expired_time", admin.EditMemberExpiredTime)
+	group.GET("get_report_user_day_list", admin.GetReportUserDayList)
+	group.GET("get_online_user_day_list", admin.GetOnlineUserDayList)
+	group.GET("get_user_op_log_list", report.GetUserOpLogList)
 
 	nodeReportGroup := group.Group("node_report")
 	nodeReportGroup.Use(admin.NodeReportAuth())
@@ -53,6 +60,7 @@ func AdminRoute(group *gin.RouterGroup) {
 		memberGroup.GET("member_dev_list", admin.MemberDevList)
 		memberGroup.POST("edit_member", admin.EditMember)
 		memberGroup.POST("edit_member_dev", admin.EditMemberDev)
+		memberGroup.POST("edit_member_expired_time", admin.EditMemberExpiredTime)
 
 		//套餐管理
 		comboGroup := group.Group("combo")
@@ -136,5 +144,20 @@ func AdminRoute(group *gin.RouterGroup) {
 		plantGroup.GET("plant_month_summary", admin.PlantMonthSummary)
 		orderGroup.GET("order_summary", admin.OrderSummary)
 
+		/************************************** 新版本接口 ******************************************************/
+		//国家标识图片管理
+		// 国家管理
+		countryGroup := group.Group("country")
+		countryGroup.GET("list", country.CountryList) // 国家名称列表
+
+		servingCountryGroup := group.Group("serving_country")
+		servingCountryGroup.GET("list", country.ServingCountryList)    // 查询在线的国家列表
+		servingCountryGroup.POST("add", country.ServingCountryCreate)  // 添加国家
+		servingCountryGroup.POST("edit", country.ServingCountryModify) // 修改国家信息
+
+		machineGroup := group.Group("machine")
+		machineGroup.GET("list", node.NodeList)    // 查询机器列表
+		machineGroup.POST("add", node.NodeCreate)  // 添加机器
+		machineGroup.POST("edit", node.NodeModify) // 修改机器信息
 	}
 }

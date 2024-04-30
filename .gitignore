@@ -10,3 +10,8 @@ http-test/
 public/
 #upload/
 *.key
+*.yaml
+.idea/go-speed.iml
+
+cmd/go-api/go-api
+

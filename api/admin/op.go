@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 	"go-speed/global"
+	"go-speed/i18n"
 	"go-speed/model"
 	"go-speed/model/request"
 	"go-speed/model/response"
@@ -141,6 +142,126 @@ func EditMemberDev(c *gin.Context) {
 		return
 	}
 	response.ResOk(c, "成功")
+}
+
+func EditMemberExpiredTime(c *gin.Context) {
+	param := new(request.EditMemberExpiredTimeRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+
+	claims := c.MustGet("claims").(*service.CustomClaims)
+	user, err := service.GetAdminUserByClaims(claims)
+	if err != nil {
+		global.Logger.Err(err).Msg("不合法！")
+		response.ResFail(c, "不合法！")
+		return
+	}
+	global.Logger.Err(err).Msgf("Admin uname: %s", user.Uname)
+
+	if !isValidTimestamp(param.ExpiredTime) {
+		global.Logger.Err(nil).Msgf("ExpiredTime: (%d) 参数无效！不能超过5年时间长度。", param.ExpiredTime)
+		response.ResFail(c, "用户过期参数无效！不能超过5年时间长度。")
+		return
+	}
+
+	bean := new(model.TUser)
+	bean.UpdatedAt = time.Now()
+	bean.ExpiredTime = param.ExpiredTime
+	cols := []string{"updated_at", "expired_time"}
+	rows, err := global.Db.Cols(cols...).Where("id = ?", param.Id).Update(bean)
+	if err != nil || rows != 1 {
+		global.Logger.Err(err).Msg("操作失败！")
+		response.ResFail(c, "操作失败！")
+		return
+	}
+	response.ResOk(c, "成功")
+}
+
+func isValidTimestamp(expiredTime int64) bool {
+	// 将 ExpiredTime 转换为 time.Time 类型
+	expiredTimeInTime := time.Unix(expiredTime, 0)
+
+	// 获取当前时间
+	now := time.Now()
+
+	// 获取1年前的时间
+	oneYearAgo := now.AddDate(-1, 0, 0)
+
+	// 获取5年后的时间
+	fiveYearsLater := now.AddDate(5, 0, 0)
+
+	// 判断 ExpiredTime 是否在有效范围内
+	if expiredTimeInTime.After(oneYearAgo) && expiredTimeInTime.Before(fiveYearsLater) {
+		return true
+	}
+	return false
+}
+
+func GetReportUserDayList(c *gin.Context) {
+	param := new(request.GetReportUserDayListRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+
+	total, list, err := service.QueryUserReportDay(c, param.Date, param.ChannelId, param.OrderType, param.Page, param.Size)
+	if err != nil {
+		global.Logger.Err(err).Msg("查询出错！")
+		response.ResFail(c, "查询出错！")
+		return
+	}
+	items := make([]response.ReportUserDay, 0)
+	for _, item := range list {
+		items = append(items, response.ReportUserDay{
+			Id:        item.Id,
+			Date:      item.Date,
+			ChannelId: item.ChannelId,
+			Total:     item.Total,
+			New:       item.New,
+			Retained:  item.Retained,
+			CreatedAt: item.CreatedAt.String(),
+		})
+	}
+	resp := response.GetReportUserDayListResponse{Total: total, Items: items}
+	response.RespOk(c, i18n.RetMsgSuccess, resp)
+	return
+}
+
+func GetOnlineUserDayList(c *gin.Context) {
+	param := new(request.GetOnlineUserDayListRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+
+	total, list, err := service.QueryOnlineUserDay(c, param.Date, param.ChannelId, param.Email, param.OrderType, param.Page, param.Size)
+	if err != nil {
+		global.Logger.Err(err).Msg("查询出错！")
+		response.ResFail(c, "查询出错！")
+		return
+	}
+	items := make([]response.OnlineUserDay, 0)
+	for _, item := range list {
+		items = append(items, response.OnlineUserDay{
+			Id:               item.Id,
+			Date:             item.Date,
+			Email:            item.Email,
+			ChannelId:        item.ChannelId,
+			OnlineDuration:   item.OnlineDuration,
+			Uplink:           item.Uplink,
+			Downlink:         item.Downlink,
+			CreatedAt:        item.CreatedAt.String(),
+			LastLoginCountry: item.LastLoginCountry,
+		})
+	}
+	resp := response.GetOnlineUserDayListResponse{Total: total, Items: items}
+	response.RespOk(c, i18n.RetMsgSuccess, resp)
+	return
 }
 
 func ComboList(c *gin.Context) {
@@ -1153,6 +1274,7 @@ func AddAppVersion(c *gin.Context) {
 		response.ResFail(c, "参数错误")
 		return
 	}
+	global.MyLogger(c).Info().Msgf("param: %+v", *param)
 	claims := c.MustGet("claims").(*service.CustomClaims)
 	user, err := service.GetAdminUserByClaims(claims)
 	if err != nil {
