@@ -367,11 +367,6 @@ type EditMemberAdminRequest struct {
 	Status string `form:"status" json:"status"`            //状态
 }
 
-type EditMemberExpiredTimeRequest struct {
-	Id          int64 `form:"id" binding:"required" json:"id"`  //用户ID
-	ExpiredTime int64 `form:"expired_time" json:"expired_time"` //会员过期时间，时间戳秒，最大支持当前时间+5年
-}
-
 type EditMemberDevAdminRequest struct {
 	Id     int64  `form:"id" binding:"required" json:"id"` //用户ID
 	Status string `form:"status" json:"status"`            //状态

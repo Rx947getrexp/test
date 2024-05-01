@@ -29,4 +29,5 @@ type TUser struct {
 	LastLoginIp      string      `orm:"last_login_ip"      description:"最近一次登录的ip"`
 	LastLoginCountry string      `orm:"last_login_country" description:"最近一次登录的国家"`
 	PreferredCountry string      `orm:"preferred_country"  description:"用户选择的国家（国家名称）"`
+	Version          int         `orm:"version"            description:"数据版本号"`
 }

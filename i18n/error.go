@@ -83,10 +83,15 @@ const (
 	RetMsgDevIdInvalid              = "Dev-Id无效"
 	RetMsgUserIdInvalid             = "User-Id无效"
 	RetMsgAuthorizationTokenInvalid = "Token无效"
+	RetMsgCreatePayOrderFailed      = "创建支付订单失败，请稍后重试。如果持续失败，请联系客服处理！"
 )
 
 func Init() {
 	ReturnMsgMap = make(I18nMsgMap)
+	ReturnMsgMap[RetMsgCreatePayOrderFailed] = map[string]string{
+		LangEN: "Failed to create a payment order, please try again later. If the issue persists, please contact customer support!",
+		LangRU: "Не удалось создать платежный заказ, пожалуйста, попробуйте еще раз позже. Если проблема не устраняется, обратитесь в службу поддержки",
+	}
 	ReturnMsgMap[RetMsgDBErr] = map[string]string{
 		LangEN: "Query failed.",
 		LangRU: "Запрос не удался.",

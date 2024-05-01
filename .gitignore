@@ -14,4 +14,8 @@ public/
 .idea/go-speed.iml
 
 cmd/go-api/go-api
-
+cmd/go-api/go-api-mac
+cmd/go-admin/go-admin
+cmd/go-api/go-api-mac
+cmd/go-job/go-job
+cmd/go-job/go-job-mac

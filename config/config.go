@@ -8,4 +8,5 @@ type Server struct {
 	Redis  Redis  `mapstructure:"redis"`
 	Gas    Gas    `mapstructure:"gas"`
 	Kafka  Kafka  `mapstructure:"kafka"`
+	Pay    Pay    `mapstructure:"pay"`
 }

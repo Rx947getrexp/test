@@ -12,7 +12,7 @@ import (
 
 type GetUserOpLogListReq struct {
 	Email     string `form:"email" json:"email" dc:"用户email"`
-	DeviceId  string `form:"device_id" json:"device_id" dc:"DeviceId"`
+	DeviceId  string `form:"dev_id" json:"dev_id" dc:"dev_id"`
 	Result    string `form:"result" json:"result" dc:"result"`
 	StartTime string `form:"start_time" json:"start_time" dc:"数据创建的开始时间"`
 	EndTime   string `form:"end_time" json:"end_time" dc:"数据创建的结束时间"`

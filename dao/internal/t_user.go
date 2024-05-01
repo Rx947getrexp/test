@@ -39,6 +39,7 @@ type TUserColumns struct {
 	LastLoginIp      string // 最近一次登录的ip
 	LastLoginCountry string // 最近一次登录的国家
 	PreferredCountry string // 用户选择的国家（国家名称）
+	Version          string // 数据版本号
 }
 
 // tUserColumns holds the columns for table t_user.
@@ -62,6 +63,7 @@ var tUserColumns = TUserColumns{
 	LastLoginIp:      "last_login_ip",
 	LastLoginCountry: "last_login_country",
 	PreferredCountry: "preferred_country",
+	Version:          "version",
 }
 
 // NewTUserDao creates and returns a new DAO object for table data access.
