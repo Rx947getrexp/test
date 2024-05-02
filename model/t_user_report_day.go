@@ -16,7 +16,7 @@ type TUserOnlineDay struct {
 	Id               int64     `xorm:"pk autoincr comment('自增id') BIGINT"`
 	Date             int       `xorm:"INT"`
 	Email            string    `xorm:"INT"`
-	ChannelId        int       `xorm:"INT"`
+	Channel          string    `xorm:"VARCHAR(32)"`
 	OnlineDuration   int       `xorm:"INT"`
 	Uplink           int64     `xorm:"INT"`
 	Downlink         int64     `xorm:"INT"`

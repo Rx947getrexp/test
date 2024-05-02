@@ -1,8 +1,6 @@
 package admin
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/shopspring/decimal"
 	"go-speed/global"
 	"go-speed/i18n"
 	"go-speed/model"
@@ -11,6 +9,9 @@ import (
 	"go-speed/service"
 	"strconv"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
 )
 
 func MemberList(c *gin.Context) {
@@ -251,7 +252,7 @@ func GetOnlineUserDayList(c *gin.Context) {
 			Id:               item.Id,
 			Date:             item.Date,
 			Email:            item.Email,
-			ChannelId:        item.ChannelId,
+			Channel:          item.Channel,
 			OnlineDuration:   item.OnlineDuration,
 			Uplink:           item.Uplink,
 			Downlink:         item.Downlink,
