@@ -45,7 +45,7 @@ func QueryUserReportDay(ctx context.Context, date, channelId int, orderType stri
 	return count, list, err
 }
 
-func QueryOnlineUserDay(ctx context.Context, date, channelId int, email, orderType string, page, size int) (int64, []*model.TUserOnlineDay, error) {
+func QueryOnlineUserDay(ctx context.Context, date, channelId string, email, orderType string, page, size int) (int64, []*model.TUserOnlineDay, error) {
 	order := "desc"
 	if strings.ToLower(orderType) == "asc" {
 		order = "asc"
@@ -60,7 +60,7 @@ func QueryOnlineUserDay(ctx context.Context, date, channelId int, email, orderTy
 	var list []*model.TUserOnlineDay
 	sessCount := global.Db2.Context(ctx)
 	sess := global.Db2.Context(ctx)
-	if date > 0 {
+	if date != "" {
 		sess = sess.Where(" date = ?", date)
 		sessCount = sessCount.Where(" date = ?", date)
 	}
@@ -68,7 +68,7 @@ func QueryOnlineUserDay(ctx context.Context, date, channelId int, email, orderTy
 		sess = sess.Where(" email = ?", email)
 		sessCount = sessCount.Where(" email = ?", email)
 	}
-	if channelId > 0 {
+	if channelId != "" {
 		sess = sess.Where(" channel_id = ?", channelId)
 		sessCount = sessCount.Where(" channel_id = ?", channelId)
 	}
@@ -81,6 +81,6 @@ func QueryOnlineUserDay(ctx context.Context, date, channelId int, email, orderTy
 		return 0, nil, err
 	}
 
-	err = sess.Limit(size, offset).OrderBy(fmt.Sprintf("date %s, channel_id %s", order, order)).Find(&list)
+	err = sess.Limit(size, offset).OrderBy(fmt.Sprintf("date %s, channel %s", order, order)).Find(&list)
 	return count, list, err
 }

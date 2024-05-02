@@ -500,9 +500,9 @@ type GetReportUserDayListRequest struct {
 }
 
 type GetOnlineUserDayListRequest struct {
-	Date      int    `form:"date" json:"date" dc:"报表日期，eg:20240101"`
+	Date      string `form:"date" json:"date" dc:"报表日期，eg:20240101"`
 	Email     string `form:"email" json:"email" dc:"用户email"`
-	ChannelId int    `form:"channel_id" json:"channel_id" dc:"渠道ID"`
+	ChannelId string `form:"channel" json:"channel" dc:"渠道ID"`
 	OrderBy   string `form:"order_by" json:"order_by" dc:"排序字段，eg: id|online_duration|uplink|downlink"`
 	OrderType string `form:"order_type" json:"order_type" dc:"排序类型，eg: asc|desc"`
 	Page      int    `form:"page" json:"page" dc:"分页查询page, 从1开始"`
