@@ -69,8 +69,8 @@ func QueryOnlineUserDay(ctx context.Context, date, channelId string, email, orde
 		sessCount = sessCount.Where(" email = ?", email)
 	}
 	if channelId != "" {
-		sess = sess.Where(" channel_id = ?", channelId)
-		sessCount = sessCount.Where(" channel_id = ?", channelId)
+		sess = sess.Where(" channel = ?", channelId)
+		sessCount = sessCount.Where(" channel = ?", channelId)
 	}
 	offset := 0
 	if page > 1 {
