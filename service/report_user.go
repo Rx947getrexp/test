@@ -45,7 +45,7 @@ func QueryUserReportDay(ctx context.Context, date, channelId int, orderType stri
 	return count, list, err
 }
 
-func QueryOnlineUserDay(ctx context.Context, date, channelId string, email, orderType string, page, size int) (int64, []*model.TUserOnlineDay, error) {
+func QueryOnlineUserDay(ctx context.Context, date int, channelId string, email, orderType string, page, size int) (int64, []*model.TUserOnlineDay, error) {
 	order := "desc"
 	if strings.ToLower(orderType) == "asc" {
 		order = "asc"
@@ -60,7 +60,7 @@ func QueryOnlineUserDay(ctx context.Context, date, channelId string, email, orde
 	var list []*model.TUserOnlineDay
 	sessCount := global.Db2.Context(ctx)
 	sess := global.Db2.Context(ctx)
-	if date != "" {
+	if date > 0 {
 		sess = sess.Where(" date = ?", date)
 		sessCount = sessCount.Where(" date = ?", date)
 	}
