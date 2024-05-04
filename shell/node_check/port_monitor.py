@@ -8,7 +8,7 @@ import requests
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-with open("health_scores.json", "r") as f:
+with open("health_scores.json", "r", encoding='utf-8') as f:
     health_scores = json.load(f)
 
 # 连续失败的阈值
@@ -28,7 +28,7 @@ def Switching_machine_requests(siteName, status):
 # 检查端口是否开放
 def check_port(ip, port):
     try:
-        with telnetlib.Telnet(ip, port, timeout=10) as telnet:
+        with telnetlib.Telnet(ip, port, timeout=1) as telnet:
             logging.info(f"成功连接到 {ip}:{port}")
             return True
     except Exception as e:
@@ -44,19 +44,23 @@ def update_failure_count(siteName, ip, port, healthy):
     # 初始化键
     if str(port) not in health_scores[siteName][ip]:
         health_scores[siteName][ip][str(port)] = {"failure_count": 0}
+    if "status" not in health_scores[siteName][ip]:
+        health_scores[siteName][ip]["status"] = "未知"
+
     # 根据成功与否更新失败次数
     if healthy:
-        # 连续失败超过三次了,后面成功了
-        if health_scores[siteName][ip][str(port)]["failure_count"] >= FAILURE_THRESHOLD:
+        # 恢复上架
+        if health_scores[siteName][ip][str(port)]["failure_count"] > FAILURE_THRESHOLD and health_scores[siteName][ip][
+            "status"] == "已下架":
             recommission(siteName, ip)
         else:
             health_scores[siteName][ip][str(port)]["failure_count"] = 0
     else:
         # 如果失败，增加失败次数
         health_scores[siteName][ip][str(port)]["failure_count"] += 1
-    # 如果连续失败超过三次,那么可以下架了
-    if health_scores[siteName][ip][str(port)]["failure_count"] >= FAILURE_THRESHOLD:
-        print(health_scores[siteName][ip])
+
+    # 判断是否连续三次失败是否下架，如果连续三次失败，下架机器
+    if health_scores[siteName][ip][str(port)]["failure_count"] == FAILURE_THRESHOLD:
         decommission(siteName, ip)
 
 
@@ -66,13 +70,17 @@ def recommission(siteName, siteNameIp):
     :param siteNameIp: 服务器IP地址
     :return:
     """
-    Switching_machine_requests(siteNameIp, "1")
-    logging.warning(f"对 {siteName}进行上架架操作")
+    response = Switching_machine_requests(siteNameIp, "1")
+    if response.status_code == 200:
+        health_scores[siteName][siteNameIp]["status"] = "已上架"
+        logging.warning(f"对 {siteName}进行上架架操作")
 
 
 def decommission(siteName, siteNameIp):
-    Switching_machine_requests(siteNameIp, "2")
-    logging.warning(f"对 {siteName}进行下架操作")
+    response = Switching_machine_requests(siteNameIp, "2")
+    if response.status_code == 200:
+        health_scores[siteName][siteNameIp]["status"] = "已下架"
+        logging.warning(f"对 {siteName}进行下架操作")
 
 
 # 主函数
@@ -94,8 +102,8 @@ def main():
                 if healthy:
                     break
             update_failure_count(siteName, ip, "443~13005", batch_success)
-    with open("health_scores.json", "w") as f:
-        json.dump(health_scores, f)
+    with open("health_scores.json", "w", encoding='utf-8') as f:
+        f.write(json.dumps(health_scores, ensure_ascii=False))
 
 
 if __name__ == "__main__":
