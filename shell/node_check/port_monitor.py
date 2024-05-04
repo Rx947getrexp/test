@@ -1,11 +1,9 @@
-import concurrent.futures
 import telnetlib
 import time
 import logging
 import json
 import hashlib
 import hmac
-
 import requests
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -17,7 +15,7 @@ with open("health_scores.json", "r") as f:
 FAILURE_THRESHOLD = 3
 
 
-def send_requests(siteName, status):
+def Switching_machine_requests(siteName, status):
     url = "http://127.0.0.1:13002/machine_states_witching"
     secret_key = "3f5202f0-4ed3-4456-80dd-13638c975bda"
     params = {'Ip': siteName, 'status': status}
@@ -30,7 +28,7 @@ def send_requests(siteName, status):
 # 检查端口是否开放
 def check_port(ip, port):
     try:
-        with telnetlib.Telnet(ip, port, timeout=2) as telnet:
+        with telnetlib.Telnet(ip, port, timeout=10) as telnet:
             logging.info(f"成功连接到 {ip}:{port}")
             return True
     except Exception as e:
@@ -42,36 +40,38 @@ def check_port(ip, port):
 
 
 # 更新失败次数
-def update_failure_count(siteName, ip, port, success):
+def update_failure_count(siteName, ip, port, healthy):
     # 初始化键
     if str(port) not in health_scores[siteName][ip]:
         health_scores[siteName][ip][str(port)] = {"failure_count": 0}
     # 根据成功与否更新失败次数
-    if success:
-        if health_scores[siteName][ip][str(port)]["failure_count"] > 0:
-            health_scores[siteName][ip][str(port)]["failure_count"] = 0
+    if healthy:
+        # 连续失败超过三次了,后面成功了
+        if health_scores[siteName][ip][str(port)]["failure_count"] >= FAILURE_THRESHOLD:
             recommission(siteName, ip)
         else:
             health_scores[siteName][ip][str(port)]["failure_count"] = 0
     else:
         # 如果失败，增加失败次数
         health_scores[siteName][ip][str(port)]["failure_count"] += 1
-
-    # 检查是否需要下架
+    # 如果连续失败超过三次,那么可以下架了
     if health_scores[siteName][ip][str(port)]["failure_count"] >= FAILURE_THRESHOLD:
         print(health_scores[siteName][ip])
         decommission(siteName, ip)
 
 
-
-
 def recommission(siteName, siteNameIp):
-    send_requests(siteNameIp, "1")
+    """
+    :param siteName: 服务器名称
+    :param siteNameIp: 服务器IP地址
+    :return:
+    """
+    Switching_machine_requests(siteNameIp, "1")
     logging.warning(f"对 {siteName}进行上架架操作")
 
 
 def decommission(siteName, siteNameIp):
-    send_requests(siteNameIp, "2")
+    Switching_machine_requests(siteNameIp, "2")
     logging.warning(f"对 {siteName}进行下架操作")
 
 
@@ -80,41 +80,20 @@ def main():
     siteNames = {
         "Hong Kong": ["103.84.110.102"],
         "Moscow": ["185.143.220.131"],
-        "Latvia": ["193.124.22.221"],
         "Inner Mongolia": ["211.101.233.165"],
         "Germany": ["91.149.222.79"],
     }
-    batch_ports = [13001, 13002, 13003, 13004, 13005]
-    single_ports = [15003, 443]
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        tasks = []
-        for siteName, ips in siteNames.items():
-            for ip in ips:
-                for port in single_ports:
-                    future = executor.submit(check_port, ip, port)
-                    tasks.append({
-                        'future': future,
-                        'siteName': siteName,
-                        'ip': ip,
-                        'port': port
-                    })
-                # 批量端口探测
-                batch_success = False
-                for port in batch_ports:
-                    success = check_port(ip, port)
-                    batch_success |= success
-                    # 调用位运算符判断13001~13005的结果
-                    if success:
-                        break
-                update_failure_count(siteName, ip, "13001~13005", batch_success)
-        concurrent.futures.wait([task['future'] for task in tasks])
-        # 更新单独端口的失败次数
-        for task in tasks:
-            success = task['future'].result()
-            siteName = task['siteName']
-            ip = task['ip']
-            port = task['port']
-            update_failure_count(siteName, ip, port, success)
+    batch_ports = [443, 13001, 13002, 13003, 13004, 13005]
+    for siteName, ips in siteNames.items():
+        for ip in ips:
+            batch_success = False
+            for port in batch_ports:
+                healthy = check_port(ip, port)
+                batch_success |= healthy
+                # 调用位运算符判断443~13005的结果
+                if healthy:
+                    break
+            update_failure_count(siteName, ip, "443~13005", batch_success)
     with open("health_scores.json", "w") as f:
         json.dump(health_scores, f)
 

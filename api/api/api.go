@@ -1,6 +1,9 @@
 package api
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"go-speed/api"
@@ -1912,4 +1915,72 @@ func TrafficList(c *gin.Context) {
 
 func getClientId(c *gin.Context) string {
 	return global.GetClientId(c)
+}
+
+func isValidSignature(signature string) bool {
+	keyBytes := []byte(constant.SecretKey)
+	hmacKey := hmac.New(sha256.New, keyBytes)
+	hmacKey.Write(keyBytes)
+	Signature := hex.EncodeToString(hmacKey.Sum(nil))
+	fmt.Println("Signature", Signature)
+	return signature == Signature
+}
+
+// 签名验证
+func Verify(c *gin.Context) {
+	signature := c.Request.Header.Get("X-Signature")
+	if !isValidSignature(signature) {
+		global.MyLogger(c).Err(fmt.Errorf("Invalid signature")).Msgf("Invalid signature: %s", signature)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid signature"})
+		c.Abort()
+		return
+	}
+	var isAllowed bool
+	AllowedIP := []string{"127.0.0.1", "185.22.154.46", "45.251.243.140"} // ip池白名单
+	// 获取请求IP
+	ip := c.ClientIP()
+	fmt.Printf("获取请求的客户端IP: %s", ip)
+	// 检查 IP 地址是否在白名单中
+	for _, allowedIP := range AllowedIP {
+		if ip == allowedIP {
+			isAllowed = true
+			break
+		}
+	}
+	// 如果 IP 地址不在白名单中，返回未授权的错误响应
+	if !isAllowed {
+		global.MyLogger(c).Err(fmt.Errorf("IP is Unauthorized")).Msgf("未知的IP没有加入白名单 IP: %s", ip) // 插入日志
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized IP"})
+		return
+	}
+	response.RespOk(c, i18n.RetMsgSuccess, nil)
+}
+func ServerStateSwitching(c *gin.Context) {
+	// 获取请求参数
+	param := new(request.ServerStateSwitchingRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.MyLogger(c).Err(err).Msgf("绑定参数失败, clientId: %s", getClientId(c))
+		response.RespFail(c, i18n.RetMsgParamParseErr, nil)
+		return
+	}
+	switch param.Status {
+	case constant.Healthy:
+		//上架
+		_, err := dao.TNode.Ctx(c).Where(do.TNode{Ip: param.Ip}).Update(do.TNode{Status: 1})
+		if err != nil {
+			global.MyLogger(c).Err(err).Msgf("数据库查询出错, ip: %s", param.Ip)
+			response.RespFail(c, i18n.RetMsgDBErr, nil)
+			return
+		}
+	case constant.Unhealthy:
+		//下架
+		_, err := dao.TNode.Ctx(c).Where(do.TNode{Ip: param.Ip}).Update(do.TNode{Status: 2})
+		if err != nil {
+			global.MyLogger(c).Err(err).Msgf("数据库查询出错, ip: %s", param.Ip)
+			response.RespFail(c, i18n.RetMsgDBErr, nil)
+			return
+		}
+	default:
+		response.RespFail(c, i18n.RetMsgParamInvalid, nil)
+	}
 }

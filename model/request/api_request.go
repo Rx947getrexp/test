@@ -100,7 +100,7 @@ type PingResultItem struct {
 	Cost string `form:"cost" json:"cost" dc:"ping耗时"`
 }
 
-type ServerStateSwitchingItem struct {
+type ServerStateSwitchingRequest struct {
 	Ip     string `form:"Ip" json:"Ip"`
 	Status string `form:"status" json:"status"` //1-开启；2-关闭
 }
