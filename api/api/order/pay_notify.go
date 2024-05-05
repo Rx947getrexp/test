@@ -2,6 +2,7 @@ package order
 
 import (
 	"github.com/gin-gonic/gin"
+	"go-speed/constant"
 	"go-speed/global"
 	"go-speed/i18n"
 	"go-speed/model/response"
@@ -23,8 +24,9 @@ type PayNotifyRes struct {
 
 func PayNotify(ctx *gin.Context) {
 	var (
-		err error
-		req = new(PayNotifyReq)
+		err    error
+		req    = new(PayNotifyReq)
+		status string
 	)
 	if err = ctx.ShouldBind(req); err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("绑定参数失败")
@@ -33,12 +35,16 @@ func PayNotify(ctx *gin.Context) {
 	}
 	global.MyLogger(ctx).Debug().Msgf("request: %+v", *req)
 
-	err = service.SyncOrderStatus(ctx, req.OrderNo)
+	status, err = service.SyncOrderStatus(ctx, req.OrderNo)
 	if err != nil {
 		response.ResFail(ctx, err.Error())
 		return
 	}
-	ctx.Writer.Write([]byte("ok"))
+	if status == constant.ReturnStatusSuccess {
+		ctx.Writer.Write([]byte("ok"))
+	} else {
+		ctx.Writer.Write([]byte(status))
+	}
 	ctx.Done()
 	return
 }

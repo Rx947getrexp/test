@@ -27,7 +27,7 @@ func SyncOrderStatus(ctx *gin.Context) {
 	}
 	global.MyLogger(ctx).Debug().Msgf("request: %+v", *req)
 
-	err = service.SyncOrderStatus(ctx, req.OrderNo)
+	_, err = service.SyncOrderStatus(ctx, req.OrderNo)
 	if err != nil {
 		response.ResFail(ctx, err.Error())
 		return

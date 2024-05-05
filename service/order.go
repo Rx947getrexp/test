@@ -12,6 +12,7 @@ import (
 	"go-speed/model/do"
 	"go-speed/model/entity"
 	"go-speed/util/pay/pnsafepay"
+	"strconv"
 	"strings"
 )
 
@@ -19,7 +20,7 @@ const (
 	ReturnStatusSuccess = "success"
 )
 
-func SyncOrderStatus(ctx *gin.Context, orderNo string) (err error) {
+func SyncOrderStatus(ctx *gin.Context, orderNo string) (status string, err error) {
 	var (
 		affected     int64
 		lastInsertId int64
@@ -43,7 +44,7 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string) (err error) {
 	}
 	if payOrder.Status == constant.ParOrderStatusPaid {
 		global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ orderNo: %s, status: %s, has notified success", orderNo, payOrder.Status)
-		return nil
+		return ReturnStatusSuccess, nil
 	}
 
 	payResponse, err = pnsafepay.QueryPayOrder(ctx, payOrder.OrderNo)
@@ -57,10 +58,11 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string) (err error) {
 		global.MyLogger(ctx).Err(err).Msgf("CheckStatus failed")
 		return
 	}
-
+	orderAmount, _ := strconv.ParseFloat(payResponse.OrderAmount, 64)
+	payOrderAmount, _ := strconv.ParseFloat(payOrder.OrderAmount, 64)
 	if payResponse.OrderNo != payOrder.OrderNo ||
-		payResponse.OrderAmount != payOrder.OrderAmount ||
-		payResponse.MerNo != global.Config.Pay.CallBackUrl {
+		orderAmount != payOrderAmount ||
+		payResponse.MerNo != global.Config.PNSafePay.MerNo {
 		err = fmt.Errorf(`QueryPayOrder response order info is invalid, [order_no,order_amount,mer_no] is not right`)
 		global.MyLogger(ctx).Err(err).Msgf(`payResponse: %+v, payOrder: %+v`, *payResponse, *payOrder)
 		return
@@ -150,5 +152,5 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string) (err error) {
 		return
 	}
 	global.MyLogger(ctx).Debug().Msgf("sync order status success, orderNo: %s", orderNo)
-	return nil
+	return payResponse.ResultStatus, nil
 }

@@ -11,3 +11,7 @@ const (
 	UserVipAttrOpSourcePayOrder = "pay-order"
 	UserVipAttrOpSourceAdminSet = "admin-set"
 )
+
+const (
+	ReturnStatusSuccess = "success"
+)

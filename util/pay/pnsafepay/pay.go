@@ -44,7 +44,7 @@ type PayResponse struct {
 func CreatePayOrder(ctx *gin.Context, req *PayRequest) (res *PayResponse, err error) {
 	url := "http://api.pnsafepay.com/gateway.aspx"
 	req.Method = "trade.create"
-	req.ReturnUrl = global.Config.Pay.CallBackUrl
+	req.ReturnUrl = global.Config.PNSafePay.CallBackUrl
 	requestParams := genRequestSignature(ctx, req)
 	headers := map[string]string{
 		"Content-Type": "application/json",
@@ -84,7 +84,7 @@ func CreatePayOrder(ctx *gin.Context, req *PayRequest) (res *PayResponse, err er
 func genRequestSignature(ctx *gin.Context, req *PayRequest) map[string]string {
 	params := map[string]string{
 		"currency":     req.Currency,
-		"mer_no":       global.Config.Pay.MerNo,
+		"mer_no":       global.Config.PNSafePay.MerNo,
 		"method":       req.Method,
 		"order_amount": req.OrderAmount,
 		"order_no":     req.OrderNo,
@@ -143,7 +143,7 @@ func QueryPayOrder(ctx *gin.Context, orderNo string) (res *QueryOrderResponse, e
 	url := "http://api.pnsafepay.com/gateway.aspx"
 
 	params := map[string]string{
-		"mer_no":   global.Config.Pay.CallBackUrl,
+		"mer_no":   global.Config.PNSafePay.MerNo,
 		"method":   "trade.check",
 		"order_no": orderNo,
 	}

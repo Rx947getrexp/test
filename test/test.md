@@ -120,7 +120,7 @@ curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:
 }'
 
 
-curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13002/pay_notify -d '{"order_no": "20240501221029143918"}'
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13002/pay_notify -d '{"order_no": "20240505184228571983"}'
 
 
 

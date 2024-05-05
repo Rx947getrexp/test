@@ -58,7 +58,7 @@ func doSyncPayOrderStatus() {
 	}
 
 	for _, item := range items {
-		err = service.SyncOrderStatus(&gin.Context{}, item.OrderNo)
+		_, err = service.SyncOrderStatus(&gin.Context{}, item.OrderNo)
 		if err != nil {
 			global.Logger.Err(err).Msgf("SyncOrderStatus failed, orderNo: %s", item.OrderNo)
 			continue

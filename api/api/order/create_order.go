@@ -20,16 +20,8 @@ import (
 )
 
 const (
-	ProductNoVIPMonth        = "vip-month" // vip月卡
-	OrderAmountVIPMonth      = "500"       // vip月卡
-	CurrencyRUB              = "RUB"       // 俄罗斯卢布
-	RussianOnlineBankingCode = "29001"     // 俄罗斯网银
-)
-
-const (
-	PayName  = "hsfly"
-	PayEmail = "2233@gmail.com"
-	PayPhone = "18818811881"
+	CurrencyRUB              = "RUB"   // 俄罗斯卢布
+	RussianOnlineBankingCode = "29001" // 俄罗斯网银
 )
 
 type CreateOrderReq struct {
@@ -67,7 +59,7 @@ func CreateOrder(ctx *gin.Context) {
 	}
 	global.MyLogger(ctx).Debug().Msgf("request: %+v", *req)
 
-	if req.ProductNo != ProductNoVIPMonth {
+	if req.ProductNo != global.Config.PNSafePay.ProductNo {
 		global.MyLogger(ctx).Err(err).Msgf("params 'ProductNo'(%s) invalid", req.ProductNo)
 		response.RespFail(ctx, i18n.RetMsgParamInvalid, nil)
 		return
@@ -79,7 +71,7 @@ func CreateOrder(ctx *gin.Context) {
 		return
 	}
 
-	if strconv.Itoa(req.OrderAmount) != OrderAmountVIPMonth {
+	if strconv.Itoa(req.OrderAmount) != global.Config.PNSafePay.OrderAmount {
 		global.MyLogger(ctx).Err(err).Msgf("params 'OrderAmount'(%d) invalid", req.OrderAmount)
 		response.RespFail(ctx, i18n.RetMsgParamInvalid, nil)
 		return
@@ -112,12 +104,12 @@ func CreateOrder(ctx *gin.Context) {
 
 	// 发起支付
 	payRequest = &pnsafepay.PayRequest{
-		MerNo:       global.Config.Pay.MerNo,
+		MerNo:       global.Config.PNSafePay.MerNo,
 		OrderNo:     orderNo,
-		OrderAmount: OrderAmountVIPMonth,
-		PayName:     PayName,
-		PayEmail:    PayEmail,
-		PayPhone:    PayPhone,
+		OrderAmount: global.Config.PNSafePay.OrderAmount,
+		PayName:     global.Config.PNSafePay.PayName,
+		PayEmail:    global.Config.PNSafePay.PayEmail,
+		PayPhone:    global.Config.PNSafePay.PayPhone,
 		Currency:    req.Currency,
 		PayTypeCode: RussianOnlineBankingCode,
 	}
@@ -168,6 +160,7 @@ func generateOrderID() string {
 
 	rand.Seed(time.Now().UnixNano())
 	randomNumber := rand.Intn(1000000) // 生成一个0到1000000之间的随机数
+	//randomNumber = 2468
 
 	return fmt.Sprintf("%04d%02d%02d%02d%02d%02d%06d", year, month, day, hour, minute, second, randomNumber)
 }
