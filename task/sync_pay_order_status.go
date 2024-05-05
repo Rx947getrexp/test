@@ -10,13 +10,14 @@ import (
 	"go-speed/global"
 	"go-speed/model/entity"
 	"go-speed/service"
+	"net/http/httptest"
 	"time"
 )
 
 const (
 	leaderLockKeySyncOrderStatus       = "hs-fly-SyncPayOrderStatus-leader-lock"
-	electionIntervalSyncPayOrderStatus = 1 * time.Minute
-	lockTimeoutSyncPayOrderStatus      = electionIntervalSyncPayOrderStatus + 10*time.Minute
+	electionIntervalSyncPayOrderStatus = 10 * time.Second
+	lockTimeoutSyncPayOrderStatus      = electionIntervalSyncPayOrderStatus + 10*time.Second
 )
 
 // SyncPayOrderStatus 同步订单支付状态
@@ -57,8 +58,10 @@ func doSyncPayOrderStatus() {
 		return
 	}
 
+	c, _ := gin.CreateTestContext(httptest.NewRecorder())
+	defer c.Done()
 	for _, item := range items {
-		_, err = service.SyncOrderStatus(&gin.Context{}, item.OrderNo)
+		_, err = service.SyncOrderStatus(c, item.OrderNo)
 		if err != nil {
 			global.Logger.Err(err).Msgf("SyncOrderStatus failed, orderNo: %s", item.OrderNo)
 			continue
