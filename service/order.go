@@ -28,7 +28,7 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string) (status string, err error
 		payResponse  *pnsafepay.QueryOrderResponse
 		userEntity   *entity.TUser
 	)
-	global.MyLogger(ctx).Debug().Msgf("$$$$$$$$$$$$$$ orderNo: %s", orderNo)
+	global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ orderNo: %s", orderNo)
 
 	err = dao.TPayOrder.Ctx(ctx).Where(do.TPayOrder{
 		OrderNo: orderNo,
@@ -91,7 +91,7 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string) (status string, err error
 		if payResponse.ResultStatus == ReturnStatusSuccess {
 			// 修改订单状态
 			updateDo.Status = constant.ParOrderStatusPaid
-			global.MyLogger(ctx).Debug().Msgf(">>>> 1 order status from(%s) to(%s)", payOrder.Status, constant.ParOrderStatusPaid)
+			global.MyLogger(ctx).Info().Msgf(">>>> 1 order status from(%s) to(%s)", payOrder.Status, constant.ParOrderStatusPaid)
 
 			// 加时长
 			affected, err = dao.TUser.Ctx(ctx).Data(do.TUser{
@@ -112,7 +112,7 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string) (status string, err error
 				return err
 			}
 
-			global.MyLogger(ctx).Debug().Msgf(">>>> 2 add(%d) user ExpiredTime from(%d) to(%d)",
+			global.MyLogger(ctx).Info().Msgf(">>>> 2 add(%d) user ExpiredTime from(%d) to(%d)",
 				30*24*60*60, userEntity.ExpiredTime, userEntity.ExpiredTime+30*24*60*60)
 
 			// 记录操作流水
@@ -128,7 +128,7 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string) (status string, err error
 				global.MyLogger(ctx).Err(err).Msgf(`insert TUserVipAttrRecords failed`)
 				return err
 			}
-			global.MyLogger(ctx).Debug().Msgf(">>>> 3 insert TUserVipAttrRecords, lastInsertId: %d", lastInsertId)
+			global.MyLogger(ctx).Info().Msgf(">>>> 3 insert TUserVipAttrRecords, lastInsertId: %d", lastInsertId)
 		}
 
 		affected, err = dao.TPayOrder.Ctx(ctx).Data(updateDo).Where(do.TPayOrder{
@@ -151,6 +151,6 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string) (status string, err error
 		global.MyLogger(ctx).Err(err).Msgf("sync order status failed")
 		return
 	}
-	global.MyLogger(ctx).Debug().Msgf("sync order status success, orderNo: %s", orderNo)
+	global.MyLogger(ctx).Info().Msgf("sync order status success, orderNo: %s", orderNo)
 	return payResponse.ResultStatus, nil
 }

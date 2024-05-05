@@ -18,8 +18,6 @@ func AdminRoute(group *gin.RouterGroup) {
 	group.GET("get_report_user_day_list", admin.GetReportUserDayList)
 	group.GET("get_online_user_day_list", admin.GetOnlineUserDayList)
 	group.GET("get_user_op_log_list", report.GetUserOpLogList)
-	group.GET("pay_order_list", order.PayOrderList)
-	group.GET("sync_order_status", order.SyncOrderStatus)
 
 	nodeReportGroup := group.Group("node_report")
 	nodeReportGroup.Use(admin.NodeReportAuth())
@@ -81,6 +79,8 @@ func AdminRoute(group *gin.RouterGroup) {
 		//订单管理
 		orderGroup := group.Group("order")
 		orderGroup.GET("order_list", admin.OrderList)
+		group.GET("pay_order_list", order.PayOrderList)
+		group.POST("sync_order_status", order.SyncOrderStatus)
 
 		//广告管理
 		adGroup := group.Group("ad")

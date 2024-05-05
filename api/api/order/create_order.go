@@ -57,7 +57,7 @@ func CreateOrder(ctx *gin.Context) {
 		response.RespFail(ctx, i18n.RetMsgParamParseErr, nil)
 		return
 	}
-	global.MyLogger(ctx).Debug().Msgf("request: %+v", *req)
+	global.MyLogger(ctx).Info().Msgf("request: %+v", *req)
 
 	if req.ProductNo != global.Config.PNSafePay.ProductNo {
 		global.MyLogger(ctx).Err(err).Msgf("params 'ProductNo'(%s) invalid", req.ProductNo)
@@ -100,7 +100,7 @@ func CreateOrder(ctx *gin.Context) {
 		response.RespFail(ctx, i18n.RetMsgDBErr, nil)
 		return
 	}
-	global.MyLogger(ctx).Debug().Msgf("lastInsertId: %d, email: %s, orderNo: %s", lastInsertId, userEntity.Email, orderNo)
+	global.MyLogger(ctx).Info().Msgf("lastInsertId: %d, email: %s, orderNo: %s", lastInsertId, userEntity.Email, orderNo)
 
 	// 发起支付
 	payRequest = &pnsafepay.PayRequest{
@@ -140,7 +140,7 @@ func CreateOrder(ctx *gin.Context) {
 		response.RespFail(ctx, i18n.RetMsgDBErr, nil)
 		return
 	}
-	global.MyLogger(ctx).Debug().Msgf("affected: %d, email: %s, orderNo: %s", affected, userEntity.Email, orderNo)
+	global.MyLogger(ctx).Info().Msgf("affected: %d, email: %s, orderNo: %s", affected, userEntity.Email, orderNo)
 
 	// 返回支付单信息
 	res.OrderNo = orderNo

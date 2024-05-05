@@ -143,3 +143,15 @@ curl -X POST -H "Content-Type: application/json" http://api.pnsafepay.com/gatewa
 
 {"currency":"RUB","mer_no":"1082775","method":"trade.create","order_amount":"500","order_no":"20240429231417116748","payemail":"2233@gmail.com","payname":"hsfly","payphone":"18818811881","paytypecode":"29001","returnurl":"http://www.wuwuwu360.xyz/app-api/pay_notify","sign":"d2ce6618b4fbd94d3c99a9f1a057a0a5"}
 
+curl -X GET -H "Lang: cn" https://www.baodu.xyz/app-api/get_rules?user_id=219122623
+
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" https://www.baodu.xyz/app-api/create_order -d '{
+    "user_id": 219122692,
+    "product_no": "pro-vip-month",
+    "currency": "RUB",
+    "order_amount": 500
+}'
+
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" https://www.baodu.xyz/app-api/pay_notify -d '{"order_no": "20240505121440989398"}'
+
+

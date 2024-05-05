@@ -35,7 +35,6 @@ func ApiRoute(group *gin.RouterGroup) {
 	group.POST("report_user_op_log", report.ReportUserOpLog)         // 连接代理
 	group.GET("get_rules", config.GetRules)                          // 获取ip和域名列表
 
-	group.POST("create_order", order.CreateOrder)
 	group.POST("pay_notify", order.PayNotify)
 
 	group.Use(api.JWTAuth())
@@ -67,6 +66,9 @@ func ApiRoute(group *gin.RouterGroup) {
 		group.POST("connect_server", config.ConnectServer)                // 连接代理
 
 		group.GET("get_server_config_without_rules", config.GetServerConfigWithoutRules) // 获取配置不带ip和域名池
+
+		// 支付相关
+		group.POST("create_order", order.CreateOrder)
 	}
 	//签名验证
 	group.Use(api.Verify)

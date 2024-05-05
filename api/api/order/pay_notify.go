@@ -33,7 +33,7 @@ func PayNotify(ctx *gin.Context) {
 		response.RespFail(ctx, i18n.RetMsgParamParseErr, nil)
 		return
 	}
-	global.MyLogger(ctx).Debug().Msgf("request: %+v", *req)
+	global.MyLogger(ctx).Info().Msgf("request: %+v", *req)
 
 	status, err = service.SyncOrderStatus(ctx, req.OrderNo)
 	if err != nil {
