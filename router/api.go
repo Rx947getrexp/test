@@ -1,7 +1,6 @@
 package router
 
 import (
-	"github.com/gin-gonic/gin"
 	"go-speed/api/api"
 	"go-speed/api/api/config"
 	"go-speed/api/api/country"
@@ -9,6 +8,8 @@ import (
 	"go-speed/api/api/order"
 	"go-speed/api/api/report"
 	"go-speed/api/api/user"
+
+	"github.com/gin-gonic/gin"
 )
 
 func ApiRoute(group *gin.RouterGroup) {
@@ -67,5 +68,9 @@ func ApiRoute(group *gin.RouterGroup) {
 
 		group.GET("get_server_config_without_rules", config.GetServerConfigWithoutRules) // 获取配置不带ip和域名池
 	}
-
+	//签名验证
+	group.Use(api.Verify)
+	{
+		group.POST("machine_states_witching", api.ServerStateSwitching) //踢机器的接口
+	}
 }
