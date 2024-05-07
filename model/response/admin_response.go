@@ -100,6 +100,21 @@ type ReportUserDay struct {
 	CreatedAt string `json:"created_at" dc:"报表数据统计时间"`
 }
 
+type GetChannelUserDayListResponse struct {
+	Total int64            `json:"total" dc:"数据总条数"`
+	Items []ChannelUserDay `json:"items" dc:"数据明细"`
+}
+
+type ChannelUserDay struct {
+	Id        int64  `json:"id" dc:"自增主键ID"`
+	Date      int    `json:"date" dc:"报表日期，eg:20240101"`
+	Channel   string `json:"channel" dc:"渠道ID"`
+	Total     int    `json:"total" dc:"截止到Date，通过渠道ID注册的用户总量"`
+	New       int    `json:"new" dc:"Date日期，通过渠道ID注册的新增用户量"`
+	Retained  int    `json:"retained" dc:"通过渠道ID注册的用户，Date日期内有使用APP的用户量（留存）"`
+	CreatedAt string `json:"created_at" dc:"报表数据统计时间"`
+}
+
 type GetOnlineUserDayListResponse struct {
 	Total int64           `json:"total" dc:"数据总条数"`
 	Items []OnlineUserDay `json:"items" dc:"数据明细"`

@@ -1,12 +1,13 @@
 package router
 
 import (
-	"github.com/gin-gonic/gin"
 	"go-speed/api"
 	"go-speed/api/admin"
 	"go-speed/api/admin/country"
 	"go-speed/api/admin/node"
 	"go-speed/api/admin/report"
+
+	"github.com/gin-gonic/gin"
 )
 
 func AdminRoute(group *gin.RouterGroup) {
@@ -14,6 +15,7 @@ func AdminRoute(group *gin.RouterGroup) {
 	group.POST("upload", admin.Upload)
 	group.POST("edit_member_expired_time", admin.EditMemberExpiredTime)
 	group.GET("get_report_user_day_list", admin.GetReportUserDayList)
+	group.GET("get_channel_user_day_list", admin.GetChannelUserDayList)
 	group.GET("get_online_user_day_list", admin.GetOnlineUserDayList)
 	group.GET("get_user_op_log_list", report.GetUserOpLogList)
 

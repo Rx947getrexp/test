@@ -11,7 +11,15 @@ type TUserReportDay struct {
 	Retained  int       `xorm:"INT"`
 	CreatedAt time.Time `xorm:"comment('创建时间') TIMESTAMP"`
 }
-
+type TUserChannelDay struct {
+	Id        int64     `xorm:"pk autoincr comment('自增id') BIGINT"`
+	Date      int       `xorm:"INT"`
+	Channel   string    `xorm:"VARCHAR(32)"`
+	Total     int       `xorm:"INT"`
+	New       int       `xorm:"INT"`
+	Retained  int       `xorm:"INT"`
+	CreatedAt time.Time `xorm:"comment('创建时间') TIMESTAMP"`
+}
 type TUserOnlineDay struct {
 	Id               int64     `xorm:"pk autoincr comment('自增id') BIGINT"`
 	Date             int       `xorm:"INT"`
