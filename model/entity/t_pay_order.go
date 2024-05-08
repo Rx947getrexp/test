@@ -26,4 +26,5 @@ type TPayOrder struct {
 	CreatedAt          *gtime.Time `orm:"created_at"           description:"创建时间"`
 	UpdatedAt          *gtime.Time `orm:"updated_at"           description:"更新时间"`
 	Version            int         `orm:"version"              description:"数据版本号"`
+	PaymentChannelName string      `orm:"payment_channel_name" description:"支付通道名称"`
 }
