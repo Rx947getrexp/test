@@ -6,6 +6,7 @@ import (
 	"go-speed/api/admin/country"
 	"go-speed/api/admin/node"
 	"go-speed/api/admin/order"
+	"go-speed/api/admin/paymentChannel"
 	"go-speed/api/admin/report"
 	"go-speed/api/admin/vip"
 
@@ -20,6 +21,7 @@ func AdminRoute(group *gin.RouterGroup) {
 	group.GET("get_channel_user_day_list", admin.GetChannelUserDayList)
 	group.GET("get_online_user_day_list", admin.GetOnlineUserDayList)
 	group.GET("get_user_op_log_list", report.GetUserOpLogList)
+	group.GET("edit_", report.GetUserOpLogList)
 
 	nodeReportGroup := group.Group("node_report")
 	nodeReportGroup.Use(admin.NodeReportAuth())
@@ -165,5 +167,8 @@ func AdminRoute(group *gin.RouterGroup) {
 		machineGroup.GET("list", node.NodeList)    // 查询机器列表
 		machineGroup.POST("add", node.NodeCreate)  // 添加机器
 		machineGroup.POST("edit", node.NodeModify) // 修改机器信息
+		//支付通道管理
+		PaymentChannelGroup := group.Group("paymentChannel")
+		PaymentChannelGroup.GET("list", paymentChannel.ChannelList)
 	}
 }

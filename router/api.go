@@ -34,7 +34,6 @@ func ApiRoute(group *gin.RouterGroup) {
 	group.POST("report_node_ping_result", node.ReportNodePingResult) //上报ping结果
 	group.POST("report_user_op_log", report.ReportUserOpLog)         // 连接代理
 	group.GET("get_rules", config.GetRules)                          // 获取ip和域名列表
-
 	group.POST("pay_notify", order.PayNotify)
 
 	group.Use(api.JWTAuth())
@@ -42,9 +41,9 @@ func ApiRoute(group *gin.RouterGroup) {
 		group.POST("change_passwd", api.ChangePasswd)
 		group.GET("user_info", api.UserInfo) // call
 		group.GET("team_list", api.TeamList)
-		group.GET("team_info", api.TeamInfo)
-		group.POST("receive_free", api.ReceiveFree)
-		group.GET("receive_free_summary", api.ReceiveFreeSummary)
+		group.GET("team_info", api.TeamInfo)                      //分享vpn送时长
+		group.POST("receive_free", api.ReceiveFree)               //免费领取会员
+		group.GET("receive_free_summary", api.ReceiveFreeSummary) //免费领取会员
 		group.POST("upload_log", api.UploadLog)
 		//group.POST("create_order", api.CreateOrder)
 		group.GET("order_list", api.OrderList)
@@ -69,6 +68,8 @@ func ApiRoute(group *gin.RouterGroup) {
 
 		// 支付相关
 		group.POST("create_order", order.CreateOrder)
+		group.POST("check_order", order.CheckOrder)             //检查支付订单状态
+		group.GET("check_expiration_time", order.CheckUserTime) //检查用户是否到期
 	}
 	//签名验证
 	group.Use(api.Verify)

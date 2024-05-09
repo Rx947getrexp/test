@@ -2,8 +2,9 @@ package i18n
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"go-speed/global"
+
+	"github.com/gin-gonic/gin"
 )
 
 func I18nTrans(c *gin.Context, msg string) string {
@@ -84,6 +85,7 @@ const (
 	RetMsgUserIdInvalid             = "User-Id无效"
 	RetMsgAuthorizationTokenInvalid = "Token无效"
 	RetMsgCreatePayOrderFailed      = "创建支付订单失败，请稍后重试。如果持续失败，请联系客服处理！"
+	RetMsgMemberExpirationReminder  = "会员还有三天即将到期，请及时续费！"
 )
 
 func Init() {

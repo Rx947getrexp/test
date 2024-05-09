@@ -2,21 +2,21 @@ package order
 
 import (
 	"fmt"
-	"github.com/gogf/gf/v2/os/gtime"
+	"go-speed/api/api/common"
 	"go-speed/constant"
 	"go-speed/dao"
+	"go-speed/global"
+	"go-speed/i18n"
 	"go-speed/model/do"
 	"go-speed/model/entity"
+	"go-speed/model/response"
 	"go-speed/util/pay/pnsafepay"
 	"math/rand"
 	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"go-speed/api/api/common"
-	"go-speed/global"
-	"go-speed/i18n"
-	"go-speed/model/response"
+	"github.com/gogf/gf/v2/os/gtime"
 )
 
 const (
@@ -25,16 +25,18 @@ const (
 )
 
 type CreateOrderReq struct {
-	UserId      uint64 `form:"user_id" binding:"required" json:"user_id" dc:"用户ID"`
-	ProductNo   string `form:"product_no" binding:"required" json:"product_no" dc:"产品编码"`
-	Currency    string `form:"currency" binding:"required" json:"currency" dc:"货币类型"`
-	OrderAmount int    `form:"order_amount" binding:"required" json:"order_amount" dc:"订单金额"`
+	UserId             uint64 `form:"user_id" binding:"required" json:"user_id" dc:"用户ID"`
+	ProductNo          string `form:"product_no" binding:"required" json:"product_no" dc:"产品编码"`
+	Currency           string `form:"currency" binding:"required" json:"currency" dc:"货币类型"`
+	OrderAmount        int    `form:"order_amount" binding:"required" json:"order_amount" dc:"订单金额"`
+	PaymentChannelName string `form:"payment_channel_name" binding:"required" json:"payment_channel_name" dc:"支付通道名称"`
 }
 
 type CreateOrderRes struct {
-	OrderNo  string `json:"order_no" dc:"订单号"`
-	OrderUrl string `json:"order_url" dc:"支付链接"`
-	Status   string `json:"status" dc:"订单创建状态" eg:"success,fail"`
+	OrderNo            string `json:"order_no" dc:"订单号"`
+	OrderUrl           string `json:"order_url" dc:"支付链接"`
+	Status             string `json:"status" dc:"订单创建状态" eg:"success,fail"`
+	PaymentChannelName string `json:"payment_channel_name" dc:"支付通道名称"`
 }
 
 // CreateOrder 创建订单
@@ -84,16 +86,17 @@ func CreateOrder(ctx *gin.Context) {
 
 	// 创建订单
 	lastInsertId, err = dao.TPayOrder.Ctx(ctx).Data(do.TPayOrder{
-		UserId:      req.UserId,
-		Email:       userEntity.Email,
-		OrderNo:     orderNo,
-		OrderAmount: strconv.Itoa(req.OrderAmount),
-		Currency:    req.Currency,
-		PayTypeCode: RussianOnlineBankingCode,
-		Status:      constant.ParOrderStatusInit,
-		CreatedAt:   gtime.Now(),
-		UpdatedAt:   gtime.Now(),
-		Version:     1,
+		UserId:             req.UserId,
+		Email:              userEntity.Email,
+		OrderNo:            orderNo,
+		OrderAmount:        strconv.Itoa(req.OrderAmount),
+		Currency:           req.Currency,
+		PayTypeCode:        RussianOnlineBankingCode,
+		Status:             constant.ParOrderStatusInit,
+		PaymentChannelName: req.PaymentChannelName,
+		CreatedAt:          gtime.Now(),
+		UpdatedAt:          gtime.Now(),
+		Version:            1,
 	}).InsertAndGetId()
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("insert pay order failed")
@@ -141,7 +144,6 @@ func CreateOrder(ctx *gin.Context) {
 		return
 	}
 	global.MyLogger(ctx).Info().Msgf("affected: %d, email: %s, orderNo: %s", affected, userEntity.Email, orderNo)
-
 	// 返回支付单信息
 	res.OrderNo = orderNo
 	response.RespOk(ctx, i18n.RetMsgSuccess, res)
