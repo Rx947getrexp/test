@@ -5,7 +5,9 @@ import (
 	"go-speed/api/admin"
 	"go-speed/api/admin/country"
 	"go-speed/api/admin/node"
+	"go-speed/api/admin/order"
 	"go-speed/api/admin/report"
+	"go-speed/api/admin/vip"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,7 +15,7 @@ import (
 func AdminRoute(group *gin.RouterGroup) {
 	group.POST("login", admin.LoginAdmin)
 	group.POST("upload", admin.Upload)
-	group.POST("edit_member_expired_time", admin.EditMemberExpiredTime)
+	group.POST("edit_member_expired_time", vip.EditMemberExpiredTime)
 	group.GET("get_report_user_day_list", admin.GetReportUserDayList)
 	group.GET("get_channel_user_day_list", admin.GetChannelUserDayList)
 	group.GET("get_online_user_day_list", admin.GetOnlineUserDayList)
@@ -62,7 +64,7 @@ func AdminRoute(group *gin.RouterGroup) {
 		memberGroup.GET("member_dev_list", admin.MemberDevList)
 		memberGroup.POST("edit_member", admin.EditMember)
 		memberGroup.POST("edit_member_dev", admin.EditMemberDev)
-		memberGroup.POST("edit_member_expired_time", admin.EditMemberExpiredTime)
+		memberGroup.POST("edit_member_expired_time", vip.EditMemberExpiredTime)
 
 		//套餐管理
 		comboGroup := group.Group("combo")
@@ -79,6 +81,8 @@ func AdminRoute(group *gin.RouterGroup) {
 		//订单管理
 		orderGroup := group.Group("order")
 		orderGroup.GET("order_list", admin.OrderList)
+		group.GET("pay_order_list", order.PayOrderList)
+		group.POST("sync_order_status", order.SyncOrderStatus)
 
 		//广告管理
 		adGroup := group.Group("ad")

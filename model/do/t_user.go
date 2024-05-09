@@ -31,4 +31,5 @@ type TUser struct {
 	LastLoginIp      interface{} // 最近一次登录的ip
 	LastLoginCountry interface{} // 最近一次登录的国家
 	PreferredCountry interface{} // 用户选择的国家（国家名称）
+	Version          interface{} // 数据版本号
 }

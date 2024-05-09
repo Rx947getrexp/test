@@ -5,6 +5,7 @@ import (
 	"go-speed/api/api/config"
 	"go-speed/api/api/country"
 	"go-speed/api/api/node"
+	"go-speed/api/api/order"
 	"go-speed/api/api/report"
 	"go-speed/api/api/user"
 
@@ -32,6 +33,9 @@ func ApiRoute(group *gin.RouterGroup) {
 	group.GET("list_node_for_report", node.ListNodeForReport)        //获取节点ip列表，上报ping结果
 	group.POST("report_node_ping_result", node.ReportNodePingResult) //上报ping结果
 	group.POST("report_user_op_log", report.ReportUserOpLog)         // 连接代理
+	group.GET("get_rules", config.GetRules)                          // 获取ip和域名列表
+
+	group.POST("pay_notify", order.PayNotify)
 
 	group.Use(api.JWTAuth())
 	{
@@ -42,7 +46,7 @@ func ApiRoute(group *gin.RouterGroup) {
 		group.POST("receive_free", api.ReceiveFree)
 		group.GET("receive_free_summary", api.ReceiveFreeSummary)
 		group.POST("upload_log", api.UploadLog)
-		group.POST("create_order", api.CreateOrder)
+		//group.POST("create_order", api.CreateOrder)
 		group.GET("order_list", api.OrderList)
 		group.GET("dev_list", api.DevList)                     // call
 		group.POST("ban_dev", api.BanDev)                      // call
@@ -61,8 +65,10 @@ func ApiRoute(group *gin.RouterGroup) {
 		group.GET("get_server_config", config.GetServerConfig)            // 查询v2ray代理配置
 		group.POST("connect_server", config.ConnectServer)                // 连接代理
 
-		group.GET("get_rules", config.GetRules)                                          // 获取ip和域名列表
 		group.GET("get_server_config_without_rules", config.GetServerConfigWithoutRules) // 获取配置不带ip和域名池
+
+		// 支付相关
+		group.POST("create_order", order.CreateOrder)
 	}
 	//签名验证
 	group.Use(api.Verify)
