@@ -1,14 +1,15 @@
 package node
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/gogf/gf/v2/os/gtime"
 	"go-speed/dao"
 	"go-speed/global"
 	"go-speed/i18n"
 	"go-speed/model/do"
 	"go-speed/model/entity"
 	"go-speed/model/response"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gogf/gf/v2/os/gtime"
 )
 
 type NodeModifyReq struct {

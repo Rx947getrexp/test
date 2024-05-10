@@ -1,12 +1,13 @@
 package node
 
 import (
-	"github.com/gin-gonic/gin"
 	"go-speed/dao"
 	"go-speed/global"
 	"go-speed/i18n"
 	"go-speed/model/entity"
 	"go-speed/model/response"
+
+	"github.com/gin-gonic/gin"
 )
 
 type NodeListReq struct {

@@ -170,5 +170,6 @@ func AdminRoute(group *gin.RouterGroup) {
 		//支付通道管理
 		PaymentChannelGroup := group.Group("paymentChannel")
 		PaymentChannelGroup.GET("list", paymentChannel.ChannelList)
+		PaymentChannelGroup.GET("edit", paymentChannel.PaymentModify)
 	}
 }
