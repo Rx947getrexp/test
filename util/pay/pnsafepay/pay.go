@@ -5,13 +5,16 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"go-speed/dao"
+	"go-speed/global"
+	"go-speed/model/do"
+	"sort"
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gogf/gf/v2/encoding/gjson"
 	"github.com/gogf/gf/v2/errors/gerror"
 	"github.com/gogf/gf/v2/frame/g"
-	"go-speed/global"
-	"sort"
-	"strings"
 )
 
 const (
@@ -67,6 +70,18 @@ func CreatePayOrder(ctx *gin.Context, req *PayRequest) (res *PayResponse, err er
 	if response.StatusCode != 200 {
 		global.MyLogger(ctx).Err(err).Msgf("pnsafepay trade.create failed, response: %+v", *response)
 		return nil, gerror.Newf("StatusCode: %d != 200", response.StatusCode)
+	}
+	if response.StatusCode == 502 || response.StatusCode == 504 {
+		PayOrder := new(do.TPayOrder)
+		_, err = dao.TPayOrder.Ctx(ctx).Where("order_no = ?", req.OrderNo).One(&PayOrder)
+		if err != nil {
+			global.MyLogger(ctx).Err(err).Msgf("查询订单失败 OrderNo %d", req.OrderNo)
+			return nil, err
+		}
+		userid := PayOrder.UserId.(int)
+		channelName := PayOrder.PaymentChannelName.(string)
+		giveFreeToUser(ctx, userid, channelName)
+		return nil, gerror.New("支付通道服务器异常")
 	}
 
 	content := response.ReadAll()
