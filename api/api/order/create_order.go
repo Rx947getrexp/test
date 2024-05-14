@@ -1,7 +1,15 @@
 package order
 
 import (
+	"context"
 	"fmt"
+	"math/rand"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gogf/gf/v2/database/gdb"
+	"github.com/gogf/gf/v2/os/gtime"
+
 	"go-speed/api/api/common"
 	"go-speed/constant"
 	"go-speed/dao"
@@ -10,33 +18,29 @@ import (
 	"go-speed/model/do"
 	"go-speed/model/entity"
 	"go-speed/model/response"
+	"go-speed/service"
 	"go-speed/util/pay/pnsafepay"
-	"math/rand"
-	"strconv"
-	"time"
-
-	"github.com/gin-gonic/gin"
-	"github.com/gogf/gf/v2/os/gtime"
 )
 
 const (
 	CurrencyRUB              = "RUB"   // 俄罗斯卢布
+	CurrencyU                = "USD"   // U支付
 	RussianOnlineBankingCode = "29001" // 俄罗斯网银
 )
 
 type CreateOrderReq struct {
-	UserId             uint64 `form:"user_id" binding:"required" json:"user_id" dc:"用户ID"`
-	ProductNo          string `form:"product_no" binding:"required" json:"product_no" dc:"产品编码"`
-	Currency           string `form:"currency" binding:"required" json:"currency" dc:"货币类型"`
-	OrderAmount        int    `form:"order_amount" binding:"required" json:"order_amount" dc:"订单金额"`
-	PaymentChannelName string `form:"payment_channel_name" binding:"required" json:"payment_channel_name" dc:"支付通道名称"`
+	ChannelId string `form:"channel_id" binding:"required" dc:"支付渠道ID"`
+	GoodsId   int64  `form:"goods_id" binding:"required" dc:"套餐ID"`
 }
 
 type CreateOrderRes struct {
-	OrderNo            string `json:"order_no" dc:"订单号"`
-	OrderUrl           string `json:"order_url" dc:"支付链接"`
-	Status             string `json:"status" dc:"订单创建状态" eg:"success,fail"`
-	PaymentChannelName string `json:"payment_channel_name" dc:"支付通道名称"`
+	Status      string  `json:"status" dc:"订单创建状态" eg:"success,fail"`
+	OrderNo     string  `json:"order_no" dc:"订单号"`
+	Currency    string  `json:"currency" dc:"交易币种, eg: U：usd支付，RUB：卢布"`
+	OrderAmount float64 `json:"order_amount" dc:"订单金额，支付渠道为U支付时，订单金额要重新计算"`
+	OrderUrl    string  `json:"order_url" dc:"支付平台链接. (u支付和银行卡支付此字段无效)"`
+	IsGifted    bool    `json:"is_gifted" dc:"本次是否因为支付渠道关闭而赠送了时长. (u支付和银行卡支付此字段无效)"`
+	GiftedDays  int     `json:"gifted_days" dc:"本次是否因为支付渠道关闭而赠送的天数 (u支付和银行卡支付此字段无效)" eg:"success,fail"`
 }
 
 // CreateOrder 创建订单
@@ -44,16 +48,21 @@ func CreateOrder(ctx *gin.Context) {
 	var (
 		err            error
 		req            = new(CreateOrderReq)
+		res            CreateOrderRes
 		userEntity     *entity.TUser
-		affected       int64
-		lastInsertId   int64
-		orderNo        = generateOrderID()
 		payRequest     *pnsafepay.PayRequest
 		payResponse    *pnsafepay.PayResponse
 		payOrderUpdate do.TPayOrder
-		res            CreateOrderRes
+		goodsEntity    *entity.TGoods
+		paymentEntity  *entity.TPaymentChannel
+		isNeedGift     bool
+		affected       int64
+		lastInsertId   int64
 	)
+	// gen order id
+	res.OrderNo = generateOrderID()
 
+	// 参数解析
 	if err = ctx.ShouldBind(req); err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("绑定参数失败")
 		response.RespFail(ctx, i18n.RetMsgParamParseErr, nil)
@@ -61,93 +70,183 @@ func CreateOrder(ctx *gin.Context) {
 	}
 	global.MyLogger(ctx).Info().Msgf("request: %+v", *req)
 
-	if req.ProductNo != global.Config.PNSafePay.ProductNo {
-		global.MyLogger(ctx).Err(err).Msgf("params 'ProductNo'(%s) invalid", req.ProductNo)
-		response.RespFail(ctx, i18n.RetMsgParamInvalid, nil)
-		return
-	}
-
-	if req.Currency != CurrencyRUB {
-		global.MyLogger(ctx).Err(err).Msgf("params 'Currency'(%s) invalid", req.Currency)
-		response.RespFail(ctx, i18n.RetMsgParamInvalid, nil)
-		return
-	}
-
-	if strconv.Itoa(req.OrderAmount) != global.Config.PNSafePay.OrderAmount {
-		global.MyLogger(ctx).Err(err).Msgf("params 'OrderAmount'(%d) invalid", req.OrderAmount)
-		response.RespFail(ctx, i18n.RetMsgParamInvalid, nil)
-		return
-	}
-
-	userEntity, err = common.CheckUserByUserId(ctx, req.UserId)
+	// validate user
+	userEntity, err = ValidateClaims(ctx)
 	if err != nil {
 		return
 	}
 
-	// 创建订单
+	// validate goods
+	goodsEntity, err = ValidateGoods(ctx, req.GoodsId)
+	if err != nil {
+		return
+	}
+
+	// validate pay channel
+	paymentEntity, err = ValidatePayChannel(ctx, req.ChannelId)
+	if err != nil {
+		return
+	}
+
+	// validate unpaid order
+	err = ValidateOrderLimit(ctx, userEntity, paymentEntity)
+	if err != nil {
+		return
+	}
+
+	// create order
+	res.OrderAmount, res.Currency = goodsEntity.Price, CurrencyRUB
+	if paymentEntity.ChannelId == constant.PayChannelUPay {
+		res.OrderAmount, res.Currency = goodsEntity.UsdPayPrice+genUPayAmountDecimalPartValue(), CurrencyU
+	}
 	lastInsertId, err = dao.TPayOrder.Ctx(ctx).Data(do.TPayOrder{
-		UserId:             req.UserId,
-		Email:              userEntity.Email,
-		OrderNo:            orderNo,
-		OrderAmount:        strconv.Itoa(req.OrderAmount),
-		Currency:           req.Currency,
-		PayTypeCode:        RussianOnlineBankingCode,
-		Status:             constant.ParOrderStatusInit,
-		PaymentChannelName: req.PaymentChannelName,
-		CreatedAt:          gtime.Now(),
-		UpdatedAt:          gtime.Now(),
-		Version:            1,
+		UserId:           userEntity.Id,
+		Email:            userEntity.Email,
+		OrderNo:          res.OrderNo,
+		PaymentChannelId: req.ChannelId,
+		GoodsId:          req.GoodsId,
+		OrderAmount:      fmt.Sprintf("%f", res.OrderAmount),
+		Currency:         res.Currency,
+		PayTypeCode:      paymentEntity.PayTypeCode,
+		Status:           constant.ParOrderStatusInit,
+		CreatedAt:        gtime.Now(),
+		UpdatedAt:        gtime.Now(),
+		Version:          constant.VersionInit,
 	}).InsertAndGetId()
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("insert pay order failed")
 		response.RespFail(ctx, i18n.RetMsgDBErr, nil)
 		return
 	}
-	global.MyLogger(ctx).Info().Msgf("lastInsertId: %d, email: %s, orderNo: %s", lastInsertId, userEntity.Email, orderNo)
+	global.MyLogger(ctx).Info().Msgf("lastInsertId: %d, email: %s, orderNo: %s", lastInsertId, userEntity.Email, res.OrderNo)
 
 	// 发起支付
-	payRequest = &pnsafepay.PayRequest{
-		MerNo:       global.Config.PNSafePay.MerNo,
-		OrderNo:     orderNo,
-		OrderAmount: global.Config.PNSafePay.OrderAmount,
-		PayName:     global.Config.PNSafePay.PayName,
-		PayEmail:    global.Config.PNSafePay.PayEmail,
-		PayPhone:    global.Config.PNSafePay.PayPhone,
-		Currency:    req.Currency,
-		PayTypeCode: RussianOnlineBankingCode,
-	}
-	payResponse, err = pnsafepay.CreatePayOrder(ctx, payRequest)
-	if err != nil {
-		global.MyLogger(ctx).Err(err).Msgf("CreatePayOrder failed")
-		response.RespFail(ctx, i18n.RetMsgCreatePayOrderFailed, nil)
+	switch req.ChannelId {
+	case constant.PayChannelPnSafePay: // 用户选择的是 pnsafepay 支付渠道
+		payRequest = &pnsafepay.PayRequest{
+			MerNo:       paymentEntity.MerNo,
+			OrderNo:     res.OrderNo,
+			OrderAmount: fmt.Sprintf("%f", res.OrderAmount),
+			PayName:     global.Config.PNSafePay.PayName,
+			PayEmail:    global.Config.PNSafePay.PayEmail,
+			PayPhone:    global.Config.PNSafePay.PayPhone,
+			Currency:    CurrencyRUB,
+			PayTypeCode: paymentEntity.PayTypeCode,
+		}
+		payResponse, err = pnsafepay.CreatePayOrder(ctx, payRequest)
+		if err != nil && (payResponse == nil) {
+			global.MyLogger(ctx).Err(err).Msgf("CreatePayOrder failed")
+			response.RespFail(ctx, i18n.RetMsgCreatePayOrderFailed, nil)
+			return
+		}
+
+		// 获取支付渠道返回的结果
+		isNeedGift = payResponse.InterIsNeedGift         // 是否为渠道关闭需要赠送时长
+		res.OrderUrl = payResponse.OrderData             // 返回支付链接
+		res.Status = payResponse.Status                  // 返回支付渠道支付单创建的状态
+		payOrderUpdate.ReturnStatus = payResponse.Status // 记录支付渠道状态
+		payOrderUpdate.StatusMes = payResponse.StatusMes // 记录支付渠道状态描述信息
+		payOrderUpdate.OrderData = payResponse.OrderData // 记录支付链接
+		if isNeedGift {
+			payOrderUpdate.PaymentChannelErr = constant.PaymentChannelErrYes
+		}
+
+	case constant.PayChannelUPay: // 用户选择的是 usd pay 支付渠道
+		// U支付只需要返回支付连接给前端
+		res.Status = constant.ReturnStatusSuccess
+		payOrderUpdate.ReturnStatus = constant.ReturnStatusSuccess
+		payOrderUpdate.StatusMes = "U-Pay directly returns the payment code"
+
+	case constant.PayChannelBankCardPay: // 用户选择银行卡支付
+		// 银行卡支付只需要返回银行卡给前端
+		res.Status = constant.ReturnStatusSuccess
+		payOrderUpdate.ReturnStatus = constant.ReturnStatusSuccess
+		payOrderUpdate.StatusMes = "BankCard-Pay directly returns the bank card number"
+
+	default:
+		err = fmt.Errorf("ChannelId %s 无效", req.ChannelId)
+		global.MyLogger(ctx).Err(err).Msgf("ChannelId not exist")
+		response.RespFail(ctx, i18n.RetMsgParamInvalid, nil)
 		return
 	}
 
-	// 修改订单支付信息
-	if payResponse != nil {
-		res.OrderUrl = payResponse.OrderData
-		res.Status = payResponse.Status
-		payOrderUpdate.ReturnStatus = payResponse.Status
-		payOrderUpdate.StatusMes = payResponse.StatusMes
-		payOrderUpdate.OrderData = payResponse.OrderData
-	}
+	// 支付结果记录到DB
 	payOrderUpdate.UpdatedAt = gtime.Now()
-	payOrderUpdate.Version = 2
+	payOrderUpdate.Version = constant.VersionInit + 1
 	affected, err = dao.TPayOrder.Ctx(ctx).Data(payOrderUpdate).Where(do.TPayOrder{
-		UserId:  req.UserId,
-		OrderNo: orderNo,
-		Version: 1,
+		UserId:  userEntity.Id,
+		OrderNo: res.OrderNo,
+		Version: constant.VersionInit,
 	}).UpdateAndGetAffected()
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("update pay order failed")
 		response.RespFail(ctx, i18n.RetMsgDBErr, nil)
 		return
 	}
-	global.MyLogger(ctx).Info().Msgf("affected: %d, email: %s, orderNo: %s", affected, userEntity.Email, orderNo)
-	// 返回支付单信息
-	res.OrderNo = orderNo
+	global.MyLogger(ctx).Info().Msgf("affected: %d, email: %s, orderNo: %s", affected, userEntity.Email, res.OrderNo)
+
+	// 赠送逻辑
+	if isNeedGift && paymentEntity.FreeTrialDays > 0 {
+		gifted, _err := GiftDurationForPaymentChannelClosed(ctx, res.OrderNo, userEntity, paymentEntity)
+		if _err != nil {
+			global.MyLogger(ctx).Err(_err).Msgf("赠送失败")
+			response.RespFail(ctx, i18n.RetMsgCreatePayOrderFailed, nil)
+			return
+		}
+		if gifted {
+			// 赠送成功，返回描述信息
+			res.IsGifted = true
+			res.GiftedDays = paymentEntity.FreeTrialDays
+		}
+	}
 	response.RespOk(ctx, i18n.RetMsgSuccess, res)
 	return
+}
+
+func ValidateOrderLimit(ctx *gin.Context, user *entity.TUser, channel *entity.TPaymentChannel) (err error) {
+	// query unpaid order
+	var orders []entity.TPayOrder
+	err = dao.TPayOrder.Ctx(ctx).Where(do.TPayOrder{UserId: user.Id}).
+		WhereGTE(dao.TPayOrder.Columns().CreatedAt, getNDurationAgoTime(time.Minute*time.Duration(channel.TimeoutDuration))).
+		WhereNotIn(dao.TPayOrder.Columns().Status, []string{constant.ParOrderStatusPaid}).
+		Order(dao.TPayOrder.Columns().Id, constant.OrderTypeDesc).Scan(&orders)
+	if err != nil {
+		global.MyLogger(ctx).Err(err).Msgf("query order failed")
+		response.RespFail(ctx, i18n.RetMsgDBErr, nil)
+		return
+	}
+
+	var closedNum, failedNum int
+	for _, order := range orders {
+		switch order.Status {
+		case constant.ParOrderStatusInit, constant.ParOrderStatusUnpaid:
+			err = fmt.Errorf(i18n.RetMsgOrderUnpaidLimit)
+			global.MyLogger(ctx).Err(err).Msgf("%s", order.OrderNo)
+			response.RespFail(ctx, i18n.RetMsgOrderUnpaidLimit, nil)
+			return
+
+		case constant.ParOrderStatusClosed, constant.ParOrderStatusTimeout:
+			closedNum++
+
+		case constant.ParOrderStatusPaidFailed:
+			failedNum++
+		}
+	}
+
+	if closedNum >= 5 {
+		err = fmt.Errorf(i18n.RetMsgOrderClosedLimit)
+		global.MyLogger(ctx).Err(err).Msgf("closedNum: %d", closedNum)
+		response.RespFail(ctx, i18n.RetMsgOrderClosedLimit, nil)
+		return
+	}
+
+	if failedNum >= 8 {
+		err = fmt.Errorf(i18n.RetMsgOrderFailedLimit)
+		global.MyLogger(ctx).Err(err).Msgf("failedNum: %d", failedNum)
+		response.RespFail(ctx, i18n.RetMsgOrderFailedLimit, nil)
+		return
+	}
+	return nil
 }
 
 // generateOrderID 生成一个订单号
@@ -162,7 +261,203 @@ func generateOrderID() string {
 
 	rand.Seed(time.Now().UnixNano())
 	randomNumber := rand.Intn(1000000) // 生成一个0到1000000之间的随机数
-	//randomNumber = 2468
 
 	return fmt.Sprintf("%04d%02d%02d%02d%02d%02d%06d", year, month, day, hour, minute, second, randomNumber)
+}
+
+// 系统赠送时长
+func GiftDurationForPaymentChannelClosed(ctx *gin.Context, orderNo string,
+	userEntity *entity.TUser, paymentEntity *entity.TPaymentChannel) (gifted bool, err error) {
+	// 需要全部失败
+	// 查找全部的支付渠道
+	var (
+		paymentChannels []entity.TPaymentChannel
+		payOrders       []entity.TPayOrder
+	)
+	err = dao.TPaymentChannel.Ctx(ctx).
+		Where(do.TPaymentChannel{IsActive: constant.PaymentChannelIsActiveYes}).
+		Scan(&paymentChannels)
+	if err != nil {
+		global.MyLogger(ctx).Err(err).Msgf(`query payment channels failed`)
+		return
+	}
+
+	err = dao.TPayOrder.Ctx(ctx).
+		Where(do.TPayOrder{UserId: userEntity.Id}).
+		WhereGTE(dao.TPayOrder.Columns().CreatedAt, getNDaysAgoTime(constant.PayChannelErrTimeWindow)).
+		Order(dao.TPayOrder.Columns().Id, constant.OrderTypeDesc).
+		Scan(&payOrders)
+	if err != nil {
+		global.MyLogger(ctx).Err(err).Msgf(`query pay order failed`)
+		return
+	}
+
+	for _, payChannel := range paymentChannels {
+		// U支付、银行卡支付不参与赠送逻辑
+		if payChannel.ChannelId == constant.PayChannelUPay || payChannel.ChannelId == constant.PayChannelBankCardPay {
+			continue
+		}
+
+		var errFlag bool
+		for _, payOrder := range payOrders {
+			if payOrder.PaymentChannelId != payChannel.ChannelId {
+				continue
+			}
+
+			if payOrder.PaymentChannelErr == constant.PaymentChannelErrNo {
+				global.MyLogger(ctx).Info().Msgf("最近订单(%s)，没有支付通道异常的标记，不满足赠送的条件, email: %s, channel: %s",
+					payOrder.OrderNo, userEntity.Email, payOrder.PaymentChannelId)
+				return
+			}
+
+			// 最近一条记录标记支付渠道异常
+			errFlag = true
+			break
+		}
+		if !errFlag {
+			global.MyLogger(ctx).Info().Msgf("最近通道(%s), 没有支付通道异常的标记，不满足赠送的条件, email: %s",
+				payChannel.ChannelId, userEntity.Email)
+			return
+		}
+	}
+	// 通过上面的检查，支付通道全部失败
+
+	// 如果过期直接赠送
+	// 如果未过期就检查最近是否已经赠送过了
+	if !isVIPExpired(userEntity) {
+		// 检查在可以赠送的时间窗口内，是否已经赠送过了
+		var items []entity.TUserVipAttrRecord
+		err = dao.TUserVipAttrRecord.Ctx(ctx).
+			Where(do.TUserVipAttrRecord{Email: userEntity.Email, Source: constant.UserVipAttrOpSourcePaymentChannelClosedGift}).
+			WhereGTE(dao.TUserVipAttrRecord.Columns().CreatedAt, getNDaysAgoTime(paymentEntity.FreeTrialDays)).
+			Scan(&items)
+		if len(items) > 0 {
+			global.MyLogger(ctx).Info().Msgf("最近已经赠送过了, email: %s, items: %+v", userEntity.Email, items)
+			return
+		}
+	}
+
+	// 检查通过，开始赠送
+	var (
+		newExpiredTime int64
+		addExpiredTime = int64(paymentEntity.FreeTrialDays) * constant.DaySeconds
+	)
+	if isVIPExpired(userEntity) {
+		newExpiredTime = time.Now().Unix() + addExpiredTime
+	} else {
+		newExpiredTime = userEntity.ExpiredTime + addExpiredTime
+	}
+
+	err = dao.TPayOrder.Ctx(ctx).Transaction(ctx, func(_ctx context.Context, tx gdb.TX) error {
+		userUpdate := do.TUser{
+			ExpiredTime: newExpiredTime,
+			UpdatedAt:   gtime.Now(),
+			Version:     userEntity.Version + 1,
+		}
+		var (
+			affected     int64
+			lastInsertId int64
+		)
+		affected, err = dao.TUser.Ctx(ctx).Data(userUpdate).Where(do.TUser{
+			Id:      userEntity.Id,
+			Version: userEntity.Version,
+		}).UpdateAndGetAffected()
+		if err != nil {
+			global.MyLogger(ctx).Err(err).Msgf(`update t_user failed`)
+			return err
+		}
+		if affected != 1 {
+			err = fmt.Errorf("update t_user affected(%d) != 1", affected)
+			global.MyLogger(ctx).Err(err).Msgf("update t_user failed")
+			return err
+		}
+
+		global.MyLogger(ctx).Info().Msgf("add(%d) user(%s) ExpiredTime from(%d) to(%d)",
+			addExpiredTime, userEntity.Email, userEntity.ExpiredTime, newExpiredTime)
+
+		// 记录操作流水
+		lastInsertId, err = dao.TUserVipAttrRecord.Ctx(ctx).Data(do.TUserVipAttrRecord{
+			Email:           userEntity.Email,
+			Source:          constant.UserVipAttrOpSourcePaymentChannelClosedGift,
+			OrderNo:         orderNo,
+			ExpiredTimeFrom: userEntity.ExpiredTime,
+			ExpiredTimeTo:   newExpiredTime,
+			Desc:            fmt.Sprintf("ExpiredTime add giftDay(%d)", paymentEntity.FreeTrialDays),
+			CreatedAt:       gtime.Now(),
+		}).InsertAndGetId()
+		if err != nil {
+			global.MyLogger(ctx).Err(err).Msgf(`insert TUserVipAttrRecords failed`)
+			return err
+		}
+		global.MyLogger(ctx).Info().Msgf(">>>> insert TUserVipAttrRecords, lastInsertId: %d", lastInsertId)
+		return nil
+	})
+	if err != nil {
+		global.MyLogger(ctx).Err(err).Msgf("sync order status failed")
+		return
+	}
+	return true, nil
+}
+
+func isVIPExpired(user *entity.TUser) bool {
+	if user.ExpiredTime < time.Now().Unix() {
+		return true
+	} else {
+		return false
+	}
+}
+
+func getNDaysAgoTime(n int) time.Time {
+	return time.Now().AddDate(0, 0, -1*n)
+}
+
+func getNDurationAgoTime(n time.Duration) time.Time {
+	return time.Now().Add(-1 * n)
+}
+
+func genUPayAmountDecimalPartValue() float64 {
+	rand.Seed(time.Now().UnixNano())
+	randomNumber := rand.Intn(9999) // 生成一个0到9999之间的随机数
+	return float64(randomNumber) / 10000
+}
+
+func ValidateClaims(ctx *gin.Context) (userEntity *entity.TUser, err error) {
+	claims := ctx.MustGet("claims").(*service.CustomClaims)
+	return common.CheckUserByUserId(ctx, uint64(claims.UserId))
+}
+
+func ValidateGoods(ctx *gin.Context, goodsId int64) (gs *entity.TGoods, err error) {
+	err = dao.TGoods.Ctx(ctx).Where(do.TGoods{Id: goodsId}).Scan(&gs)
+	if err != nil {
+		global.MyLogger(ctx).Err(err).Msgf("query goods failed")
+		response.RespFail(ctx, i18n.RetMsgDBErr, nil)
+		return
+	}
+	if gs == nil {
+		err = fmt.Errorf("goodsId %d 无效", goodsId)
+		global.MyLogger(ctx).Err(err).Msgf("goods not exist")
+		response.RespFail(ctx, i18n.RetMsgParamInvalid, nil)
+		return
+	}
+	return
+}
+
+func ValidatePayChannel(ctx *gin.Context, channelId string) (pc *entity.TPaymentChannel, err error) {
+	err = dao.TPaymentChannel.Ctx(ctx).Where(
+		do.TPaymentChannel{
+			ChannelId: channelId,
+			IsActive:  constant.PaymentChannelIsActiveYes,
+		}).Scan(&pc)
+	if err != nil {
+		global.MyLogger(ctx).Err(err).Msgf("query TPaymentChannels failed")
+		response.ResFail(ctx, err.Error())
+		return
+	}
+	if pc == nil {
+		err = fmt.Errorf("channelId %s 无效", channelId)
+		global.MyLogger(ctx).Err(err).Msgf("channelId not exist")
+		response.RespFail(ctx, i18n.RetMsgParamInvalid, nil)
+		return
+	}
+	return
 }

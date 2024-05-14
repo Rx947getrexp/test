@@ -16,6 +16,8 @@ type TPayOrder struct {
 	UserId             interface{} // 用户uid
 	Email              interface{} // 用户邮箱
 	OrderNo            interface{} // 订单号
+	PaymentChannelId   interface{} // 支付通道ID
+	GoodsId            interface{} // 套餐ID
 	OrderAmount        interface{} // 交易金额
 	Currency           interface{} // 交易币种
 	PayTypeCode        interface{} // 支付类型编码
@@ -25,8 +27,9 @@ type TPayOrder struct {
 	OrderData          interface{} // 创建订单时支付平台返回的信息
 	ResultStatus       interface{} // 查询结果，实际订单状态
 	OrderRealityAmount interface{} // 实际交易金额
+	PaymentProof       interface{} // 支付凭证地址
+	PaymentChannelErr  interface{} // 通道错误
 	CreatedAt          *gtime.Time // 创建时间
 	UpdatedAt          *gtime.Time // 更新时间
 	Version            interface{} // 数据版本号
-	PaymentChannelName interface{} // 支付通道名称
 }

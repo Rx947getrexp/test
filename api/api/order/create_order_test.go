@@ -19,3 +19,23 @@ func TestGenerateOrderID(t *testing.T) {
 	orderId = generateOrderID()
 	fmt.Println(orderId)
 }
+
+func TestGenUPayAmountDecimalPartValue(t *testing.T) {
+	amount := genUPayAmountDecimalPartValue()
+	fmt.Println(amount)
+
+	amount = genUPayAmountDecimalPartValue()
+	fmt.Println(amount)
+
+	amount = genUPayAmountDecimalPartValue()
+	fmt.Println(amount)
+
+	amount = genUPayAmountDecimalPartValue()
+	fmt.Println(amount)
+
+	amount = genUPayAmountDecimalPartValue()
+	fmt.Println(amount)
+
+	amount = genUPayAmountDecimalPartValue()
+	fmt.Println(amount)
+}

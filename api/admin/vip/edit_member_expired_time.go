@@ -13,6 +13,7 @@ import (
 	"go-speed/model/do"
 	"go-speed/model/entity"
 	"go-speed/model/response"
+	"go-speed/util"
 	"time"
 )
 
@@ -68,13 +69,14 @@ func EditMemberExpiredTime(c *gin.Context) {
 		global.MyLogger(c).Debug().Msgf("reset user ExpiredTime from(%d) to(%d)", userEntity.ExpiredTime, req.ExpiredTime)
 
 		// 记录操作流水
-		lastInsertId, err = dao.TUserVipAttrRecords.Ctx(c).Data(do.TUserVipAttrRecords{
-			Email:       userEntity.Email,
-			Source:      constant.UserVipAttrOpSourceAdminSet,
-			OrderNo:     gtime.Datetime(),
-			ExpiredTime: req.ExpiredTime,
-			Desc:        fmt.Sprintf("expired_time from [%d] to [%d]", userEntity.ExpiredTime, req.ExpiredTime),
-			CreatedAt:   gtime.Now(),
+		lastInsertId, err = dao.TUserVipAttrRecord.Ctx(c).Data(do.TUserVipAttrRecord{
+			Email:           userEntity.Email,
+			Source:          constant.UserVipAttrOpSourceAdminSet,
+			OrderNo:         gtime.Datetime(),
+			ExpiredTimeFrom: userEntity.ExpiredTime,
+			ExpiredTimeTo:   req.ExpiredTime,
+			Desc:            fmt.Sprintf("ExpiredTime set to(%s)", util.TimeFormat(req.ExpiredTime)),
+			CreatedAt:       gtime.Now(),
 		}).InsertAndGetId()
 		if err != nil {
 			global.MyLogger(c).Err(err).Msgf(`insert TUserVipAttrRecords failed`)

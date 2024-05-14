@@ -48,3 +48,11 @@ const (
 	Healthy   = "1"
 	Unhealthy = "2"
 )
+
+const (
+	OrderTypeDesc = "desc"
+)
+
+const (
+	DaySeconds = 60 * 60 * 24
+)

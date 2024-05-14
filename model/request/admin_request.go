@@ -189,29 +189,31 @@ type NoticeListAdminRequest struct {
 }
 
 type AddGoodsAdminRequest struct {
-	Title      string  `form:"title" binding:"required" json:"title"`
-	MType      int     `form:"m_type" binding:"required" json:"m_type"`
-	DevLimit   int     `form:"dev_limit" binding:"required" json:"dev_limit"`
-	FlowLimit  int64   `form:"flow_limit" json:"flow_limit"`
-	Period     int     `form:"period" binding:"required" json:"period"`
-	Price      float64 `form:"price" binding:"required" json:"price"`
-	IsDiscount int     `form:"is_discount" binding:"required" json:"is_discount"`
-	Low        int     `form:"low" json:"low"`
-	High       int     `form:"high" json:"high"`
+	Title       string  `form:"title" binding:"required" json:"title"`
+	MType       int     `form:"m_type" binding:"required" json:"m_type"`
+	DevLimit    int     `form:"dev_limit" binding:"required" json:"dev_limit"`
+	FlowLimit   int64   `form:"flow_limit" json:"flow_limit"`
+	Period      int     `form:"period" binding:"required" json:"period"`
+	Price       float64 `form:"price" binding:"required" json:"price"`
+	UsdPayPrice float64 `form:"usd_pay_price" binding:"required" json:"usd_pay_price"`
+	IsDiscount  int     `form:"is_discount" binding:"required" json:"is_discount"`
+	Low         int     `form:"low" json:"low"`
+	High        int     `form:"high" json:"high"`
 }
 
 type EditGoodsAdminRequest struct {
-	Id         int64   `form:"id" binding:"required" json:"id"`
-	Title      string  `form:"title" json:"title"`
-	MType      int     `form:"m_type" json:"m_type"`
-	DevLimit   int     `form:"dev_limit" json:"dev_limit"`
-	FlowLimit  int64   `form:"flow_limit" json:"flow_limit"`
-	Period     int     `form:"period" json:"period"`
-	Price      float64 `form:"price" json:"price"`
-	IsDiscount int     `form:"is_discount" json:"is_discount"`
-	Low        int     `form:"low" json:"low"`
-	High       int     `form:"high" json:"high"`
-	Status     int     `form:"status" json:"status"`
+	Id          int64   `form:"id" binding:"required" json:"id"`
+	Title       string  `form:"title" json:"title"`
+	MType       int     `form:"m_type" json:"m_type"`
+	DevLimit    int     `form:"dev_limit" json:"dev_limit"`
+	FlowLimit   int64   `form:"flow_limit" json:"flow_limit"`
+	Period      int     `form:"period" json:"period"`
+	Price       float64 `form:"price" json:"price"`
+	UsdPayPrice float64 `form:"usd_pay_price" json:"usd_pay_price"`
+	IsDiscount  int     `form:"is_discount" json:"is_discount"`
+	Low         int     `form:"low" json:"low"`
+	High        int     `form:"high" json:"high"`
+	Status      int     `form:"status" json:"status"`
 }
 
 type GoodsListAdminRequest struct {

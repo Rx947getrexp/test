@@ -5,9 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"go-speed/dao"
 	"go-speed/global"
-	"go-speed/model/do"
 	"sort"
 	"strings"
 
@@ -18,35 +16,39 @@ import (
 )
 
 const (
-	PaySecretKey = "97a8df4fadfb613f0b4f0611c7dfc826"
+	PaySecretKey      = "97a8df4fadfb613f0b4f0611c7dfc826"
+	MethodTradeCreate = "trade.create"
+	MethodTradeCheck  = "trade.check"
+	PnSafePayUrl      = "http://api.pnsafepay.com/gateway.aspx"
 )
 
 type PayRequest struct {
-	MerNo       string `json:"mer_no"`       // y
-	OrderNo     string `json:"order_no"`     // y
-	OrderAmount string `json:"order_amount"` // y
-	PayName     string `json:"payname"`      // y
-	PayEmail    string `json:"payemail"`     // y
-	PayPhone    string `json:"payphone"`     // y
-	Currency    string `json:"currency"`     // y
-	PayTypeCode string `json:"paytypecode"`  // y
+	MerNo       string `json:"mer_no"`
+	OrderNo     string `json:"order_no"`
+	OrderAmount string `json:"order_amount"`
+	PayName     string `json:"payname"`
+	PayEmail    string `json:"payemail"`
+	PayPhone    string `json:"payphone"`
+	Currency    string `json:"currency"`
+	PayTypeCode string `json:"paytypecode"`
 	Method      string `json:"method"`
 	ReturnUrl   string `json:"returnurl"`
 	Sign        string `json:"sign"`
 }
 
 type PayResponse struct {
-	MerNo       string `json:"mer_no"`
-	OrderNo     string `json:"order_no"`
-	OrderAmount string `json:"order_amount"`
-	Status      string `json:"status"`
-	StatusMes   string `json:"status_mes"`
-	OrderData   string `json:"order_data"`
+	MerNo           string `json:"mer_no"`
+	OrderNo         string `json:"order_no"`
+	OrderAmount     string `json:"order_amount"`
+	Status          string `json:"status"`
+	StatusMes       string `json:"status_mes"`
+	OrderData       string `json:"order_data"`
+	InterIsNeedGift bool   `json:"-"`
+	InterMsg        string `json:"-"`
 }
 
 func CreatePayOrder(ctx *gin.Context, req *PayRequest) (res *PayResponse, err error) {
-	url := "http://api.pnsafepay.com/gateway.aspx"
-	req.Method = "trade.create"
+	req.Method = MethodTradeCreate
 	req.ReturnUrl = global.Config.PNSafePay.CallBackUrl
 	requestParams := genRequestSignature(ctx, req)
 	headers := map[string]string{
@@ -60,28 +62,25 @@ func CreatePayOrder(ctx *gin.Context, req *PayRequest) (res *PayResponse, err er
 	}
 
 	global.MyLogger(ctx).Info().Msgf(">>>>>>>>>>>> pnsafepay request: %s", gjson.MustEncode(requestParams))
-	response, err := g.Client().Post(ctx, url, jsonData, headers)
+	response, err := g.Client().Post(ctx, PnSafePayUrl, jsonData, headers)
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("请求pnsafepay失败")
 		return nil, err
 	}
 	defer response.Close()
+	global.MyLogger(ctx).Debug().Msgf("pnsafepay trade.create response: %+v", *response)
 
 	if response.StatusCode != 200 {
-		global.MyLogger(ctx).Err(err).Msgf("pnsafepay trade.create failed, response: %+v", *response)
-		return nil, gerror.Newf("StatusCode: %d != 200", response.StatusCode)
-	}
-	if response.StatusCode == 502 || response.StatusCode == 504 {
-		PayOrder := new(do.TPayOrder)
-		_, err = dao.TPayOrder.Ctx(ctx).Where("order_no = ?", req.OrderNo).One(&PayOrder)
-		if err != nil {
-			global.MyLogger(ctx).Err(err).Msgf("查询订单失败 OrderNo %d", req.OrderNo)
-			return nil, err
+		global.MyLogger(ctx).Err(err).Msgf("pnsafepay trade.create failed, StatusCode: %d, response: %+v",
+			response.StatusCode, *response)
+		var payResponse *PayResponse
+		if response.StatusCode == 502 || response.StatusCode == 504 {
+			payResponse = &PayResponse{
+				InterIsNeedGift: true,
+				InterMsg:        fmt.Sprintf("StatusCode is %d", response.StatusCode),
+			}
 		}
-		userid := PayOrder.UserId.(int)
-		channelName := PayOrder.PaymentChannelName.(string)
-		giveFreeToUser(ctx, userid, channelName)
-		return nil, gerror.New("支付通道服务器异常")
+		return payResponse, gerror.Newf("StatusCode: %d != 200", response.StatusCode)
 	}
 
 	content := response.ReadAll()
@@ -155,11 +154,9 @@ type QueryOrderResponse struct {
 }
 
 func QueryPayOrder(ctx *gin.Context, orderNo string) (res *QueryOrderResponse, err error) {
-	url := "http://api.pnsafepay.com/gateway.aspx"
-
 	params := map[string]string{
 		"mer_no":   global.Config.PNSafePay.MerNo,
-		"method":   "trade.check",
+		"method":   MethodTradeCheck,
 		"order_no": orderNo,
 	}
 	params["sign"] = generateSignature(ctx, params, PaySecretKey)
@@ -173,7 +170,7 @@ func QueryPayOrder(ctx *gin.Context, orderNo string) (res *QueryOrderResponse, e
 	}
 
 	global.MyLogger(ctx).Info().Msgf(">>>>>>>>>>>> pnsafepay params: %s", gjson.MustEncode(params))
-	response, err := g.Client().Post(ctx, url, jsonData, headers)
+	response, err := g.Client().Post(ctx, PnSafePayUrl, jsonData, headers)
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("请求pnsafepay失败")
 		return nil, err

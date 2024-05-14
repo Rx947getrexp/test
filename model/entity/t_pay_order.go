@@ -14,6 +14,8 @@ type TPayOrder struct {
 	UserId             uint64      `orm:"user_id"              description:"用户uid"`
 	Email              string      `orm:"email"                description:"用户邮箱"`
 	OrderNo            string      `orm:"order_no"             description:"订单号"`
+	PaymentChannelId   string      `orm:"payment_channel_id"   description:"支付通道ID"`
+	GoodsId            int         `orm:"goods_id"             description:"套餐ID"`
 	OrderAmount        string      `orm:"order_amount"         description:"交易金额"`
 	Currency           string      `orm:"currency"             description:"交易币种"`
 	PayTypeCode        string      `orm:"pay_type_code"        description:"支付类型编码"`
@@ -23,8 +25,9 @@ type TPayOrder struct {
 	OrderData          string      `orm:"order_data"           description:"创建订单时支付平台返回的信息"`
 	ResultStatus       string      `orm:"result_status"        description:"查询结果，实际订单状态"`
 	OrderRealityAmount string      `orm:"order_reality_amount" description:"实际交易金额"`
+	PaymentProof       string      `orm:"payment_proof"        description:"支付凭证地址"`
+	PaymentChannelErr  int         `orm:"payment_channel_err"  description:"通道错误"`
 	CreatedAt          *gtime.Time `orm:"created_at"           description:"创建时间"`
 	UpdatedAt          *gtime.Time `orm:"updated_at"           description:"更新时间"`
 	Version            int         `orm:"version"              description:"数据版本号"`
-	PaymentChannelName string      `orm:"payment_channel_name" description:"支付通道名称"`
 }

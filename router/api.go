@@ -4,6 +4,7 @@ import (
 	"go-speed/api/api"
 	"go-speed/api/api/config"
 	"go-speed/api/api/country"
+	"go-speed/api/api/goods"
 	"go-speed/api/api/node"
 	"go-speed/api/api/order"
 	"go-speed/api/api/report"
@@ -67,9 +68,13 @@ func ApiRoute(group *gin.RouterGroup) {
 		group.GET("get_server_config_without_rules", config.GetServerConfigWithoutRules) // 获取配置不带ip和域名池
 
 		// 支付相关
+		group.POST("payment_channel_list", order.PaymentChannelList)
+		group.POST("goods_list", goods.GoodsList)
 		group.POST("create_order", order.CreateOrder)
-		group.POST("check_order", order.CheckOrder)             //检查支付订单状态
-		group.GET("check_expiration_time", order.CheckUserTime) //检查用户是否到期
+		group.POST("upload_payment_proof", order.UploadPaymentProof)
+		group.POST("confirm_order", order.ConfirmOrder)
+		group.POST("cancel_order", order.CancelOrder)
+		group.POST("order_list", order.GetOrderList)
 	}
 	//签名验证
 	group.Use(api.Verify)
