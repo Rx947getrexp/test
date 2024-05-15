@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/gogf/gf/v2/os/gtime"
+	"go-speed/api/api/common"
 	"go-speed/constant"
 	"go-speed/dao"
 	"go-speed/global"
@@ -18,10 +19,10 @@ import (
 )
 
 type UploadPaymentProofReq struct {
-	OrderNo      string                `form:"order_no" binding:"required" dc:"订单号"`
-	PaymentProof string                `form:"payment_proof" dc:"支付凭证（截图链接）"`
-	Files        *multipart.FileHeader `form:"files" binding:"required"`
-	FileType     string                `form:"file_type,default=default"`
+	OrderNo      string                `form:"order_no" json:"order_no" binding:"required" dc:"订单号"`
+	PaymentProof string                `form:"payment_proof" json:"payment_proof" dc:"支付凭证（截图链接）"`
+	Files        *multipart.FileHeader `form:"files" json:"files" binding:"required"`
+	FileType     string                `form:"file_type,default=default" json:"file_type" `
 }
 
 type UploadPaymentProofRes struct {
@@ -45,7 +46,7 @@ func UploadPaymentProof(ctx *gin.Context) {
 	global.MyLogger(ctx).Info().Msgf("req: %+v", *req)
 
 	// validate user
-	user, err = ValidateClaims(ctx)
+	user, err = common.ValidateClaims(ctx)
 	if err != nil {
 		return
 	}

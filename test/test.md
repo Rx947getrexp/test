@@ -38,7 +38,7 @@ curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:
 }'
 
 # 8
-curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13001/machine_edit -d '{
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13001/machine/edit -d '{
     "id": 100004,
     "ip": "1.1.1.2",
     "server": "1.www.xxx",
@@ -155,3 +155,23 @@ curl -X POST -H "Content-Type: application/json" -H "Lang: cn" https://www.baodu
 curl -X POST -H "Content-Type: application/json" -H "Lang: cn" https://www.baodu.xyz/app-api/pay_notify -d '{"order_no": "20240505121440989398"}'
 
 
+# 支付相关
+## 管理后台
+### 支付渠道列表
+curl -X POST -H "Lang: cn" http://localhost:13001/payment_channel/list
+
+
+### 修改支付渠道配置接口
+curl -X POST -H "Lang: cn" -H "Content-Type: application/json" http://localhost:13001/payment_channel/edit -d '{"ChannelId":"usd","payment_qr_code":"qr-123","customer_service_info":{"phone":"18118811881","working_hours":"10:00~20:00"}}'
+
+
+curl -X POST -H "Lang: cn" -H "Content-Type: application/json" http://localhost:13001/payment_channel/edit -d '{
+    "ChannelId": "usd",
+    "PaymentQRCode": "qr-123",
+    "CustomerServiceInfo": {
+        "Phone": "18118811881",
+        "WorkingHours": "10:00~20:00"
+    }
+}'
+
+curl -X POST -H "Lang: cn" -H "Content-Type: application/json"  http://localhost:13001/order/pay_order_list -d '{"order_no":"20240506024451529790","page":1,"size":10,"email":"zzz@qq.com"}'

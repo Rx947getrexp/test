@@ -19,6 +19,7 @@ type TPaymentChannel struct {
 	FreeTrialDays       interface{} // 赠送的免费时长（以天为单位）
 	TimeoutDuration     interface{} // 订单未支付超时关闭时间（单位分钟）
 	PaymentQrCode       interface{} // 支付收款码. eg: U支付收款码
+	PaymentQrUrl        interface{} // 支付收款链接
 	BankCardInfo        interface{} // 银行卡信息
 	CustomerServiceInfo interface{} // 客服信息
 	MerNo               interface{} // mer_no

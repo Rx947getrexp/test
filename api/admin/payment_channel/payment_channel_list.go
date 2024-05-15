@@ -25,6 +25,7 @@ type PaymentChannel struct {
 	FreeTrialDays       int                 `json:"free_trial_days" dc:"赠送的免费时长（以天为单位）"`
 	TimeoutDuration     int                 `json:"timeout_duration" dc:"订单未支付超时自动关闭时间（单位分钟）"`
 	PaymentQRCode       string              `json:"payment_qr_code" dc:"支付收款码. eg: U支付收款码"`
+	PaymentQRUrl        string              `json:"payment_qr_url" dc:"支付收款码链接"`
 	BankCardInfo        []BankCardInfo      `json:"bank_card_info" dc:"银行卡信息"`
 	CustomerServiceInfo CustomerServiceInfo `json:"customer_service_info" dc:"客服信息"`
 	Weight              int                 `json:"weight" dc:"权重，根据权重排序"`
@@ -68,6 +69,7 @@ func PaymentChannelList(ctx *gin.Context) {
 			FreeTrialDays:       item.FreeTrialDays,
 			TimeoutDuration:     item.TimeoutDuration,
 			PaymentQRCode:       item.PaymentQrCode,
+			PaymentQRUrl:        item.PaymentQrUrl,
 			BankCardInfo:        bankCardInfo,
 			CustomerServiceInfo: customerServiceInfo,
 			Weight:              item.Weight,

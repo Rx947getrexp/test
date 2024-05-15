@@ -82,7 +82,7 @@ func AdminRoute(group *gin.RouterGroup) {
 		//订单管理
 		orderGroup := group.Group("order")
 		orderGroup.GET("order_list", admin.OrderList)
-		orderGroup.GET("pay_order_list", order.PayOrderList)
+		orderGroup.POST("pay_order_list", order.PayOrderList)
 		orderGroup.POST("sync_order_status", order.SyncOrderStatus)
 
 		//广告管理

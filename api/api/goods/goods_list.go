@@ -8,7 +8,6 @@ import (
 	"go-speed/i18n"
 	"go-speed/model/entity"
 	"go-speed/model/response"
-	"go-speed/service"
 )
 
 type GoodsListReq struct {
@@ -38,14 +37,13 @@ func GoodsList(ctx *gin.Context) {
 	var (
 		err           error
 		goodsEntities []entity.TGoods
+		user          *entity.TUser
 	)
-
-	claims := ctx.MustGet("claims").(*service.CustomClaims)
-	_, err = common.CheckUserByUserId(ctx, uint64(claims.UserId))
+	user, err = common.ValidateClaims(ctx)
 	if err != nil {
 		return
 	}
-	global.MyLogger(ctx).Info().Msgf("OrderNo: %s", claims.UserId)
+	global.MyLogger(ctx).Info().Msgf("user: %s", user.Email)
 
 	err = dao.TGoods.Ctx(ctx).Scan(&goodsEntities)
 	if err != nil {

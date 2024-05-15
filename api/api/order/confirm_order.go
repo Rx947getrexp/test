@@ -2,12 +2,14 @@ package order
 
 import (
 	"fmt"
+	"go-speed/api/api/common"
 	"go-speed/constant"
 	"go-speed/global"
 	"go-speed/i18n"
 	"go-speed/model/entity"
 	"go-speed/model/response"
 	"go-speed/service"
+	"runtime/debug"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,7 +19,7 @@ type ConfirmOrderReq struct {
 }
 
 type ConfirmOrderRes struct {
-	Status string `json:"status" dc:"订单状态" dc:"success:成功，fail:支付失败,waiting：等待支付中"`
+	Status string `json:"status" dc:"订单状态. success:成功，fail:支付失败, waiting：等待支付中"`
 }
 
 func ConfirmOrder(ctx *gin.Context) {
@@ -28,6 +30,13 @@ func ConfirmOrder(ctx *gin.Context) {
 		payOrder    *entity.TPayOrder
 		orderStatus string
 	)
+	defer func() {
+		if r := recover(); r != nil {
+			// 同时打印到日志文件和标准输出中
+			global.MyLogger(ctx).Err(err).Msgf("%+v\n%+v", r, string(debug.Stack()))
+		}
+	}()
+
 	// 绑定请求参数
 	if err = ctx.ShouldBind(req); err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("绑定参数失败")
@@ -37,7 +46,7 @@ func ConfirmOrder(ctx *gin.Context) {
 	global.MyLogger(ctx).Info().Msgf("OrderNo: %s", req.OrderNo)
 
 	// validate user
-	user, err = ValidateClaims(ctx)
+	user, err = common.ValidateClaims(ctx)
 	if err != nil {
 		return
 	}

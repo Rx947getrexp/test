@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gogf/gf/v2/os/gtime"
+	"go-speed/api/api/common"
 	"go-speed/constant"
 	"go-speed/dao"
 	"go-speed/global"
@@ -37,7 +38,7 @@ func CancelOrder(ctx *gin.Context) {
 	global.MyLogger(ctx).Info().Msgf("OrderNo: %s", req.OrderNo)
 
 	// validate user
-	userEntity, err = ValidateClaims(ctx)
+	userEntity, err = common.ValidateClaims(ctx)
 	if err != nil {
 		return
 	}

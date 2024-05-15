@@ -3,6 +3,7 @@ package order
 import (
 	"context"
 	"fmt"
+	"go-speed/api/api/common"
 	"math/rand"
 	"time"
 
@@ -10,7 +11,6 @@ import (
 	"github.com/gogf/gf/v2/database/gdb"
 	"github.com/gogf/gf/v2/os/gtime"
 
-	"go-speed/api/api/common"
 	"go-speed/constant"
 	"go-speed/dao"
 	"go-speed/global"
@@ -18,7 +18,6 @@ import (
 	"go-speed/model/do"
 	"go-speed/model/entity"
 	"go-speed/model/response"
-	"go-speed/service"
 	"go-speed/util/pay/pnsafepay"
 )
 
@@ -29,8 +28,8 @@ const (
 )
 
 type CreateOrderReq struct {
-	ChannelId string `form:"channel_id" binding:"required" dc:"支付渠道ID"`
-	GoodsId   int64  `form:"goods_id" binding:"required" dc:"套餐ID"`
+	ChannelId string `form:"channel_id" json:"channel_id" binding:"required" dc:"支付渠道ID"`
+	GoodsId   int64  `form:"goods_id" json:"goods_id" binding:"required" dc:"套餐ID"`
 }
 
 type CreateOrderRes struct {
@@ -71,7 +70,7 @@ func CreateOrder(ctx *gin.Context) {
 	global.MyLogger(ctx).Info().Msgf("request: %+v", *req)
 
 	// validate user
-	userEntity, err = ValidateClaims(ctx)
+	userEntity, err = common.ValidateClaims(ctx)
 	if err != nil {
 		return
 	}
@@ -419,11 +418,6 @@ func genUPayAmountDecimalPartValue() float64 {
 	rand.Seed(time.Now().UnixNano())
 	randomNumber := rand.Intn(9999) // 生成一个0到9999之间的随机数
 	return float64(randomNumber) / 10000
-}
-
-func ValidateClaims(ctx *gin.Context) (userEntity *entity.TUser, err error) {
-	claims := ctx.MustGet("claims").(*service.CustomClaims)
-	return common.CheckUserByUserId(ctx, uint64(claims.UserId))
 }
 
 func ValidateGoods(ctx *gin.Context, goodsId int64) (gs *entity.TGoods, err error) {

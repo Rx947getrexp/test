@@ -8,6 +8,7 @@ CREATE TABLE `t_payment_channel`
     `free_trial_days` int         NOT NULL DEFAULT '3' COMMENT '赠送的免费时长（以天为单位）',
     `timeout_duration` int         NOT NULL DEFAULT '30' COMMENT '订单未支付超时关闭时间（单位分钟）',
     `payment_qr_code`            text default NULL COMMENT '支付收款码. eg: U支付收款码',
+    `payment_qr_url`            text default NULL COMMENT '支付收款链接',
     `bank_card_info`            text default NULL COMMENT '银行卡信息',
     `customer_service_info`            text default NULL COMMENT '客服信息',
     `mer_no`            varchar(64) default NULL COMMENT 'mer_no',
@@ -22,6 +23,12 @@ CREATE TABLE `t_payment_channel`
   AUTO_INCREMENT = 1
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_general_ci COMMENT ='支付通道表';
+
+
+insert into t_payment_channel (channel_id,channel_name,is_active,payment_qr_code,payment_qr_url,mer_no,pay_type_code,weight,created_at,updated_at) values
+('usd','USD支付',1,'qr-code-778899', 'http:xxx.11.com/12345.png','','',88,now(),now()),
+('bankcard','银行卡支付',1,'', '','','',70,now(),now()),
+('pnsafepay','pnsafepay支付',2,'', '','','',50,now(),now());
 
 
 ALTER TABLE `t_pay_order`ADD COLUMN `payment_channel_id` varchar(32) NOT NULL COMMENT '支付通道ID';

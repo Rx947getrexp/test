@@ -2,6 +2,7 @@ package order
 
 import (
 	"github.com/gin-gonic/gin"
+	"go-speed/api/api/common"
 	"go-speed/constant"
 	"go-speed/dao"
 	"go-speed/global"
@@ -12,10 +13,10 @@ import (
 )
 
 type GetOrderListReq struct {
-	ChannelId string `form:"channel_id" dc:"支付渠道"`
-	Status    string `form:"status" dc:"订单状态"`
-	Page      int    `form:"page" dc:"分页查询page, 从1开始"`
-	Size      int    `form:"size" dc:"分页查询size, 最大1000"`
+	ChannelId string `form:"channel_id" json:"channel_id" dc:"支付渠道"`
+	Status    string `form:"status" json:"status" dc:"订单状态"`
+	Page      int    `form:"page" json:"page" dc:"分页查询page, 从1开始"`
+	Size      int    `form:"size" json:"size"  dc:"分页查询size, 最大1000"`
 }
 
 type GetOrderListRes struct {
@@ -42,6 +43,7 @@ func GetOrderList(ctx *gin.Context) {
 		req       = new(GetOrderListReq)
 		payOrders []entity.TPayOrder
 		doWhere   do.TPayOrder
+		user      *entity.TUser
 		total     int
 	)
 	if err = ctx.ShouldBind(req); err != nil {
@@ -49,7 +51,11 @@ func GetOrderList(ctx *gin.Context) {
 		response.ResFail(ctx, i18n.RetMsgParamParseErr)
 		return
 	}
-
+	user, err = common.ValidateClaims(ctx)
+	if err != nil {
+		return
+	}
+	doWhere.UserId = user.Id
 	if req.ChannelId != "" {
 		doWhere.PaymentChannelId = req.ChannelId
 	}

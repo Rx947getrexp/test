@@ -17,6 +17,7 @@ type TPaymentChannel struct {
 	FreeTrialDays       int         `orm:"free_trial_days"       description:"赠送的免费时长（以天为单位）"`
 	TimeoutDuration     int         `orm:"timeout_duration"      description:"订单未支付超时关闭时间（单位分钟）"`
 	PaymentQrCode       string      `orm:"payment_qr_code"       description:"支付收款码. eg: U支付收款码"`
+	PaymentQrUrl        string      `orm:"payment_qr_url"        description:"支付收款链接"`
 	BankCardInfo        string      `orm:"bank_card_info"        description:"银行卡信息"`
 	CustomerServiceInfo string      `orm:"customer_service_info" description:"客服信息"`
 	MerNo               string      `orm:"mer_no"                description:"mer_no"`

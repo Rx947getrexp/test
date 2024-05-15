@@ -39,9 +39,10 @@ func QueryPayOrder(ctx *gin.Context, minutesAgo time.Duration) (deposits []Depos
 
 	// 构造请求参数
 	params := map[string]string{
-		"coin":      "",                                                                  // 可选，填写币种，不填则返回所有币种的充值历史
-		"status":    "",                                                                  // 可选，0表示pending，1表示success，不填则返回所有状态的充值历史
-		"startTime": fmt.Sprintf("%d", time.Now().Add(-1*time.Minute*minutesAgo).Unix()), // 默认当前时间90天的时间戳
+		"coin":   "", // 可选，填写币种，不填则返回所有币种的充值历史
+		"status": "", // 可选，0表示pending，1表示success，不填则返回所有状态的充值历史
+		//"startTime": fmt.Sprintf("%d", time.Now().Add(-1*time.Minute*minutesAgo).Unix()), // 默认当前时间90天的时间戳
+		"startTime": fmt.Sprintf("%d", time.Now().Add(-1*minutesAgo).UnixNano()/int64(time.Millisecond)), // 默认当前时间90天的时间戳
 		"endTime":   "",
 		"limit":     "1000",                                                               // 默认1000，最大1000
 		"timestamp": strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10), // 必填，以毫秒为单位的UNIX时间戳
@@ -73,13 +74,13 @@ func QueryPayOrder(ctx *gin.Context, minutesAgo time.Duration) (deposits []Depos
 		return
 	}
 	defer resp.Body.Close()
-	global.MyLogger(ctx).Debug().Msgf(">>>>>>>>>>>> binance response deposits: %s", gjson.MustEncode(resp))
 
 	// 处理响应
 	body, _ := ioutil.ReadAll(resp.Body)
+	global.MyLogger(ctx).Debug().Msgf(">>>>>>>>>>>> binance response body: %s", string(body))
 	if resp.StatusCode != 200 {
 		err = gerror.Newf("StatusCode: %d != 200", resp.StatusCode)
-		global.MyLogger(ctx).Err(err).Msgf("binance query order failed, response: %+v", gjson.MustEncode(resp))
+		global.MyLogger(ctx).Err(err).Msgf("binance query order failed, response: %+v", *resp)
 		return
 	}
 

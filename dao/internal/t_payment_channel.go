@@ -27,6 +27,7 @@ type TPaymentChannelColumns struct {
 	FreeTrialDays       string // 赠送的免费时长（以天为单位）
 	TimeoutDuration     string // 订单未支付超时关闭时间（单位分钟）
 	PaymentQrCode       string // 支付收款码. eg: U支付收款码
+	PaymentQrUrl        string // 支付收款链接
 	BankCardInfo        string // 银行卡信息
 	CustomerServiceInfo string // 客服信息
 	MerNo               string // mer_no
@@ -45,6 +46,7 @@ var tPaymentChannelColumns = TPaymentChannelColumns{
 	FreeTrialDays:       "free_trial_days",
 	TimeoutDuration:     "timeout_duration",
 	PaymentQrCode:       "payment_qr_code",
+	PaymentQrUrl:        "payment_qr_url",
 	BankCardInfo:        "bank_card_info",
 	CustomerServiceInfo: "customer_service_info",
 	MerNo:               "mer_no",

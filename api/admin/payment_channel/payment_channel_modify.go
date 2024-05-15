@@ -15,15 +15,28 @@ import (
 )
 
 type PaymentChannelModifyReq struct {
-	ChannelId           string               `form:"channel_id" binding:"required" dc:"支付通道ID，前后端交互时使用.（不可以修改）"`
-	ChannelName         string               `form:"channel_name" dc:"支付通道名称，展示给用户"`
-	IsActive            int                  `form:"is_active" dc:"支付通道是否可用，1：可用，2：不可用"`
-	FreeTrialDays       int                  `form:"free_trial_days" dc:"赠送的免费时长（以天为单位）"`
-	TimeoutDuration     int                  `form:"timeout_duration" dc:"订单未支付超时自动关闭时间（单位分钟）"`
-	PaymentQRCode       *string              `form:"payment_qr_code" dc:"支付收款码. eg: U支付收款码"`
-	BankCardInfo        []BankCardInfo       `form:"bank_card_info" dc:"银行卡信息"`
-	CustomerServiceInfo *CustomerServiceInfo `form:"customer_service_info" dc:"客服信息"`
-	Weight              int                  `form:"weight" dc:"权重，根据权重排序"`
+	ChannelId           string               `form:"channel_id" json:"channel_id" dc:"支付通道ID，前后端交互时使用.（不可以修改）"`
+	ChannelName         string               `form:"channel_name" json:"channel_name" dc:"支付通道名称，展示给用户"`
+	IsActive            int                  `form:"is_active" json:"is_active" dc:"支付通道是否可用，1：可用，2：不可用"`
+	FreeTrialDays       int                  `form:"free_trial_days" json:"free_trial_days" dc:"赠送的免费时长（以天为单位）"`
+	TimeoutDuration     int                  `form:"timeout_duration" json:"timeout_duration" dc:"订单未支付超时自动关闭时间（单位分钟）"`
+	PaymentQRCode       *string              `form:"payment_qr_code" json:"payment_qr_code" dc:"支付收款码. eg: U支付收款码"`
+	PaymentQRUrl        *string              `form:"payment_qr_url" json:"payment_qr_url" dc:"支付收款码链接"`
+	BankCardInfo        []bankCardInfo       `form:"bank_card_info" json:"bank_card_info" dc:"银行卡信息"`
+	CustomerServiceInfo *customerServiceInfo `form:"customer_service_info" json:"customer_service_info" dc:"客服信息"`
+	Weight              int                  `form:"weight" json:"weight" dc:"权重，根据权重排序"`
+}
+
+type bankCardInfo struct {
+	Cardholder     string `form:"cardholder" json:"cardholder" dc:"持卡人"`
+	BankCardNumber string `form:"bank_card_number" json:"bank_card_number" dc:"银行卡号"`
+	IssuingBank    string `form:"issuing_bank" json:"issuing_bank" dc:"开户银行"`
+}
+
+type customerServiceInfo struct {
+	Phone        string `form:"phone" json:"phone" dc:"持卡人姓名"`
+	Email        string `form:"email" json:"email" dc:"银行卡号"`
+	WorkingHours string `form:"working_hours" json:"working_hours" dc:"工作时间"`
 }
 
 type PaymentChannelModifyRes struct {
@@ -42,7 +55,8 @@ func PaymentChannelModify(ctx *gin.Context) {
 		return
 	}
 	global.MyLogger(ctx).Info().Msgf("req: %+v", *req)
-	if req.IsActive != constant.PaymentChannelIsActiveYes && req.IsActive != constant.PaymentChannelIsActiveNo {
+	if req.IsActive > 0 && req.IsActive != constant.PaymentChannelIsActiveYes && req.IsActive != constant.PaymentChannelIsActiveNo {
+		global.MyLogger(ctx).Err(err).Msgf(`param "IsActive" invalid`)
 		response.ResFail(ctx, `param "IsActive" invalid`)
 		return
 	}
@@ -75,6 +89,10 @@ func PaymentChannelModify(ctx *gin.Context) {
 	}
 	if req.PaymentQRCode != nil {
 		updateData.PaymentQrCode = *req.PaymentQRCode
+		global.MyLogger(ctx).Info().Msgf("param `PaymentQrCode` is %s", *req.PaymentQRCode)
+	}
+	if req.PaymentQRUrl != nil {
+		updateData.PaymentQrUrl = *req.PaymentQRUrl
 	}
 	if req.Weight > 0 {
 		updateData.Weight = req.Weight
@@ -97,15 +115,16 @@ func PaymentChannelModify(ctx *gin.Context) {
 		}
 		updateData.CustomerServiceInfo = string(bytes)
 	}
-	affected, err = dao.TNode.Ctx(ctx).Data(updateData).
+	global.MyLogger(ctx).Info().Msgf("param `updateData` is: %#v", updateData)
+	affected, err = dao.TPaymentChannel.Ctx(ctx).Data(updateData).
 		Where(do.TPaymentChannel{
 			ChannelId: req.ChannelId,
 		}).UpdateAndGetAffected()
 	if err != nil {
-		global.MyLogger(ctx).Err(err).Msgf("modify Name failed")
+		global.MyLogger(ctx).Err(err).Msgf("modify TPaymentChannel failed")
 		response.ResFail(ctx, err.Error())
 		return
 	}
-	global.MyLogger(ctx).Debug().Msgf("affected: %d", affected)
+	global.MyLogger(ctx).Info().Msgf("affected: %d", affected)
 	response.ResOk(ctx, i18n.RetMsgSuccess)
 }

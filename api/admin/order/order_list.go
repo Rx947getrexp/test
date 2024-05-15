@@ -2,6 +2,7 @@ package order
 
 import (
 	"github.com/gin-gonic/gin"
+	"go-speed/constant"
 	"go-speed/dao"
 	"go-speed/global"
 	"go-speed/i18n"
@@ -53,15 +54,22 @@ func PayOrderList(ctx *gin.Context) {
 		response.ResFail(ctx, i18n.RetMsgParamParseErr)
 		return
 	}
+	where := do.TPayOrder{}
+	if req.Email != "" {
+		where.Email = req.Email
+	}
+	if req.OrderNo != "" {
+		where.OrderNo = req.OrderNo
+	}
 
-	totalNum, err = dao.TPayOrder.Ctx(ctx).Where(do.TPayOrder{Email: req.Email, OrderNo: req.OrderNo}).Count()
+	totalNum, err = dao.TPayOrder.Ctx(ctx).Where(where).Count()
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("query payOrder failed")
 		response.ResFail(ctx, err.Error())
 		return
 	}
 
-	err = dao.TPayOrder.Ctx(ctx).Where(do.TPayOrder{Email: req.Email, OrderNo: req.OrderNo}).Scan(&payOrders)
+	err = dao.TPayOrder.Ctx(ctx).Where(where).Order(dao.TPayOrder.Columns().Id, constant.OrderTypeDesc).Scan(&payOrders)
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("query payOrder failed")
 		response.ResFail(ctx, err.Error())

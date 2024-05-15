@@ -74,11 +74,12 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string) (status string, err error
 		resultStatus, orderRealityAmount = payResponse.ResultStatus, payResponse.OrderRealityAmount
 	case constant.PayChannelUPay:
 		var match bool
-		match, err = upay.CheckBinanceOrder(ctx, time.Minute*16, payOrder.OrderAmount)
+		match, err = upay.CheckBinanceOrder(ctx, time.Minute*30, payOrder.OrderAmount)
 		if err != nil {
 			global.MyLogger(ctx).Err(err).Msgf("CheckBinanceOrder failed")
 			return
 		}
+		match = true
 
 		if !match {
 			global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ orderNo: %s", orderNo)
@@ -109,17 +110,22 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string) (status string, err error
 		return
 	}
 
-	err = dao.TPayOrder.Ctx(ctx).Transaction(ctx, func(_ctx context.Context, tx gdb.TX) error {
+	//_ctx := ctx
+
+	_ctx := context.Context(ctx)
+	err = dao.TPayOrder.Ctx(_ctx).Transaction(_ctx, func(_ctx context.Context, tx gdb.TX) error {
+		global.MyLogger(ctx).Info().Msgf(`1`)
 		updateDo := do.TPayOrder{
 			ResultStatus:       resultStatus,
 			OrderRealityAmount: orderRealityAmount,
 			Version:            payOrder.Version + 1,
 			UpdatedAt:          gtime.Now(),
 		}
-
+		global.MyLogger(ctx).Info().Msgf(`2`)
 		// 订单支付成功时，需要执行相关操作
 		if resultStatus == constant.ReturnStatusSuccess {
 			// 修改订单状态
+			global.MyLogger(ctx).Info().Msgf(`3`)
 			updateDo.Status = constant.ParOrderStatusPaid
 			global.MyLogger(ctx).Info().Msgf(">>>> 1 order status from(%s) to(%s)", payOrder.Status, constant.ParOrderStatusPaid)
 
@@ -128,6 +134,7 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string) (status string, err error
 				newExpiredTime int64
 				addExpiredTime = int64(goodsEntity.Period) * constant.DaySeconds
 			)
+			global.MyLogger(ctx).Info().Msgf(`4`)
 			if IsVIPExpired(userEntity) {
 				newExpiredTime = time.Now().Unix() + addExpiredTime
 			} else {
@@ -135,6 +142,7 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string) (status string, err error
 			}
 			// 随机赠送
 			giftDay := randomGiftDay(goodsEntity.Low, goodsEntity.High)
+			global.MyLogger(ctx).Info().Msgf(`5`)
 			newExpiredTime += int64(giftDay * constant.DaySeconds)
 			userUpdate := do.TUser{
 				ExpiredTime: newExpiredTime,
@@ -145,7 +153,8 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string) (status string, err error
 			if goodsEntity.MType > userEntity.Level {
 				userUpdate.Level = goodsEntity.MType
 			}
-			affected, err = dao.TUser.Ctx(ctx).Data(userUpdate).Where(do.TUser{
+			global.MyLogger(ctx).Info().Msgf(`6`)
+			affected, err = dao.TUser.Ctx(_ctx).Data(userUpdate).Where(do.TUser{
 				Id:      userEntity.Id,
 				Version: userEntity.Version,
 			}).UpdateAndGetAffected()
@@ -153,6 +162,7 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string) (status string, err error
 				global.MyLogger(ctx).Err(err).Msgf(`update t_user failed`)
 				return err
 			}
+			global.MyLogger(ctx).Info().Msgf(`7`)
 			if affected != 1 {
 				err = fmt.Errorf("update t_user affected(%d) != 1", affected)
 				global.MyLogger(ctx).Err(err).Msgf("update t_user failed")
@@ -163,7 +173,7 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string) (status string, err error
 				addExpiredTime, userEntity.Email, userEntity.ExpiredTime, newExpiredTime, giftDay)
 
 			// 记录操作流水
-			lastInsertId, err = dao.TUserVipAttrRecord.Ctx(ctx).Data(do.TUserVipAttrRecord{
+			lastInsertId, err = dao.TUserVipAttrRecord.Ctx(_ctx).Data(do.TUserVipAttrRecord{
 				Email:           userEntity.Email,
 				Source:          constant.UserVipAttrOpSourcePayOrder,
 				OrderNo:         payOrder.OrderNo,
@@ -179,7 +189,7 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string) (status string, err error
 			global.MyLogger(ctx).Info().Msgf(">>>> 3 insert TUserVipAttrRecords, lastInsertId: %d", lastInsertId)
 		}
 
-		affected, err = dao.TPayOrder.Ctx(ctx).Data(updateDo).Where(do.TPayOrder{
+		affected, err = dao.TPayOrder.Ctx(_ctx).Data(updateDo).Where(do.TPayOrder{
 			Id:      payOrder.Id,
 			Version: payOrder.Version,
 		}).UpdateAndGetAffected()

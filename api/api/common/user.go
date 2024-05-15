@@ -9,7 +9,14 @@ import (
 	"go-speed/model/do"
 	"go-speed/model/entity"
 	"go-speed/model/response"
+	"go-speed/service"
 )
+
+func ValidateClaims(ctx *gin.Context) (userEntity *entity.TUser, err error) {
+	claims := ctx.MustGet("claims").(*service.CustomClaims)
+	//claims := service.CustomClaims{UserId: 219122692}
+	return CheckUserByUserId(ctx, uint64(claims.UserId))
+}
 
 func CheckUserByUserId(ctx *gin.Context, userId uint64) (userEntity *entity.TUser, err error) {
 	err = dao.TUser.Ctx(ctx).Where(do.TUser{Id: userId}).Scan(&userEntity)
