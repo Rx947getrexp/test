@@ -6,7 +6,6 @@ import (
 	"go-speed/api/admin/country"
 	"go-speed/api/admin/node"
 	"go-speed/api/admin/order"
-	"go-speed/api/admin/paymentChannel"
 	"go-speed/api/admin/report"
 	"go-speed/api/admin/vip"
 
@@ -19,7 +18,9 @@ func AdminRoute(group *gin.RouterGroup) {
 	group.POST("edit_member_expired_time", vip.EditMemberExpiredTime)
 	group.GET("get_report_user_day_list", admin.GetReportUserDayList)
 	group.GET("get_channel_user_day_list", admin.GetChannelUserDayList)
+	group.GET("get_promotion_channel_user_day_list", admin.GetPromotionChannelUserDayList)
 	group.GET("get_online_user_day_list", admin.GetOnlineUserDayList)
+	group.GET("get_node_day_list", admin.GetNodeDayList)
 	group.GET("get_user_op_log_list", report.GetUserOpLogList)
 	group.GET("edit_", report.GetUserOpLogList)
 
@@ -168,8 +169,8 @@ func AdminRoute(group *gin.RouterGroup) {
 		machineGroup.POST("add", node.NodeCreate)  // 添加机器
 		machineGroup.POST("edit", node.NodeModify) // 修改机器信息
 		//支付通道管理
-		PaymentChannelGroup := group.Group("paymentChannel")
-		PaymentChannelGroup.GET("list", paymentChannel.ChannelList)
-		PaymentChannelGroup.GET("edit", paymentChannel.PaymentModify)
+		//PaymentChannelGroup := group.Group("paymentChannel")
+		//PaymentChannelGroup.GET("list", paymentChannel.ChannelList)
+		//PaymentChannelGroup.GET("edit", paymentChannel.PaymentModify)
 	}
 }

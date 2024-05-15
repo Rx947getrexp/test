@@ -204,6 +204,35 @@ func GetChannelUserDayList(c *gin.Context) {
 	response.RespOk(c, i18n.RetMsgSuccess, resp)
 	return
 }
+func GetPromotionChannelUserDayList(c *gin.Context) {
+	param := new(request.GetChannelUserDayListRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	total, list, err := service.QueryUserPromotionChannelDay(c, param.Date, param.Channel, param.OrderType, param.Page, param.Size)
+	if err != nil {
+		global.Logger.Err(err).Msg("查询出错！")
+		response.ResFail(c, "查询出错！")
+		return
+	}
+	items := make([]response.ChannelUserDay, 0)
+	for _, item := range list {
+		items = append(items, response.ChannelUserDay{
+			Id:        item.Id,
+			Date:      item.Date,
+			Channel:   item.Channel,
+			Total:     item.Total,
+			New:       item.New,
+			Retained:  item.Retained,
+			CreatedAt: item.CreatedAt.String(),
+		})
+	}
+	resp := response.GetChannelUserDayListResponse{Total: total, Items: items}
+	response.RespOk(c, i18n.RetMsgSuccess, resp)
+	return
+}
 func GetOnlineUserDayList(c *gin.Context) {
 	param := new(request.GetOnlineUserDayListRequest)
 	if err := c.ShouldBind(param); err != nil {
@@ -236,7 +265,34 @@ func GetOnlineUserDayList(c *gin.Context) {
 	response.RespOk(c, i18n.RetMsgSuccess, resp)
 	return
 }
-
+func GetNodeDayList(c *gin.Context) {
+	param := new(request.GetNodeDayListRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	total, list, err := service.QueryNodeDay(c, param.Date, param.Ip, param.OrderType, param.Page, param.Size)
+	if err != nil {
+		global.Logger.Err(err).Msg("查询出错！")
+		response.ResFail(c, "查询出错！")
+		return
+	}
+	items := make([]response.NodeUserDay, 0)
+	for _, item := range list {
+		items = append(items, response.NodeUserDay{
+			Id:        item.Id,
+			Date:      item.Date,
+			Ip:        item.Ip,
+			Total:     item.Total,
+			Retained:  item.Retained,
+			CreatedAt: item.CreatedAt.String(),
+		})
+	}
+	resp := response.GetNodeDayListResponse{Total: total, Items: items}
+	response.RespOk(c, i18n.RetMsgSuccess, resp)
+	return
+}
 func ComboList(c *gin.Context) {
 	param := new(request.GoodsListAdminRequest)
 	if err := c.ShouldBind(param); err != nil {

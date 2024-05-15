@@ -31,3 +31,11 @@ type TUserOnlineDay struct {
 	CreatedAt        time.Time `xorm:"comment('创建时间') TIMESTAMP"`
 	LastLoginCountry string    `xorm:"comment('最后登陆国家') VARCHAR(64)"`
 }
+type TUserNodeDay struct {
+	Id        int64     `xorm:"pk autoincr comment('自增id') BIGINT"`
+	Date      int       `xorm:"INT"`
+	Ip        string    `xorm:"VARCHAR(64)"`
+	Total     int       `xorm:"INT"`
+	Retained  int       `xorm:"INT"`
+	CreatedAt time.Time `xorm:"comment('创建时间') TIMESTAMP"`
+}
