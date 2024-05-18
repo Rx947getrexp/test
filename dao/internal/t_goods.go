@@ -20,46 +20,50 @@ type TGoodsDao struct {
 
 // TGoodsColumns defines and stores column names for table t_goods.
 type TGoodsColumns struct {
-	Id          string // 自增id
-	MType       string // 会员类型：1-vip1；2-vip2
-	Title       string // 套餐标题
-	TitleEn     string // 套餐标题（英文）
-	TitleRus    string // 套餐标题（俄文）
-	Price       string // 单价(U)
-	Period      string // 有效期（天）
-	DevLimit    string // 设备限制数
-	FlowLimit   string // 流量限制数；单位：字节；0-不限制
-	IsDiscount  string // 是否优惠:1-是；2-否
-	Low         string // 最低赠送(天)
-	High        string // 最高赠送(天)
-	Status      string // 状态:1-正常；2-已软删
-	CreatedAt   string // 创建时间
-	UpdatedAt   string // 更新时间
-	Author      string // 作者
-	Comment     string // 备注信息
-	UsdPayPrice string // usd_pay价格(U)
+	Id           string // 自增id
+	MType        string // 会员类型：1-vip1；2-vip2
+	Title        string // 套餐标题
+	TitleEn      string // 套餐标题（英文）
+	TitleRus     string // 套餐标题（俄文）
+	Price        string // 单价(U)
+	PriceUnit    string // 价格单位
+	Period       string // 有效期（天）
+	DevLimit     string // 设备限制数
+	FlowLimit    string // 流量限制数；单位：字节；0-不限制
+	IsDiscount   string // 是否优惠:1-是；2-否
+	Low          string // 最低赠送(天)
+	High         string // 最高赠送(天)
+	Status       string // 状态:1-正常；2-已软删
+	CreatedAt    string // 创建时间
+	UpdatedAt    string // 更新时间
+	Author       string // 作者
+	Comment      string // 备注信息
+	UsdPayPrice  string // usd_pay价格(U)
+	UsdPriceUnit string // USD支付的价格单位
 }
 
 // tGoodsColumns holds the columns for table t_goods.
 var tGoodsColumns = TGoodsColumns{
-	Id:          "id",
-	MType:       "m_type",
-	Title:       "title",
-	TitleEn:     "title_en",
-	TitleRus:    "title_rus",
-	Price:       "price",
-	Period:      "period",
-	DevLimit:    "dev_limit",
-	FlowLimit:   "flow_limit",
-	IsDiscount:  "is_discount",
-	Low:         "low",
-	High:        "high",
-	Status:      "status",
-	CreatedAt:   "created_at",
-	UpdatedAt:   "updated_at",
-	Author:      "author",
-	Comment:     "comment",
-	UsdPayPrice: "usd_pay_price",
+	Id:           "id",
+	MType:        "m_type",
+	Title:        "title",
+	TitleEn:      "title_en",
+	TitleRus:     "title_rus",
+	Price:        "price",
+	PriceUnit:    "price_unit",
+	Period:       "period",
+	DevLimit:     "dev_limit",
+	FlowLimit:    "flow_limit",
+	IsDiscount:   "is_discount",
+	Low:          "low",
+	High:         "high",
+	Status:       "status",
+	CreatedAt:    "created_at",
+	UpdatedAt:    "updated_at",
+	Author:       "author",
+	Comment:      "comment",
+	UsdPayPrice:  "usd_pay_price",
+	UsdPriceUnit: "usd_price_unit",
 }
 
 // NewTGoodsDao creates and returns a new DAO object for table data access.

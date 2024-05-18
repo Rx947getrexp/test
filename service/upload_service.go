@@ -21,7 +21,7 @@ import (
 	"time"
 )
 
-func Upload(param *request.UploadFile, fileExtMap map[string]bool) (string, error) {
+func Upload(param *request.UploadFile, fileExtMap map[string]bool, fileSavePath ...string) (string, error) {
 	var result string
 	fileHeader := param.Files
 	// 文件扩展名
@@ -75,6 +75,9 @@ func Upload(param *request.UploadFile, fileExtMap map[string]bool) (string, erro
 	var pathUpload request.PathUpload
 	pathUpload.FileContent = base64.StdEncoding.EncodeToString(fileBytes.Bytes())
 	pathUpload.DirName = param.FileType
+	if len(fileSavePath) > 0 {
+		pathUpload.DirName = fileSavePath[0]
+	}
 	pathUpload.NewFilename = newFilename
 	buildParam, _ := json.Marshal(pathUpload)
 	err = sendRequest("POST", fileServiceUrl, bytes.NewReader(buildParam), data)

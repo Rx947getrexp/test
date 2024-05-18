@@ -8,6 +8,7 @@ import (
 	"go-speed/constant"
 	"go-speed/dao"
 	"go-speed/global"
+	"go-speed/model/do"
 	"go-speed/model/entity"
 	"go-speed/service"
 	"net/http/httptest"
@@ -49,7 +50,10 @@ func doSyncPayOrderStatus() {
 		items []entity.TPayOrder
 	)
 	err = dao.TPayOrder.Ctx(ctx).
-		WhereNot(dao.TPayOrder.Columns().Status, constant.ParOrderStatusPaid).
+		Where(do.TPayOrder{
+			PaymentChannelId: constant.PayChannelUPay,
+			Status:           []string{constant.ParOrderStatusInit, constant.ParOrderStatusUnpaid},
+		}).
 		WhereGTE(dao.TPayOrder.Columns().CreatedAt, gtime.Now().Add(-7*time.Hour*24)).
 		Order(dao.TPayOrder.Columns().Id, "DESC").
 		Scan(&items)

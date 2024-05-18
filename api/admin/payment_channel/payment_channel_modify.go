@@ -22,6 +22,7 @@ type PaymentChannelModifyReq struct {
 	TimeoutDuration     int                  `form:"timeout_duration" json:"timeout_duration" dc:"订单未支付超时自动关闭时间（单位分钟）"`
 	PaymentQRCode       *string              `form:"payment_qr_code" json:"payment_qr_code" dc:"支付收款码. eg: U支付收款码"`
 	PaymentQRUrl        *string              `form:"payment_qr_url" json:"payment_qr_url" dc:"支付收款码链接"`
+	UsdNetwork          *string              `form:"usd_network" json:"usd_network" dc:"USD支付网络"`
 	BankCardInfo        []bankCardInfo       `form:"bank_card_info" json:"bank_card_info" dc:"银行卡信息"`
 	CustomerServiceInfo *customerServiceInfo `form:"customer_service_info" json:"customer_service_info" dc:"客服信息"`
 	Weight              int                  `form:"weight" json:"weight" dc:"权重，根据权重排序"`
@@ -62,6 +63,7 @@ func PaymentChannelModify(ctx *gin.Context) {
 	}
 
 	if req.FreeTrialDays > global.Config.PayConfig.MaxFreeTrialDays {
+		global.MyLogger(ctx).Err(err).Msgf(`param "FreeTrialDays" invalid`)
 		response.ResFail(ctx, `param "FreeTrialDays" invalid`)
 		return
 	}
@@ -93,6 +95,9 @@ func PaymentChannelModify(ctx *gin.Context) {
 	}
 	if req.PaymentQRUrl != nil {
 		updateData.PaymentQrUrl = *req.PaymentQRUrl
+	}
+	if req.UsdNetwork != nil {
+		updateData.UsdNetwork = *req.UsdNetwork
 	}
 	if req.Weight > 0 {
 		updateData.Weight = req.Weight

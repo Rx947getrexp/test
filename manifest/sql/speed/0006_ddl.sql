@@ -48,6 +48,12 @@ CREATE TABLE `t_user_vip_attr_record`
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_general_ci COMMENT ='用户会员属性变更记录';
 
+
+ALTER TABLE `speed`.`t_user_vip_attr_record` ADD COLUMN `is_revert` tinyint(1)  NOT NULL DEFAULT '0' COMMENT '是否被回滚';
+
 ALTER TABLE `speed`.`t_user` ADD COLUMN `version` int DEFAULT NULL default 1 COMMENT '数据版本号';
 
 ALTER TABLE `speed`.`t_pay_order` ADD COLUMN  `payment_channel_id`   varchar(32)     NOT NULL COMMENT '支付通道ID';
+ALTER TABLE `speed`.`t_pay_order` ADD COLUMN     `payment_proof`        text            DEFAULT null COMMENT '支付凭证地址';
+
+

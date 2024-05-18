@@ -35,6 +35,7 @@ type TPaymentChannelColumns struct {
 	Weight              string // 权重，排序使用
 	CreatedAt           string // 创建时间
 	UpdatedAt           string // 更新时间
+	UsdNetwork          string // USD支付网络
 }
 
 // tPaymentChannelColumns holds the columns for table t_payment_channel.
@@ -54,6 +55,7 @@ var tPaymentChannelColumns = TPaymentChannelColumns{
 	Weight:              "weight",
 	CreatedAt:           "created_at",
 	UpdatedAt:           "updated_at",
+	UsdNetwork:          "usd_network",
 }
 
 // NewTPaymentChannelDao creates and returns a new DAO object for table data access.

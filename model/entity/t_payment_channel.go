@@ -25,4 +25,5 @@ type TPaymentChannel struct {
 	Weight              int         `orm:"weight"                description:"权重，排序使用"`
 	CreatedAt           *gtime.Time `orm:"created_at"            description:"创建时间"`
 	UpdatedAt           *gtime.Time `orm:"updated_at"            description:"更新时间"`
+	UsdNetwork          string      `orm:"usd_network"           description:"USD支付网络"`
 }

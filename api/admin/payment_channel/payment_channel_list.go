@@ -26,6 +26,7 @@ type PaymentChannel struct {
 	TimeoutDuration     int                 `json:"timeout_duration" dc:"订单未支付超时自动关闭时间（单位分钟）"`
 	PaymentQRCode       string              `json:"payment_qr_code" dc:"支付收款码. eg: U支付收款码"`
 	PaymentQRUrl        string              `json:"payment_qr_url" dc:"支付收款码链接"`
+	UsdNetwork          string              `json:"usd_network" dc:"USD支付网络"`
 	BankCardInfo        []BankCardInfo      `json:"bank_card_info" dc:"银行卡信息"`
 	CustomerServiceInfo CustomerServiceInfo `json:"customer_service_info" dc:"客服信息"`
 	Weight              int                 `json:"weight" dc:"权重，根据权重排序"`
@@ -70,6 +71,7 @@ func PaymentChannelList(ctx *gin.Context) {
 			TimeoutDuration:     item.TimeoutDuration,
 			PaymentQRCode:       item.PaymentQrCode,
 			PaymentQRUrl:        item.PaymentQrUrl,
+			UsdNetwork:          item.UsdNetwork,
 			BankCardInfo:        bankCardInfo,
 			CustomerServiceInfo: customerServiceInfo,
 			Weight:              item.Weight,

@@ -27,4 +27,5 @@ type TPaymentChannel struct {
 	Weight              interface{} // 权重，排序使用
 	CreatedAt           *gtime.Time // 创建时间
 	UpdatedAt           *gtime.Time // 更新时间
+	UsdNetwork          interface{} // USD支付网络
 }

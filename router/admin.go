@@ -84,6 +84,7 @@ func AdminRoute(group *gin.RouterGroup) {
 		orderGroup.GET("order_list", admin.OrderList)
 		orderGroup.POST("pay_order_list", order.PayOrderList)
 		orderGroup.POST("sync_order_status", order.SyncOrderStatus)
+		orderGroup.POST("confirm_order_status", order.ConfirmOrderStatus)
 
 		//广告管理
 		adGroup := group.Group("ad")
@@ -170,5 +171,6 @@ func AdminRoute(group *gin.RouterGroup) {
 		paymentChannelGroup := group.Group("payment_channel")
 		paymentChannelGroup.POST("list", payment_channel.PaymentChannelList)
 		paymentChannelGroup.POST("edit", payment_channel.PaymentChannelModify)
+		paymentChannelGroup.POST("upload", payment_channel.UploadPaymentQRCode)
 	}
 }

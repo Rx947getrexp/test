@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go-speed/api/api/common"
 	"math/rand"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -94,18 +95,17 @@ func CreateOrder(ctx *gin.Context) {
 	}
 
 	// create order
-	res.OrderAmount, res.Currency = goodsEntity.Price, CurrencyRUB
-	if paymentEntity.ChannelId == constant.PayChannelUPay {
-		res.OrderAmount, res.Currency = goodsEntity.UsdPayPrice+genUPayAmountDecimalPartValue(), CurrencyU
-	}
+	amount, amountString, currency := genPayAmount(goodsEntity.Price, goodsEntity.UsdPayPrice, req.ChannelId)
+	global.MyLogger(ctx).Info().Msgf("channel: %s, amount: %f, amountString: %s, currency: %s",
+		req.ChannelId, amount, amountString, currency)
 	lastInsertId, err = dao.TPayOrder.Ctx(ctx).Data(do.TPayOrder{
 		UserId:           userEntity.Id,
 		Email:            userEntity.Email,
 		OrderNo:          res.OrderNo,
 		PaymentChannelId: req.ChannelId,
 		GoodsId:          req.GoodsId,
-		OrderAmount:      fmt.Sprintf("%f", res.OrderAmount),
-		Currency:         res.Currency,
+		OrderAmount:      amountString,
+		Currency:         currency,
 		PayTypeCode:      paymentEntity.PayTypeCode,
 		Status:           constant.ParOrderStatusInit,
 		CreatedAt:        gtime.Now(),
@@ -125,7 +125,7 @@ func CreateOrder(ctx *gin.Context) {
 		payRequest = &pnsafepay.PayRequest{
 			MerNo:       paymentEntity.MerNo,
 			OrderNo:     res.OrderNo,
-			OrderAmount: fmt.Sprintf("%f", res.OrderAmount),
+			OrderAmount: amountString,
 			PayName:     global.Config.PNSafePay.PayName,
 			PayEmail:    global.Config.PNSafePay.PayEmail,
 			PayPhone:    global.Config.PNSafePay.PayPhone,
@@ -198,6 +198,7 @@ func CreateOrder(ctx *gin.Context) {
 			res.GiftedDays = paymentEntity.FreeTrialDays
 		}
 	}
+	res.OrderAmount, res.Currency = amount, currency
 	response.RespOk(ctx, i18n.RetMsgSuccess, res)
 	return
 }
@@ -219,10 +220,12 @@ func ValidateOrderLimit(ctx *gin.Context, user *entity.TUser, channel *entity.TP
 	for _, order := range orders {
 		switch order.Status {
 		case constant.ParOrderStatusInit, constant.ParOrderStatusUnpaid:
-			err = fmt.Errorf(i18n.RetMsgOrderUnpaidLimit)
-			global.MyLogger(ctx).Err(err).Msgf("%s", order.OrderNo)
-			response.RespFail(ctx, i18n.RetMsgOrderUnpaidLimit, nil)
-			return
+			if channel.ChannelId == order.PaymentChannelId {
+				err = fmt.Errorf(i18n.RetMsgOrderUnpaidLimit)
+				global.MyLogger(ctx).Err(err).Msgf("%s", order.OrderNo)
+				response.RespFail(ctx, i18n.RetMsgOrderUnpaidLimit, nil)
+				return
+			}
 
 		case constant.ParOrderStatusClosed, constant.ParOrderStatusTimeout:
 			closedNum++
@@ -232,14 +235,14 @@ func ValidateOrderLimit(ctx *gin.Context, user *entity.TUser, channel *entity.TP
 		}
 	}
 
-	if closedNum >= 5 {
+	if closedNum >= global.Config.PayConfig.OrderClosedLimitNum {
 		err = fmt.Errorf(i18n.RetMsgOrderClosedLimit)
 		global.MyLogger(ctx).Err(err).Msgf("closedNum: %d", closedNum)
 		response.RespFail(ctx, i18n.RetMsgOrderClosedLimit, nil)
 		return
 	}
 
-	if failedNum >= 8 {
+	if failedNum >= global.Config.PayConfig.OrderFailedLimitNum {
 		err = fmt.Errorf(i18n.RetMsgOrderFailedLimit)
 		global.MyLogger(ctx).Err(err).Msgf("failedNum: %d", failedNum)
 		response.RespFail(ctx, i18n.RetMsgOrderFailedLimit, nil)
@@ -347,7 +350,8 @@ func GiftDurationForPaymentChannelClosed(ctx *gin.Context, orderNo string,
 		newExpiredTime = userEntity.ExpiredTime + addExpiredTime
 	}
 
-	err = dao.TPayOrder.Ctx(ctx).Transaction(ctx, func(_ctx context.Context, tx gdb.TX) error {
+	_ctx := ctx
+	err = dao.TPayOrder.Ctx(ctx).Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
 		userUpdate := do.TUser{
 			ExpiredTime: newExpiredTime,
 			UpdatedAt:   gtime.Now(),
@@ -362,16 +366,16 @@ func GiftDurationForPaymentChannelClosed(ctx *gin.Context, orderNo string,
 			Version: userEntity.Version,
 		}).UpdateAndGetAffected()
 		if err != nil {
-			global.MyLogger(ctx).Err(err).Msgf(`update t_user failed`)
+			global.MyLogger(_ctx).Err(err).Msgf(`update t_user failed`)
 			return err
 		}
 		if affected != 1 {
 			err = fmt.Errorf("update t_user affected(%d) != 1", affected)
-			global.MyLogger(ctx).Err(err).Msgf("update t_user failed")
+			global.MyLogger(_ctx).Err(err).Msgf("update t_user failed")
 			return err
 		}
 
-		global.MyLogger(ctx).Info().Msgf("add(%d) user(%s) ExpiredTime from(%d) to(%d)",
+		global.MyLogger(_ctx).Info().Msgf("add(%d) user(%s) ExpiredTime from(%d) to(%d)",
 			addExpiredTime, userEntity.Email, userEntity.ExpiredTime, newExpiredTime)
 
 		// 记录操作流水
@@ -385,10 +389,10 @@ func GiftDurationForPaymentChannelClosed(ctx *gin.Context, orderNo string,
 			CreatedAt:       gtime.Now(),
 		}).InsertAndGetId()
 		if err != nil {
-			global.MyLogger(ctx).Err(err).Msgf(`insert TUserVipAttrRecords failed`)
+			global.MyLogger(_ctx).Err(err).Msgf(`insert TUserVipAttrRecords failed`)
 			return err
 		}
-		global.MyLogger(ctx).Info().Msgf(">>>> insert TUserVipAttrRecords, lastInsertId: %d", lastInsertId)
+		global.MyLogger(_ctx).Info().Msgf(">>>> insert TUserVipAttrRecords, lastInsertId: %d", lastInsertId)
 		return nil
 	})
 	if err != nil {
@@ -414,10 +418,22 @@ func getNDurationAgoTime(n time.Duration) time.Time {
 	return time.Now().Add(-1 * n)
 }
 
-func genUPayAmountDecimalPartValue() float64 {
+func genUPayAmountDecimalPartValue() int {
 	rand.Seed(time.Now().UnixNano())
 	randomNumber := rand.Intn(9999) // 生成一个0到9999之间的随机数
-	return float64(randomNumber) / 10000
+	return randomNumber % 10000
+}
+
+func genPayAmount(price, priceUSD float64, channelId string) (amount float64, amountString string, currency string) {
+	switch channelId {
+	case constant.PayChannelUPay:
+		amountInt := int((priceUSD-1)*10000) + genUPayAmountDecimalPartValue()
+		amountString = fmt.Sprintf("%d.%d", amountInt/10000, amountInt%10000)
+		amount, _ = strconv.ParseFloat(amountString, 64)
+		return amount, amountString, CurrencyRUB
+	default:
+		return price, fmt.Sprintf("%f", price), CurrencyRUB
+	}
 }
 
 func ValidateGoods(ctx *gin.Context, goodsId int64) (gs *entity.TGoods, err error) {

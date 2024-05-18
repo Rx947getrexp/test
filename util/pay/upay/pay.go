@@ -121,6 +121,6 @@ func CheckBinanceOrder(ctx *gin.Context, minutesAgo time.Duration, amount string
 			return true, nil
 		}
 	}
-	global.MyLogger(ctx).Debug().Msgf("can not found Amount(%f) order", amount)
+	global.MyLogger(ctx).Debug().Msgf("can not found Amount(%s) order", amount)
 	return false, nil
 }

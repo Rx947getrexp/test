@@ -21,13 +21,16 @@ import (
 
 func SyncOrderStatus(ctx *gin.Context, orderNo string) (status string, err error) {
 	var (
-		affected           int64
-		lastInsertId       int64
-		payOrder           *entity.TPayOrder
-		userEntity         *entity.TUser
-		goodsEntity        *entity.TGoods
-		resultStatus       string
-		orderRealityAmount string
+		affected             int64
+		lastInsertId         int64
+		payOrder             *entity.TPayOrder
+		userEntity           *entity.TUser
+		goodsEntity          *entity.TGoods
+		resultStatus         string
+		orderRealityAmount   string
+		directUserEntity     *entity.TUser
+		directNewExpiredTime int64
+		directAddExpiredTime int64
 	)
 	global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ orderNo: %s", orderNo)
 
@@ -79,7 +82,6 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string) (status string, err error
 			global.MyLogger(ctx).Err(err).Msgf("CheckBinanceOrder failed")
 			return
 		}
-		match = true
 
 		if !match {
 			global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ orderNo: %s", orderNo)
@@ -109,32 +111,36 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string) (status string, err error
 		global.MyLogger(ctx).Err(err).Msgf(`goods not exist`)
 		return
 	}
+	if goodsEntity == nil {
+		err = fmt.Errorf(`goodsEntity not exist, userId: %d, GoodsId: %d`, payOrder.UserId, payOrder.GoodsId)
+		global.MyLogger(ctx).Err(err).Msgf(`GoodsId not exist`)
+		return
+	}
 
-	//_ctx := ctx
+	directUserEntity, directNewExpiredTime, directAddExpiredTime, _ = BuildDirectUserExpiredTime(ctx, userEntity.Id, goodsEntity)
 
-	_ctx := context.Context(ctx)
-	err = dao.TPayOrder.Ctx(_ctx).Transaction(_ctx, func(_ctx context.Context, tx gdb.TX) error {
-		global.MyLogger(ctx).Info().Msgf(`1`)
+	_ctx := ctx
+	err = dao.TPayOrder.Ctx(ctx).Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
+		global.MyLogger(_ctx).Info().Msgf(`1`)
 		updateDo := do.TPayOrder{
 			ResultStatus:       resultStatus,
 			OrderRealityAmount: orderRealityAmount,
 			Version:            payOrder.Version + 1,
 			UpdatedAt:          gtime.Now(),
 		}
-		global.MyLogger(ctx).Info().Msgf(`2`)
+
 		// 订单支付成功时，需要执行相关操作
 		if resultStatus == constant.ReturnStatusSuccess {
 			// 修改订单状态
-			global.MyLogger(ctx).Info().Msgf(`3`)
 			updateDo.Status = constant.ParOrderStatusPaid
-			global.MyLogger(ctx).Info().Msgf(">>>> 1 order status from(%s) to(%s)", payOrder.Status, constant.ParOrderStatusPaid)
+			global.MyLogger(_ctx).Info().Msgf(">>>> order status from(%s) to(%s)", payOrder.Status, constant.ParOrderStatusPaid)
 
 			// 加时长
 			var (
 				newExpiredTime int64
 				addExpiredTime = int64(goodsEntity.Period) * constant.DaySeconds
 			)
-			global.MyLogger(ctx).Info().Msgf(`4`)
+			global.MyLogger(_ctx).Info().Msgf(`2`)
 			if IsVIPExpired(userEntity) {
 				newExpiredTime = time.Now().Unix() + addExpiredTime
 			} else {
@@ -142,7 +148,7 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string) (status string, err error
 			}
 			// 随机赠送
 			giftDay := randomGiftDay(goodsEntity.Low, goodsEntity.High)
-			global.MyLogger(ctx).Info().Msgf(`5`)
+			global.MyLogger(_ctx).Info().Msgf(`3`)
 			newExpiredTime += int64(giftDay * constant.DaySeconds)
 			userUpdate := do.TUser{
 				ExpiredTime: newExpiredTime,
@@ -150,30 +156,37 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string) (status string, err error
 				Version:     userEntity.Version + 1,
 			}
 			// 加用户等级
-			if goodsEntity.MType > userEntity.Level {
+			// 过期充值时，按套餐的等级来
+			if IsVIPExpired(userEntity) {
 				userUpdate.Level = goodsEntity.MType
+			} else {
+				// 没有过期的续费操作，按高等级来
+				if goodsEntity.MType > userEntity.Level {
+					userUpdate.Level = goodsEntity.MType
+				}
 			}
-			global.MyLogger(ctx).Info().Msgf(`6`)
-			affected, err = dao.TUser.Ctx(_ctx).Data(userUpdate).Where(do.TUser{
+
+			global.MyLogger(_ctx).Info().Msgf(`4`)
+			affected, err = dao.TUser.Ctx(ctx).Data(userUpdate).Where(do.TUser{
 				Id:      userEntity.Id,
 				Version: userEntity.Version,
 			}).UpdateAndGetAffected()
 			if err != nil {
-				global.MyLogger(ctx).Err(err).Msgf(`update t_user failed`)
+				global.MyLogger(_ctx).Err(err).Msgf(`update t_user failed`)
 				return err
 			}
-			global.MyLogger(ctx).Info().Msgf(`7`)
+			global.MyLogger(_ctx).Info().Msgf(`5`)
 			if affected != 1 {
 				err = fmt.Errorf("update t_user affected(%d) != 1", affected)
-				global.MyLogger(ctx).Err(err).Msgf("update t_user failed")
+				global.MyLogger(_ctx).Err(err).Msgf("update t_user failed")
 				return err
 			}
 
-			global.MyLogger(ctx).Info().Msgf(">>>> 2 add(%d) user(%s) ExpiredTime from(%d) to(%d), giftDay(%d)",
+			global.MyLogger(_ctx).Info().Msgf(">>>> add(%d) user(%s) ExpiredTime from(%d) to(%d), giftDay(%d)",
 				addExpiredTime, userEntity.Email, userEntity.ExpiredTime, newExpiredTime, giftDay)
 
 			// 记录操作流水
-			lastInsertId, err = dao.TUserVipAttrRecord.Ctx(_ctx).Data(do.TUserVipAttrRecord{
+			lastInsertId, err = dao.TUserVipAttrRecord.Ctx(ctx).Data(do.TUserVipAttrRecord{
 				Email:           userEntity.Email,
 				Source:          constant.UserVipAttrOpSourcePayOrder,
 				OrderNo:         payOrder.OrderNo,
@@ -183,24 +196,66 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string) (status string, err error
 				CreatedAt:       gtime.Now(),
 			}).InsertAndGetId()
 			if err != nil {
-				global.MyLogger(ctx).Err(err).Msgf(`insert TUserVipAttrRecords failed`)
+				global.MyLogger(_ctx).Err(err).Msgf(`insert TUserVipAttrRecords failed`)
 				return err
 			}
-			global.MyLogger(ctx).Info().Msgf(">>>> 3 insert TUserVipAttrRecords, lastInsertId: %d", lastInsertId)
+			global.MyLogger(_ctx).Info().Msgf(">>>> insert TUserVipAttrRecords, lastInsertId: %d", lastInsertId)
+
+			// direct process
+			if directUserEntity != nil {
+				global.MyLogger(_ctx).Info().Msgf(`6`)
+				affected, err = dao.TUser.Ctx(ctx).Data(do.TUser{
+					ExpiredTime: directNewExpiredTime,
+					UpdatedAt:   gtime.Now(),
+					Version:     directUserEntity.Version + 1,
+				}).Where(do.TUser{
+					Id:      directUserEntity.Id,
+					Version: directUserEntity.Version,
+				}).UpdateAndGetAffected()
+				if err != nil {
+					global.MyLogger(_ctx).Err(err).Msgf(`update direct t_user failed`)
+					return err
+				}
+				if affected != 1 {
+					err = fmt.Errorf("update direct t_user affected(%d) != 1", affected)
+					global.MyLogger(_ctx).Err(err).Msgf("update direct t_user failed")
+					return err
+				}
+				global.MyLogger(_ctx).Info().Msgf(`7`)
+
+				global.MyLogger(_ctx).Info().Msgf("add(%d) direct user(%s) ExpiredTime from(%d) to(%d)",
+					directAddExpiredTime, directUserEntity.Email, directUserEntity.ExpiredTime, directNewExpiredTime)
+
+				// 记录操作流水
+				lastInsertId, err = dao.TUserVipAttrRecord.Ctx(ctx).Data(do.TUserVipAttrRecord{
+					Email:           directUserEntity.Email,
+					Source:          constant.UserVipAttrOpSourceDirectGift,
+					OrderNo:         orderNo,
+					ExpiredTimeFrom: directUserEntity.ExpiredTime,
+					ExpiredTimeTo:   directNewExpiredTime,
+					Desc:            fmt.Sprintf("ExpiredTime add[%d]", directAddExpiredTime),
+					CreatedAt:       gtime.Now(),
+				}).InsertAndGetId()
+				if err != nil {
+					global.MyLogger(_ctx).Err(err).Msgf(`insert direct TUserVipAttrRecords failed`)
+					return err
+				}
+				global.MyLogger(_ctx).Info().Msgf("insert direct TUserVipAttrRecords, lastInsertId: %d", lastInsertId)
+			}
 		}
 
-		affected, err = dao.TPayOrder.Ctx(_ctx).Data(updateDo).Where(do.TPayOrder{
+		affected, err = dao.TPayOrder.Ctx(ctx).Data(updateDo).Where(do.TPayOrder{
 			Id:      payOrder.Id,
 			Version: payOrder.Version,
 		}).UpdateAndGetAffected()
 		if err != nil {
-			global.MyLogger(ctx).Err(err).Msgf("update TPayOrder failed")
+			global.MyLogger(_ctx).Err(err).Msgf("update TPayOrder failed")
 			return err
 		}
 
 		if affected != 1 {
 			err = fmt.Errorf("update TPayOrder affected(%d) != 1", affected)
-			global.MyLogger(ctx).Err(err).Msgf("update TPayOrder failed")
+			global.MyLogger(_ctx).Err(err).Msgf("update TPayOrder failed")
 			return err
 		}
 		return nil
@@ -209,25 +264,19 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string) (status string, err error
 		global.MyLogger(ctx).Err(err).Msgf("sync order status failed")
 		return
 	}
-	// 赠送失败报错忽略
-	if resultStatus == constant.ReturnStatusSuccess {
-		_ = AddExpiredTimeForDirectUser(ctx, userEntity.Id, orderNo, goodsEntity)
-	}
 
 	global.MyLogger(ctx).Info().Msgf("sync order status success, orderNo: %s", orderNo)
 	return resultStatus, nil
 }
 
-// 给推荐人送时长
-func AddExpiredTimeForDirectUser(ctx *gin.Context, userId int64, orderNo string, goodsEntity *entity.TGoods) (err error) {
+func BuildDirectUserExpiredTime(ctx *gin.Context, userId int64, goodsEntity *entity.TGoods) (
+	directUserEntity *entity.TUser, newExpiredTime, addExpiredTime int64, err error) {
 	var (
 		userTeam               *entity.TUserTeam
-		directUserEntity       *entity.TUser
 		giftDurationPercentage int64
 	)
-	err = dao.TUserTeam.Ctx(ctx).Where(do.TUserTeam{
-		UserId: userId,
-	}).Scan(&userTeam)
+	// get user team
+	err = dao.TUserTeam.Ctx(ctx).Where(do.TUserTeam{UserId: userId}).Scan(&userTeam)
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msgf(`query user team failed`)
 		return
@@ -238,86 +287,34 @@ func AddExpiredTimeForDirectUser(ctx *gin.Context, userId int64, orderNo string,
 	}
 	if userTeam.DirectId <= 0 {
 		global.MyLogger(ctx).Info().Msgf("direct user is not exist")
-		return nil
+		return
 	}
 
-	// 查询推荐人用户信息
+	// get direct user
 	err = dao.TUser.Ctx(ctx).Where(do.TUser{Id: userTeam.DirectId}).Scan(&directUserEntity)
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("query direct user info failed")
 		return
 	}
 	if directUserEntity == nil {
-		err = fmt.Errorf(`direct user not exist, userId: %d, emal: %s`, userId, userTeam.DirectId)
+		err = fmt.Errorf(`direct user not exist, userId: %d, DirectId: %d`, userId, userTeam.DirectId)
 		global.MyLogger(ctx).Err(err).Msgf(`direct user not exist`)
 		return
 	}
 
-	// 给推荐人送时长
-	// 加时长
+	// calc direct gift time
 	giftDurationPercentage = int64(global.Config.PayConfig.GiftDurationPercentage)
 	if giftDurationPercentage <= 0 && giftDurationPercentage > 100 {
 		giftDurationPercentage = 20 // 默认20%
 	}
-	var (
-		newExpiredTime int64
-		addExpiredTime = int64(goodsEntity.Period) * constant.DaySeconds * giftDurationPercentage / 100
-	)
+
+	addExpiredTime = int64(goodsEntity.Period) * constant.DaySeconds * giftDurationPercentage / 100
 	if IsVIPExpired(directUserEntity) {
 		newExpiredTime = time.Now().Unix() + addExpiredTime
 	} else {
 		newExpiredTime = directUserEntity.ExpiredTime + addExpiredTime
 	}
-
-	err = dao.TPayOrder.Ctx(ctx).Transaction(ctx, func(_ctx context.Context, tx gdb.TX) error {
-		userUpdate := do.TUser{
-			ExpiredTime: newExpiredTime,
-			UpdatedAt:   gtime.Now(),
-			Version:     directUserEntity.Version + 1,
-		}
-		var (
-			affected     int64
-			lastInsertId int64
-		)
-		affected, err = dao.TUser.Ctx(ctx).Data(userUpdate).Where(do.TUser{
-			Id:      directUserEntity.Id,
-			Version: directUserEntity.Version,
-		}).UpdateAndGetAffected()
-		if err != nil {
-			global.MyLogger(ctx).Err(err).Msgf(`update t_user failed`)
-			return err
-		}
-		if affected != 1 {
-			err = fmt.Errorf("update t_user affected(%d) != 1", affected)
-			global.MyLogger(ctx).Err(err).Msgf("update t_user failed")
-			return err
-		}
-
-		global.MyLogger(ctx).Info().Msgf("add(%d) user(%s) ExpiredTime from(%d) to(%d)",
-			addExpiredTime, directUserEntity.Email, directUserEntity.ExpiredTime, newExpiredTime)
-
-		// 记录操作流水
-		lastInsertId, err = dao.TUserVipAttrRecord.Ctx(ctx).Data(do.TUserVipAttrRecord{
-			Email:           directUserEntity.Email,
-			Source:          constant.UserVipAttrOpSourceDirectGift,
-			OrderNo:         orderNo,
-			ExpiredTimeFrom: directUserEntity.ExpiredTime,
-			ExpiredTimeTo:   newExpiredTime,
-			Desc:            fmt.Sprintf("ExpiredTime add[%d]", addExpiredTime),
-			CreatedAt:       gtime.Now(),
-		}).InsertAndGetId()
-		if err != nil {
-			global.MyLogger(ctx).Err(err).Msgf(`insert TUserVipAttrRecords failed`)
-			return err
-		}
-		global.MyLogger(ctx).Info().Msgf(">>>> 3 insert TUserVipAttrRecords, lastInsertId: %d", lastInsertId)
-		return nil
-	})
-	if err != nil {
-		global.MyLogger(ctx).Err(err).Msgf("sync order status failed")
-		return
-	}
-	return err
+	return
 }
 
 func IsVIPExpired(user *entity.TUser) bool {

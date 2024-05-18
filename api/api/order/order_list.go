@@ -10,6 +10,7 @@ import (
 	"go-speed/model/do"
 	"go-speed/model/entity"
 	"go-speed/model/response"
+	"time"
 )
 
 type GetOrderListReq struct {
@@ -30,7 +31,7 @@ type PayOrder struct {
 	GoodsId            int    `json:"goods_id"             dc:"套餐ID"`
 	OrderAmount        string `json:"order_amount"         dc:"交易金额"`
 	Currency           string `json:"currency"             dc:"交易币种"`
-	Status             string `json:"status"               dc:"状态:1-正常；2-已软删"`
+	Status             string `json:"status"               dc:"状态"`
 	OrderRealityAmount string `json:"order_reality_amount" dc:"实际交易金额"`
 	PaymentProof       string `json:"payment_proof"        dc:"支付凭证地址"`
 	CreatedAt          string `json:"created_at"           dc:"创建时间"`
@@ -74,7 +75,10 @@ func GetOrderList(ctx *gin.Context) {
 	//if req.OrderBy != "" {
 	//	orderBy = req.OrderBy
 	//}
-	model := dao.TPayOrder.Ctx(ctx).Where(doWhere)
+	// Status: []string{constant.ParOrderStatusInit, constant.ParOrderStatusUnpaid},
+	model := dao.TPayOrder.Ctx(ctx).Where(do.TPayOrder{UserId: user.Id}).
+		WhereIn(dao.TPayOrder.Columns().Status, []string{constant.ParOrderStatusInit, constant.ParOrderStatusUnpaid}).
+		WhereGTE(dao.TPayOrder.Columns().CreatedAt, getNDurationAgoTime(time.Minute*30))
 	//if req.StartTime != "" {
 	//	model = model.WhereGTE(dao.TUserOpLog.Columns().CreatedAt, req.StartTime)
 	//}

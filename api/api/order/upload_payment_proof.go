@@ -19,14 +19,13 @@ import (
 )
 
 type UploadPaymentProofReq struct {
-	OrderNo      string                `form:"order_no" json:"order_no" binding:"required" dc:"订单号"`
-	PaymentProof string                `form:"payment_proof" json:"payment_proof" dc:"支付凭证（截图链接）"`
-	Files        *multipart.FileHeader `form:"files" json:"files" binding:"required"`
-	FileType     string                `form:"file_type,default=default" json:"file_type" `
+	OrderNo  string                `form:"order_no" json:"order_no" binding:"required" dc:"订单号"`
+	File     *multipart.FileHeader `form:"file" json:"file" binding:"required"`
+	FileType string                `form:"file_type,default=default" json:"file_type" `
 }
 
 type UploadPaymentProofRes struct {
-	Status string `json:"status" dc:"订单状态" dc:"success:成功，fail:支付失败,waiting：等待支付中"`
+	//Url string `json:"url" dc:"订单状态" dc:"success:成功，fail:支付失败,waiting：等待支付中"`
 }
 
 func UploadPaymentProof(ctx *gin.Context) {
@@ -86,34 +85,13 @@ func UploadPaymentProof(ctx *gin.Context) {
 		fileMap[".png"] = true
 		fileMap[".jpg"] = true
 		fileMap[".jpeg"] = true
-	} else if req.FileType == constant.OtherFileType {
-		fileMap[".pdf"] = true
-		fileMap[".mp4"] = true
-		fileMap[".avi"] = true
-		fileMap[".dat"] = true
-		fileMap[".mkv"] = true
-		fileMap[".flv"] = true
-		fileMap[".vob"] = true
-		fileMap[".mp3"] = true
-		fileMap[".wav"] = true
-		fileMap[".wma"] = true
-		fileMap[".mp2"] = true
-		fileMap[".ra"] = true
-		fileMap[".ape"] = true
-		fileMap[".aac"] = true
-		fileMap[".cda"] = true
-		fileMap[".mov"] = true
-		fileMap[".gif"] = true
-		fileMap[".ppt"] = true
-		fileMap[".pptx"] = true
-		fileMap[".zip"] = true
 	}
 	global.MyLogger(ctx).Info().Msgf("fileMap: %+v", fileMap)
 
 	fileUrl, err = service.Upload(&request.UploadFile{
-		Files:    req.Files,
+		Files:    req.File,
 		FileType: req.FileType,
-	}, fileMap)
+	}, fileMap, constant.UploadFilePathOrder)
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("Upload failed")
 		response.RespFail(ctx, i18n.RetMsgDBErr, nil)

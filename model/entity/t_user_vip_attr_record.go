@@ -18,4 +18,5 @@ type TUserVipAttrRecord struct {
 	ExpiredTimeTo   int         `orm:"expired_time_to"   description:"会员到期时间-新值"`
 	Desc            string      `orm:"desc"              description:"记录描述"`
 	CreatedAt       *gtime.Time `orm:"created_at"        description:"创建时间"`
+	IsRevert        int         `orm:"is_revert"         description:"是否被回滚"`
 }

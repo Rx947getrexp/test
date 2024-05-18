@@ -58,8 +58,7 @@ func ConfirmOrder(ctx *gin.Context) {
 	}
 
 	// validate proof
-	if payOrder.PaymentChannelId == constant.PayChannelBankCardPay &&
-		payOrder.PaymentProof == "" {
+	if payOrder.PaymentChannelId == constant.PayChannelBankCardPay && payOrder.PaymentProof == "" {
 		err = fmt.Errorf(i18n.RetMsgProofUploadNone)
 		global.MyLogger(ctx).Err(err).Msgf("PaymentProof: %s", payOrder.PaymentProof)
 		response.RespFail(ctx, i18n.RetMsgProofUploadNone, nil)

@@ -32,4 +32,23 @@ insert into t_payment_channel (channel_id,channel_name,is_active,payment_qr_code
 
 
 ALTER TABLE `t_pay_order`ADD COLUMN `payment_channel_id` varchar(32) NOT NULL COMMENT '支付通道ID';
+ALTER TABLE `t_pay_order`ADD COLUMN `goods_id`             int             NOT NULL COMMENT '套餐ID';
 ALTER TABLE `t_goods`ADD COLUMN `usd_pay_price` decimal(10,6) NOT NULL COMMENT 'usd_pay价格(U)';
+
+
+ALTER TABLE `t_pay_order`ADD COLUMN `payment_channel_id` varchar(32) NOT NULL COMMENT '支付通道ID';
+ALTER TABLE `t_pay_order`ADD COLUMN `goods_id`             int             NOT NULL COMMENT '套餐ID';
+ALTER TABLE `t_goods`ADD COLUMN `usd_pay_price` decimal(10,6) NOT NULL COMMENT 'usd_pay价格(U)';
+
+
+ALTER TABLE `t_goods`ADD COLUMN `price_unit` varchar(32) NOT NULL COMMENT '价格单位' after price;
+ALTER TABLE `t_goods`ADD COLUMN `usd_price_unit` varchar(32) NOT NULL COMMENT 'USD支付的价格单位' after usd_pay_price;
+
+
+ALTER TABLE `t_payment_channel`ADD COLUMN `usd_network` varchar(64) NOT NULL COMMENT 'USD支付网络';
+
+
+
+ALTER TABLE t_user_vip_attr_record DROP INDEX `uiq_k1`;
+
+ALTER TABLE t_user_vip_attr_record ADD UNIQUE KEY `uiq_k1` (`email`, `order_no`);

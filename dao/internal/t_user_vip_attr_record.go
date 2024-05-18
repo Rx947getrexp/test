@@ -28,6 +28,7 @@ type TUserVipAttrRecordColumns struct {
 	ExpiredTimeTo   string // 会员到期时间-新值
 	Desc            string // 记录描述
 	CreatedAt       string // 创建时间
+	IsRevert        string // 是否被回滚
 }
 
 // tUserVipAttrRecordColumns holds the columns for table t_user_vip_attr_record.
@@ -40,6 +41,7 @@ var tUserVipAttrRecordColumns = TUserVipAttrRecordColumns{
 	ExpiredTimeTo:   "expired_time_to",
 	Desc:            "desc",
 	CreatedAt:       "created_at",
+	IsRevert:        "is_revert",
 }
 
 // NewTUserVipAttrRecordDao creates and returns a new DAO object for table data access.

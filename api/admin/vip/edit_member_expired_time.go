@@ -46,7 +46,8 @@ func EditMemberExpiredTime(c *gin.Context) {
 		return
 	}
 
-	err = dao.TUser.Ctx(c).Transaction(c, func(_ctx context.Context, tx gdb.TX) error {
+	ctx := c
+	err = dao.TUser.Ctx(c).Transaction(c, func(c context.Context, tx gdb.TX) error {
 		// 加时长
 		affected, err = dao.TUser.Ctx(c).Data(do.TUser{
 			ExpiredTime: req.ExpiredTime, // 管理员直接重置过期时间
@@ -57,16 +58,16 @@ func EditMemberExpiredTime(c *gin.Context) {
 			Version: userEntity.Version,
 		}).UpdateAndGetAffected()
 		if err != nil {
-			global.MyLogger(c).Err(err).Msgf(`update t_user failed`)
+			global.MyLogger(ctx).Err(err).Msgf(`update t_user failed`)
 			return err
 		}
 		if affected != 1 {
 			err = fmt.Errorf("update t_user affected(%d) != 1", affected)
-			global.MyLogger(c).Err(err).Msgf("update t_user failed")
+			global.MyLogger(ctx).Err(err).Msgf("update t_user failed")
 			return err
 		}
 
-		global.MyLogger(c).Debug().Msgf("reset user ExpiredTime from(%d) to(%d)", userEntity.ExpiredTime, req.ExpiredTime)
+		global.MyLogger(ctx).Debug().Msgf("reset user ExpiredTime from(%d) to(%d)", userEntity.ExpiredTime, req.ExpiredTime)
 
 		// 记录操作流水
 		lastInsertId, err = dao.TUserVipAttrRecord.Ctx(c).Data(do.TUserVipAttrRecord{
@@ -79,10 +80,10 @@ func EditMemberExpiredTime(c *gin.Context) {
 			CreatedAt:       gtime.Now(),
 		}).InsertAndGetId()
 		if err != nil {
-			global.MyLogger(c).Err(err).Msgf(`insert TUserVipAttrRecords failed`)
+			global.MyLogger(ctx).Err(err).Msgf(`insert TUserVipAttrRecords failed`)
 			return err
 		}
-		global.MyLogger(c).Debug().Msgf("insert TUserVipAttrRecords, lastInsertId: %d", lastInsertId)
+		global.MyLogger(ctx).Debug().Msgf("insert TUserVipAttrRecords, lastInsertId: %d", lastInsertId)
 		return nil
 	})
 	if err != nil {

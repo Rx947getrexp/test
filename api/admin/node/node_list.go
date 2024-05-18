@@ -11,10 +11,10 @@ import (
 )
 
 type NodeListReq struct {
-	CountryName string `form:"country_name" dc:"国家名称"`
-	IP          string `form:"ip" dc:"机器IP, eg: 45.150.236.6"`
-	Server      string `form:"server" dc:"域名, eg: ru.workones.xyz"`
-	Status      uint   `form:"status" dc:"状态。1-已上架；2-已下架"`
+	CountryName string `form:"country_name" json:"country_name" dc:"国家名称"`
+	IP          string `form:"ip" json:"ip" dc:"机器IP, eg: 45.150.236.6"`
+	Server      string `form:"server" json:"server" dc:"域名, eg: ru.workones.xyz"`
+	Status      uint   `form:"status" json:"status" dc:"状态。1-已上架；2-已下架"`
 }
 
 type NodeListRes struct {

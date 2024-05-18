@@ -2,7 +2,7 @@ package response
 
 // PathUploadParam 上传图片返回地址
 type PathUploadParam struct {
-	Url string `json:"url"` //地址
+	Url string `form:"url" json:"url"` //地址
 }
 
 type DataResponse struct {
@@ -10,3 +10,5 @@ type DataResponse struct {
 	Msg  string          `json:"msg"`
 	Data PathUploadParam `json:"data"`
 }
+
+// `form:"order_no" binding:"required" json:"order_no"`

@@ -20,4 +20,5 @@ type TUserVipAttrRecord struct {
 	ExpiredTimeTo   interface{} // 会员到期时间-新值
 	Desc            interface{} // 记录描述
 	CreatedAt       *gtime.Time // 创建时间
+	IsRevert        interface{} // 是否被回滚
 }

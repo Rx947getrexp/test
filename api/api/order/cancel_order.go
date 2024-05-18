@@ -83,7 +83,7 @@ func ValidateOrder(ctx *gin.Context, email, orderNo string) (payOrderEntity *ent
 	if payOrderEntity.Status != constant.ParOrderStatusInit &&
 		payOrderEntity.Status != constant.ParOrderStatusUnpaid {
 		err = fmt.Errorf(`order's status is not match`)
-		global.MyLogger(ctx).Err(err).Msgf(`status: %s'`, email, payOrderEntity.Status)
+		global.MyLogger(ctx).Err(err).Msgf(`order status: %s'`, payOrderEntity.Status)
 		response.RespFail(ctx, i18n.RetMsgParamInvalid, nil)
 		return
 	}
