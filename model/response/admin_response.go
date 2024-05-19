@@ -114,7 +114,19 @@ type ChannelUserDay struct {
 	Retained  int    `json:"retained" dc:"通过渠道ID注册的用户，Date日期内有使用APP的用户量（留存）"`
 	CreatedAt string `json:"created_at" dc:"报表数据统计时间"`
 }
-
+type GetNodeDayListResponse struct {
+	Total int64         `json:"total" dc:"数据总条数"`
+	Items []NodeUserDay `json:"items" dc:"数据明细"`
+}
+type NodeUserDay struct {
+	Id        int64  `json:"id" dc:"自增主键ID"`
+	Date      int    `json:"date" dc:"报表日期，eg:20240101"`
+	Ip        string `json:"ip" dc:"节点ip"`
+	Total     int    `json:"total" dc:"截止到Date，通过渠道ID注册的用户总量"`
+	New       int    `json:"new" dc:"Date日期，通过渠道ID注册的新增用户量"`
+	Retained  int    `json:"retained" dc:"通过渠道ID注册的用户，Date日期内有使用APP的用户量（留存）"`
+	CreatedAt string `json:"created_at" dc:"报表数据统计时间"`
+}
 type GetOnlineUserDayListResponse struct {
 	Total int64           `json:"total" dc:"数据总条数"`
 	Items []OnlineUserDay `json:"items" dc:"数据明细"`
@@ -130,4 +142,21 @@ type OnlineUserDay struct {
 	Downlink         int64  `json:"downlink" dc:"下行流量，单位：字节"`
 	CreatedAt        string `json:"created_at" dc:"报表数据统计时间"`
 	LastLoginCountry string `json:"last_login_country" dc:"最后登陆的国家"`
+}
+type GetNodeOnlineUserDayListResponse struct {
+	Total int64               `json:"total" dc:"数据总条数"`
+	Items []NodeOnlineUserDay `json:"items" dc:"数据明细"`
+}
+
+type NodeOnlineUserDay struct {
+	Id             int64  `json:"id" dc:"自增主键ID"`
+	Date           int    `json:"date" dc:"报表日期，eg:20240101"`
+	Email          string `json:"email" dc:"账号email"`
+	Channel        string `json:"channel" dc:"渠道ID"`
+	OnlineDuration int    `json:"online_duration" dc:"用户在线时间戳长度，单位：秒"`
+	Uplink         int64  `json:"uplink" dc:"上行流量，单位：字节"`
+	Downlink       int64  `json:"downlink" dc:"下行流量，单位：字节"`
+	Node           string `json:"node" dc:"国家节点"`
+	RegisterDate   string `json:"register_date" dc:"用户注册最早时间"`
+	CreatedAt      string `json:"created_at" dc:"报表数据统计时间"`
 }

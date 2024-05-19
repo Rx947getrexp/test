@@ -33,7 +33,6 @@ type TPayOrderColumns struct {
 	OrderData          string // 创建订单时支付平台返回的信息
 	ResultStatus       string // 查询结果，实际订单状态
 	OrderRealityAmount string // 实际交易金额
-	PaymentChannelName string // 支付通道名称
 	CreatedAt          string // 创建时间
 	UpdatedAt          string // 更新时间
 	Version            string // 数据版本号
@@ -55,7 +54,6 @@ var tPayOrderColumns = TPayOrderColumns{
 	OrderData:          "order_data",
 	ResultStatus:       "result_status",
 	OrderRealityAmount: "order_reality_amount",
-	PaymentChannelName: "payment_channel_name",
 	CreatedAt:          "created_at",
 	UpdatedAt:          "updated_at",
 	Version:            "version",

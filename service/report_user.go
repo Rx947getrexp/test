@@ -6,6 +6,7 @@ import (
 	"go-speed/constant"
 	"go-speed/global"
 	"go-speed/model"
+	"strconv"
 	"strings"
 )
 
@@ -78,7 +79,47 @@ func QueryUserChannelDay(ctx context.Context, date int, Channel string, orderTyp
 	err = sess.Limit(size, offset).OrderBy(fmt.Sprintf("date %s, channel %s", order, order)).Find(&list)
 	return count, list, err
 }
-
+func QueryUserPromotionChannelDay(ctx context.Context, date int, Channel string, orderType string, page, size int) (int64, []*model.TUserChannelDay, error) {
+	order := "desc"
+	if strings.ToLower(orderType) == "asc" {
+		order = "asc"
+	}
+	if size > constant.MaxPageSize {
+		size = constant.MaxPageSize
+	}
+	if size == 0 {
+		size = 20
+	}
+	var err error
+	var list []*model.TUserChannelDay
+	sessCount := global.Db2.Context(ctx)
+	sess := global.Db2.Context(ctx)
+	if date > 0 {
+		sess = sess.Where(" date = ?", date)
+		sessCount = sessCount.Where(" date = ?", date)
+	}
+	if Channel == "" {
+		sess = sess.Where("channel BETWEEN ? AND ?", 110000, 120000)
+		sessCount = sessCount.Where("channel BETWEEN ? AND ?", 110000, 120000)
+	} else {
+		channelInt, err := strconv.Atoi(Channel)
+		if err != nil || channelInt <= 110000 || channelInt >= 120000 {
+			return 0, list, nil
+		}
+		sess = sess.Where("channel = ?", Channel)
+		sessCount = sessCount.Where("channel = ?", Channel)
+	}
+	offset := 0
+	if page > 1 {
+		offset = (page - 1) * size
+	}
+	count, err := sessCount.Table(model.TUserChannelDay{}).Count()
+	if err != nil {
+		return 0, nil, err
+	}
+	err = sess.Limit(size, offset).OrderBy(fmt.Sprintf("date %s, channel %s", order, order)).Find(&list)
+	return count, list, err
+}
 func QueryOnlineUserDay(ctx context.Context, date int, channelId string, email, orderType string, page, size int) (int64, []*model.TUserOnlineDay, error) {
 	order := "desc"
 	if strings.ToLower(orderType) == "asc" {
@@ -111,6 +152,80 @@ func QueryOnlineUserDay(ctx context.Context, date int, channelId string, email, 
 		offset = (page - 1) * size
 	}
 	count, err := sessCount.Table(model.TUserOnlineDay{}).Count()
+	if err != nil {
+		return 0, nil, err
+	}
+
+	err = sess.Limit(size, offset).OrderBy(fmt.Sprintf("date %s, channel %s", order, order)).Find(&list)
+	return count, list, err
+}
+func QueryNodeDay(ctx context.Context, date int, Ip string, orderType string, page, size int) (int64, []*model.TUserNodeDay, error) {
+	order := "desc"
+	if strings.ToLower(orderType) == "asc" {
+		order = "asc"
+	}
+	if size > constant.MaxPageSize {
+		size = constant.MaxPageSize
+	}
+	if size == 0 {
+		size = 20
+	}
+	var err error
+	var list []*model.TUserNodeDay
+	sessCount := global.Db2.Context(ctx)
+	sess := global.Db2.Context(ctx)
+	if date > 0 {
+		sess = sess.Where(" date = ?", date)
+		sessCount = sessCount.Where(" date = ?", date)
+	}
+	if Ip != "" {
+		sess = sess.Where(" ip = ?", Ip)
+		sessCount = sessCount.Where(" ip = ?", Ip)
+	}
+	offset := 0
+	if page > 1 {
+		offset = (page - 1) * size
+	}
+	count, err := sessCount.Table(model.TUserOnlineDay{}).Count()
+	if err != nil {
+		return 0, nil, err
+	}
+
+	err = sess.Limit(size, offset).OrderBy(fmt.Sprintf("date %s, ip %s", order, order)).Find(&list)
+	return count, list, err
+}
+func QueryNodeOnlineUserDay(ctx context.Context, date int, channelId string, email, orderType string, page, size int) (int64, []*model.TUserNodeOnlineDay, error) {
+	order := "desc"
+	if strings.ToLower(orderType) == "asc" {
+		order = "asc"
+	}
+	if size > constant.MaxPageSize {
+		size = constant.MaxPageSize
+	}
+	if size == 0 {
+		size = 20
+	}
+	var err error
+	var list []*model.TUserNodeOnlineDay
+	sessCount := global.Db2.Context(ctx)
+	sess := global.Db2.Context(ctx)
+	if date > 0 {
+		sess = sess.Where(" date = ?", date)
+		sessCount = sessCount.Where(" date = ?", date)
+	}
+	if email != "" {
+		sess = sess.Where(" email = ?", email)
+		sessCount = sessCount.Where(" email = ?", email)
+	}
+	if channelId != "" {
+		sess = sess.Where(" channel = ?", channelId)
+		sessCount = sessCount.Where(" channel = ?", channelId)
+	}
+	offset := 0
+	if page > 1 {
+		offset = (page - 1) * size
+	}
+	count, err := sessCount.Table(model.TUserNodeOnlineDay{}).Count()
 	if err != nil {
 		return 0, nil, err
 	}
