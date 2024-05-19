@@ -21,6 +21,7 @@ func AdminRoute(group *gin.RouterGroup) {
 	group.GET("get_promotion_channel_user_day_list", admin.GetPromotionChannelUserDayList)
 	group.GET("get_online_user_day_list", admin.GetOnlineUserDayList)
 	group.GET("get_node_day_list", admin.GetNodeDayList)
+	group.GET("get_node_online_user_day_list", admin.GetNodeOnlineUserDayList)
 	group.GET("get_user_op_log_list", report.GetUserOpLogList)
 	group.GET("edit_", report.GetUserOpLogList)
 

@@ -509,6 +509,15 @@ type GetOnlineUserDayListRequest struct {
 	Page      int    `form:"page" json:"page" dc:"分页查询page, 从1开始"`
 	Size      int    `form:"size" json:"size" dc:"分页查询size, 最大1000"`
 }
+type GetNodeOnlineUserDayListRequest struct {
+	Date      int    `form:"date" json:"date" dc:"报表日期，eg:20240101"`
+	Email     string `form:"email" json:"email" dc:"用户email"`
+	ChannelId string `form:"channel_id" json:"channel_id" dc:"渠道ID"`
+	OrderBy   string `form:"order_by" json:"order_by" dc:"排序字段，eg: id|online_duration|uplink|downlink"`
+	OrderType string `form:"order_type" json:"order_type" dc:"排序类型，eg: asc|desc"`
+	Page      int    `form:"page" json:"page" dc:"分页查询page, 从1开始"`
+	Size      int    `form:"size" json:"size" dc:"分页查询size, 最大1000"`
+}
 type GetNodeDayListRequest struct {
 	Date      int    `form:"date" json:"date" dc:"报表日期，eg:20240101"`
 	Ip        string `form:"ip" json:"ip" dc:"节点ip"`

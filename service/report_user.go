@@ -194,3 +194,42 @@ func QueryNodeDay(ctx context.Context, date int, Ip string, orderType string, pa
 	err = sess.Limit(size, offset).OrderBy(fmt.Sprintf("date %s, ip %s", order, order)).Find(&list)
 	return count, list, err
 }
+func QueryNodeOnlineUserDay(ctx context.Context, date int, channelId string, email, orderType string, page, size int) (int64, []*model.TUserNodeOnlineDay, error) {
+	order := "desc"
+	if strings.ToLower(orderType) == "asc" {
+		order = "asc"
+	}
+	if size > constant.MaxPageSize {
+		size = constant.MaxPageSize
+	}
+	if size == 0 {
+		size = 20
+	}
+	var err error
+	var list []*model.TUserNodeOnlineDay
+	sessCount := global.Db2.Context(ctx)
+	sess := global.Db2.Context(ctx)
+	if date > 0 {
+		sess = sess.Where(" date = ?", date)
+		sessCount = sessCount.Where(" date = ?", date)
+	}
+	if email != "" {
+		sess = sess.Where(" email = ?", email)
+		sessCount = sessCount.Where(" email = ?", email)
+	}
+	if channelId != "" {
+		sess = sess.Where(" channel = ?", channelId)
+		sessCount = sessCount.Where(" channel = ?", channelId)
+	}
+	offset := 0
+	if page > 1 {
+		offset = (page - 1) * size
+	}
+	count, err := sessCount.Table(model.TUserNodeOnlineDay{}).Count()
+	if err != nil {
+		return 0, nil, err
+	}
+
+	err = sess.Limit(size, offset).OrderBy(fmt.Sprintf("date %s, channel %s", order, order)).Find(&list)
+	return count, list, err
+}

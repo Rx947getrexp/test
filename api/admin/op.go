@@ -257,8 +257,8 @@ func GetOnlineUserDayList(c *gin.Context) {
 			OnlineDuration:   item.OnlineDuration,
 			Uplink:           item.Uplink,
 			Downlink:         item.Downlink,
-			CreatedAt:        item.CreatedAt.String(),
 			LastLoginCountry: item.LastLoginCountry,
+			CreatedAt:        item.CreatedAt.String(),
 		})
 	}
 	resp := response.GetOnlineUserDayListResponse{Total: total, Items: items}
@@ -285,11 +285,45 @@ func GetNodeDayList(c *gin.Context) {
 			Date:      item.Date,
 			Ip:        item.Ip,
 			Total:     item.Total,
+			New:       item.New,
 			Retained:  item.Retained,
 			CreatedAt: item.CreatedAt.String(),
 		})
 	}
 	resp := response.GetNodeDayListResponse{Total: total, Items: items}
+	response.RespOk(c, i18n.RetMsgSuccess, resp)
+	return
+}
+func GetNodeOnlineUserDayList(c *gin.Context) {
+	param := new(request.GetNodeOnlineUserDayListRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+
+	total, list, err := service.QueryNodeOnlineUserDay(c, param.Date, param.ChannelId, param.Email, param.OrderType, param.Page, param.Size)
+	if err != nil {
+		global.Logger.Err(err).Msg("查询出错！")
+		response.ResFail(c, "查询出错！")
+		return
+	}
+	items := make([]response.NodeOnlineUserDay, 0)
+	for _, item := range list {
+		items = append(items, response.NodeOnlineUserDay{
+			Id:             item.Id,
+			Date:           item.Date,
+			Email:          item.Email,
+			Channel:        item.Channel,
+			OnlineDuration: item.OnlineDuration,
+			Uplink:         item.Uplink,
+			Downlink:       item.Downlink,
+			Node:           item.Node,
+			RegisterDate:   item.RegisterDate.String(),
+			CreatedAt:      item.CreatedAt.String(),
+		})
+	}
+	resp := response.GetNodeOnlineUserDayListResponse{Total: total, Items: items}
 	response.RespOk(c, i18n.RetMsgSuccess, resp)
 	return
 }
