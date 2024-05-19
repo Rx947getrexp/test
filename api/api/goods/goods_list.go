@@ -9,6 +9,7 @@ import (
 	"go-speed/i18n"
 	"go-speed/model/entity"
 	"go-speed/model/response"
+	"strings"
 )
 
 type GoodsListReq struct {
@@ -85,12 +86,12 @@ func BuildDiscountTitle(ctx *gin.Context, l, h int) string {
 		return ""
 	}
 	lang := global.GetLang(ctx)
-	switch lang {
+	switch strings.ToLower(lang) {
 	case i18n.LangCN:
 		return fmt.Sprintf("随机赠送%d-%d天", l, h)
-	case i18n.LangRU:
+	case i18n.LangRU, i18n.LangRUS:
 		return fmt.Sprintf("Случайно дарить %d-%d дней", l, h)
 	default:
-		return fmt.Sprintf("Randomly give away %d-%d days", l, h)
+		return fmt.Sprintf("Randomly gift %d-%d days", l, h)
 	}
 }

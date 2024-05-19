@@ -14,6 +14,7 @@ import (
 	"go-speed/util/pay/pnsafepay"
 	"go-speed/util/pay/upay"
 	"golang.org/x/exp/rand"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
@@ -33,6 +34,12 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string) (status string, err error
 		directAddExpiredTime int64
 	)
 	global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ orderNo: %s", orderNo)
+	defer func() {
+		if r := recover(); r != nil {
+			// 同时打印到日志文件和标准输出中
+			global.MyLogger(ctx).Err(err).Msgf("%+v\n%+v", r, string(debug.Stack()))
+		}
+	}()
 
 	// 查找订单
 	err = dao.TPayOrder.Ctx(ctx).Where(do.TPayOrder{OrderNo: orderNo}).Scan(&payOrder)

@@ -49,6 +49,7 @@ const (
 	LangCN = "cn" // 中文
 	LangEN = "en" // 英语
 	LangRU = "ru" // 俄语
+	LangRUS = "rus" // 俄语
 
 	RetMsgSuccess                   = "成功"
 	RetMsgDBErr                     = "查询失败" //"数据库访问失败。"

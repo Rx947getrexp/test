@@ -19,3 +19,4 @@ cmd/go-admin/go-admin
 cmd/go-api/go-api-mac
 cmd/go-job/go-job
 cmd/go-job/go-job-mac
+cmd/go-upload/go-upload

@@ -80,6 +80,9 @@ func PaymentChannelModify(ctx *gin.Context) {
 		return
 	}
 	updateData := do.TPaymentChannel{UpdatedAt: gtime.Now()}
+	if req.ChannelName != "" {
+		updateData.ChannelName = req.ChannelName
+	}
 	if req.IsActive > 0 {
 		updateData.IsActive = req.IsActive
 	}

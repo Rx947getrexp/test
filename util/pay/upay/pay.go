@@ -117,8 +117,16 @@ func CheckBinanceOrder(ctx *gin.Context, minutesAgo time.Duration, amount string
 			global.MyLogger(ctx).Err(err).Msgf("binance ParseFloat failed, (%s)", deposit.Amount)
 			continue
 		}
+
 		if value == amountFloat {
-			return true, nil
+			if deposit.Status == 1 {
+				global.MyLogger(ctx).Debug().Msgf("充值id: %s, 充值金额: %s %s, 充值状态: %d == success, matched",
+					deposit.ID, deposit.Amount, deposit.Coin, deposit.Status)
+				return true, nil
+			} else {
+				global.MyLogger(ctx).Debug().Msgf("充值id: %s, 充值金额: %s %s, 充值状态: %d != success",
+					deposit.ID, deposit.Amount, deposit.Coin, deposit.Status)
+			}
 		}
 	}
 	global.MyLogger(ctx).Debug().Msgf("can not found Amount(%s) order", amount)
