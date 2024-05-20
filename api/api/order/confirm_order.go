@@ -1,9 +1,7 @@
 package order
 
 import (
-	"fmt"
 	"go-speed/api/api/common"
-	"go-speed/constant"
 	"go-speed/global"
 	"go-speed/i18n"
 	"go-speed/model/entity"
@@ -58,12 +56,12 @@ func ConfirmOrder(ctx *gin.Context) {
 	}
 
 	// validate proof
-	if payOrder.PaymentChannelId == constant.PayChannelBankCardPay && payOrder.PaymentProof == "" {
-		err = fmt.Errorf(i18n.RetMsgProofUploadNone)
-		global.MyLogger(ctx).Err(err).Msgf("PaymentProof: %s", payOrder.PaymentProof)
-		response.RespFail(ctx, i18n.RetMsgProofUploadNone, nil)
-		return
-	}
+	//if payOrder.PaymentChannelId == constant.PayChannelBankCardPay && payOrder.PaymentProof == "" {
+	//	err = fmt.Errorf(i18n.RetMsgProofUploadNone)
+	//	global.MyLogger(ctx).Err(err).Msgf("PaymentProof: %s", payOrder.PaymentProof)
+	//	response.RespFail(ctx, i18n.RetMsgProofUploadNone, nil)
+	//	return
+	//}
 	global.MyLogger(ctx).Info().Msgf("OrderNo: %s, ResultStatus: %s", payOrder.OrderNo, payOrder.ResultStatus)
 
 	// sync order status

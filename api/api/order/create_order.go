@@ -424,11 +424,22 @@ func genUPayAmountDecimalPartValue() int {
 	return randomNumber % 10000
 }
 
+func genUPayAmount2DecimalPartValue() int {
+	rand.Seed(time.Now().UnixNano())
+	randomNumber := rand.Intn(99) // 生成一个0到9999之间的随机数
+	return randomNumber % 100
+}
+
 func genPayAmount(price, priceUSD float64, channelId string) (amount float64, amountString string, currency string) {
 	switch channelId {
 	case constant.PayChannelUPay:
 		amountInt := int((priceUSD-1)*10000) + genUPayAmountDecimalPartValue()
 		amountString = fmt.Sprintf("%d.%d", amountInt/10000, amountInt%10000)
+		amount, _ = strconv.ParseFloat(amountString, 64)
+		return amount, amountString, CurrencyU
+	case constant.PayChannelBankCardPay:
+		amountInt := int((price-1)*100) + genUPayAmount2DecimalPartValue()
+		amountString = fmt.Sprintf("%d.%d", amountInt/100, amountInt%100)
 		amount, _ = strconv.ParseFloat(amountString, 64)
 		return amount, amountString, CurrencyRUB
 	default:
