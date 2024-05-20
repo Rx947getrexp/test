@@ -19,7 +19,7 @@ type TPayOrder struct {
 	OrderAmount        string      `orm:"order_amount"         description:"交易金额"`
 	Currency           string      `orm:"currency"             description:"交易币种"`
 	PayTypeCode        string      `orm:"pay_type_code"        description:"支付类型编码"`
-	Status             string      `orm:"status"               description:"状态"`
+	Status             string      `orm:"status"               description:"状态:1-正常；2-已软删"`
 	ReturnStatus       string      `orm:"return_status"        description:"支付平台返回的结果"`
 	StatusMes          string      `orm:"status_mes"           description:"状态:1-正常；2-已软删"`
 	OrderData          string      `orm:"order_data"           description:"创建订单时支付平台返回的信息"`

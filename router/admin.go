@@ -19,7 +19,10 @@ func AdminRoute(group *gin.RouterGroup) {
 	group.POST("edit_member_expired_time", vip.EditMemberExpiredTime)
 	group.GET("get_report_user_day_list", admin.GetReportUserDayList)
 	group.GET("get_channel_user_day_list", admin.GetChannelUserDayList)
+	group.GET("get_promotion_channel_user_day_list", admin.GetPromotionChannelUserDayList)
 	group.GET("get_online_user_day_list", admin.GetOnlineUserDayList)
+	group.GET("get_node_day_list", admin.GetNodeDayList)
+	group.GET("get_node_online_user_day_list", admin.GetNodeOnlineUserDayList)
 	group.GET("get_user_op_log_list", report.GetUserOpLogList)
 
 	nodeReportGroup := group.Group("node_report")
@@ -168,6 +171,7 @@ func AdminRoute(group *gin.RouterGroup) {
 		machineGroup.POST("add", node.NodeCreate)  // 添加机器
 		machineGroup.POST("edit", node.NodeModify) // 修改机器信息
 		//支付通道管理
+
 		paymentChannelGroup := group.Group("payment_channel")
 		paymentChannelGroup.POST("list", payment_channel.PaymentChannelList)
 		paymentChannelGroup.POST("edit", payment_channel.PaymentChannelModify)
