@@ -9,3 +9,10 @@ type PNSafePay struct {
 	PayPhone    string `mapstructure:"pay_phone"`
 	CallBackUrl string `mapstructure:"call_back_url"`
 }
+
+type PayConfig struct {
+	MaxFreeTrialDays       int `mapstructure:"max_free_trial_days"`
+	GiftDurationPercentage int `mapstructure:"gift_duration_percentage"`
+	OrderClosedLimitNum    int `mapstructure:"order_closed_limit_num"`
+	OrderFailedLimitNum    int `mapstructure:"order_failed_limit_num"`
+}

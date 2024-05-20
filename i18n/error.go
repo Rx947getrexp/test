@@ -49,6 +49,7 @@ const (
 	LangCN = "cn" // 中文
 	LangEN = "en" // 英语
 	LangRU = "ru" // 俄语
+	LangRUS = "rus" // 俄语
 
 	RetMsgSuccess                   = "成功"
 	RetMsgDBErr                     = "查询失败" //"数据库访问失败。"
@@ -86,10 +87,41 @@ const (
 	RetMsgAuthorizationTokenInvalid = "Token无效"
 	RetMsgCreatePayOrderFailed      = "创建支付订单失败，请稍后重试。如果持续失败，请联系客服处理！"
 	RetMsgMemberExpirationReminder  = "会员还有三天即将到期，请及时续费！"
+	RetMsgOrderUnpaidLimit          = "您还有订单未支付，请先支付或者取消后再继续创建新的订单。"
+	RetMsgOrderClosedLimit          = "您取消的订单次数超过限制。"
+	RetMsgOrderFailedLimit          = "当前订单支付失败的次数太多，请稍后重试。"
+	RetMsgProofUploadLimit          = "您已经上传过凭证，请不要重复上传。"
+	RetMsgProofUploadNone           = "您当前选择的是银行卡支付方式，请先上传凭证。"
 )
 
 func Init() {
 	ReturnMsgMap = make(I18nMsgMap)
+
+	ReturnMsgMap[RetMsgProofUploadNone] = map[string]string{
+		LangEN: "You have currently chosen the bank card payment method, please upload the proof first.",
+		LangRU: "Вы выбрали способ оплаты банковской картой, пожалуйста, сначала загрузите подтверждающий документ.",
+	}
+
+	ReturnMsgMap[RetMsgProofUploadLimit] = map[string]string{
+		LangEN: "You have already uploaded the proof, please do not upload it again.",
+		LangRU: "Вы уже загрузили доказательство, пожалуйста, не загружайте его снова.",
+	}
+
+	ReturnMsgMap[RetMsgOrderFailedLimit] = map[string]string{
+		LangEN: "Payment for the current order has failed too many times. Please try again later.",
+		LangRU: "Оплата текущего заказа не удалась слишком много раз. Пожалуйста, попробуйте позже.",
+	}
+
+	ReturnMsgMap[RetMsgOrderClosedLimit] = map[string]string{
+		LangEN: "The number of orders you have canceled exceeds the limit.",
+		LangRU: "Количество отмененных вами заказов превышает лимит.",
+	}
+
+	ReturnMsgMap[RetMsgOrderUnpaidLimit] = map[string]string{
+		LangEN: "You have an unpaid order. Please pay or cancel it before creating a new order.",
+		LangRU: "У вас есть неоплаченный заказ. Пожалуйста, оплатите или отмените его, прежде чем создавать новый заказ.",
+	}
+
 	ReturnMsgMap[RetMsgCreatePayOrderFailed] = map[string]string{
 		LangEN: "Failed to create a payment order, please try again later. If the issue persists, please contact customer support!",
 		LangRU: "Не удалось создать платежный заказ, пожалуйста, попробуйте еще раз позже. Если проблема не устраняется, обратитесь в службу поддержки",

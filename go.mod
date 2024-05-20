@@ -23,6 +23,7 @@ require (
 	github.com/spf13/viper v1.14.0
 	github.com/v2fly/v2ray-core/v5 v5.11.0
 	golang.org/x/crypto v0.21.0
+	golang.org/x/exp v0.0.0-20230725093048-515e97ebf090
 	golang.org/x/text v0.14.0
 	google.golang.org/grpc v1.59.0
 	xorm.io/xorm v1.3.2

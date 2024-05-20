@@ -9,4 +9,5 @@ type Server struct {
 	Gas       Gas       `mapstructure:"gas"`
 	Kafka     Kafka     `mapstructure:"kafka"`
 	PNSafePay PNSafePay `mapstructure:"pnsafepay"`
+	PayConfig PayConfig `mapstructure:"payconfig"`
 }

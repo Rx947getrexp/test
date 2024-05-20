@@ -2,6 +2,7 @@ package order
 
 import (
 	"github.com/gin-gonic/gin"
+	"go-speed/constant"
 	"go-speed/dao"
 	"go-speed/global"
 	"go-speed/i18n"
@@ -11,10 +12,12 @@ import (
 )
 
 type PayOrderListReq struct {
-	Email   string `form:"email" json:"email"`
-	OrderNo string `form:"order_no" json:"order_no"`
-	Page    int    `form:"page" binding:"required" json:"page"`
-	Size    int    `form:"size" binding:"required" json:"size"`
+	ChannelId string `form:"channel_id" json:"channel_id"`
+	Status    string `form:"status" json:"status"`
+	Email     string `form:"email" json:"email"`
+	OrderNo   string `form:"order_no" json:"order_no"`
+	Page      int    `form:"page" binding:"required" json:"page"`
+	Size      int    `form:"size" binding:"required" json:"size"`
 }
 
 type PayOrderListRes struct {
@@ -26,6 +29,7 @@ type PayOrder struct {
 	UserId             uint64 `json:"user_id"              description:"用户uid"`
 	Email              string `json:"email"                description:"用户邮箱"`
 	OrderNo            string `json:"order_no"             description:"订单号"`
+	PaymentChannelId   string `json:"payment_channel_id"   description:"支付通道ID"`
 	OrderAmount        string `json:"order_amount"         description:"交易金额"`
 	Currency           string `json:"currency"             description:"交易币种"`
 	PayTypeCode        string `json:"pay_type_code"        description:"支付类型编码"`
@@ -37,6 +41,7 @@ type PayOrder struct {
 	OrderRealityAmount string `json:"order_reality_amount" description:"实际交易金额"`
 	CreatedAt          string `json:"created_at"           description:"创建时间"`
 	UpdatedAt          string `json:"updated_at"           description:"更新时间"`
+	PaymentProof       string `json:"payment_proof"        description:"支付凭证地址"`
 	Version            int    `json:"version"              description:"数据版本号"`
 }
 
@@ -53,15 +58,28 @@ func PayOrderList(ctx *gin.Context) {
 		response.ResFail(ctx, i18n.RetMsgParamParseErr)
 		return
 	}
+	where := do.TPayOrder{}
+	if req.ChannelId != "" {
+		where.PaymentChannelId = req.ChannelId
+	}
+	if req.Status != "" {
+		where.Status = req.Status
+	}
+	if req.Email != "" {
+		where.Email = req.Email
+	}
+	if req.OrderNo != "" {
+		where.OrderNo = req.OrderNo
+	}
 
-	totalNum, err = dao.TPayOrder.Ctx(ctx).Where(do.TPayOrder{Email: req.Email, OrderNo: req.OrderNo}).Count()
+	totalNum, err = dao.TPayOrder.Ctx(ctx).Where(where).Count()
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("query payOrder failed")
 		response.ResFail(ctx, err.Error())
 		return
 	}
 
-	err = dao.TPayOrder.Ctx(ctx).Where(do.TPayOrder{Email: req.Email, OrderNo: req.OrderNo}).Scan(&payOrders)
+	err = dao.TPayOrder.Ctx(ctx).Where(where).Order(dao.TPayOrder.Columns().Id, constant.OrderTypeDesc).Scan(&payOrders)
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("query payOrder failed")
 		response.ResFail(ctx, err.Error())
@@ -73,6 +91,7 @@ func PayOrderList(ctx *gin.Context) {
 			UserId:             order.UserId,
 			Email:              order.Email,
 			OrderNo:            order.OrderNo,
+			PaymentChannelId:   order.PaymentChannelId,
 			OrderAmount:        order.OrderAmount,
 			Currency:           order.Currency,
 			PayTypeCode:        order.PayTypeCode,
@@ -81,6 +100,7 @@ func PayOrderList(ctx *gin.Context) {
 			StatusMes:          order.StatusMes,
 			OrderData:          order.OrderData,
 			ResultStatus:       order.ResultStatus,
+			PaymentProof:       order.PaymentProof,
 			OrderRealityAmount: order.OrderRealityAmount,
 			CreatedAt:          order.CreatedAt.String(),
 			UpdatedAt:          order.UpdatedAt.String(),

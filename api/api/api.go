@@ -197,7 +197,7 @@ func Reg(c *gin.Context) {
 		global.MyLogger(c).Info().Msgf("userFlag:%d, userCancelledFlag: %d", userFlag, userCancelledFlag)
 		if userFlag == 0 && userCancelledFlag == 0 {
 			//sendSec = 3600
-			sendSec = 15 * 24 * 60 * 60 // 统一赠送15天 (之前没有送过的)
+			sendSec = 2 * 60 * 60 // 统一赠送15天 (之前没有送过的)
 		}
 		//sendSec = 31536000 // TODO: 统一赠送一年
 
@@ -219,7 +219,7 @@ func Reg(c *gin.Context) {
 				}
 		*/
 	} else if channel != "" {
-		sendSec = 15 * 24 * 60 * 60 // 统一赠送15天 (通过渠道推广来的)，TODO: 目前没办法校验渠道的有效性
+		sendSec = 2 * 60 * 60 // 统一赠送15天 (通过渠道推广来的)，TODO: 目前没办法校验渠道的有效性
 	}
 
 	pwdDecode := util.AesDecrypt(param.Passwd)

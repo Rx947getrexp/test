@@ -2,14 +2,14 @@ package request
 
 // 登陆后台
 type LoginAdminRequest struct {
-	UserName string `form:"user_name" binding:"required"`
-	Pass     string `form:"pass" binding:"required"`
+	UserName string `form:"user_name" binding:"required" json:"user_name"`
+	Pass     string `form:"pass" binding:"required" json:"pass"`
 }
 
 type EditPasswdRequest struct {
-	OldPass   string `form:"old_pass" binding:"required"`
-	NewPass   string `form:"new_pass" binding:"required"`
-	EnterPass string `form:"enter_pass" binding:"required"`
+	OldPass   string `form:"old_pass" binding:"required" json:"old_pass"`
+	NewPass   string `form:"new_pass" binding:"required" json:"new_pass"`
+	EnterPass string `form:"enter_pass" binding:"required" json:"enter_pass"`
 }
 
 type AddResourceRequest struct {
@@ -34,37 +34,37 @@ type DelResourceRequest struct {
 }
 
 type AddRoleRequest struct {
-	Name   string `form:"name" binding:"required"`
-	Remark string `form:"remark"`
-	IsUsed int    `form:"is_used" binding:"required"`
-	ResIds string `form:"res_ids"`
+	Name   string `form:"name" binding:"required" json:"name"`
+	Remark string `form:"remark" json:"remark"`
+	IsUsed int    `form:"is_used" binding:"required" json:"is_used"`
+	ResIds string `form:"res_ids" json:"res_ids"`
 }
 
 type EditRoleRequest struct {
-	Id     int    `form:"id" binding:"required"`
-	Name   string `form:"name" binding:"required"`
-	Remark string `form:"remark"`
-	IsUsed int    `form:"is_used" binding:"required"`
-	ResIds string `form:"res_ids"`
+	Id     int    `form:"id" binding:"required" json:"id"`
+	Name   string `form:"name" binding:"required" json:"name"`
+	Remark string `form:"remark" json:"remark"`
+	IsUsed int    `form:"is_used" binding:"required" json:"is_used"`
+	ResIds string `form:"res_ids" json:"res_ids"`
 }
 
 type AddUserRequest struct {
-	Username string `form:"username" binding:"required"`
-	Password string `form:"password" binding:"required"`
-	Nickname string `form:"nickname" binding:"required"`
-	RoleIds  string `form:"role_ids"`
+	Username string `form:"username" binding:"required" json:"username"`
+	Password string `form:"password" binding:"required" json:"password"`
+	Nickname string `form:"nickname" binding:"required" json:"nickname"`
+	RoleIds  string `form:"role_ids" json:"role_ids"`
 }
 
 type EditUserRoleRequest struct {
-	UserId   int    `form:"user_id" binding:"required"`
-	Password string `form:"password"`
-	Nickname string `form:"nickname"`
-	Status   int    `form:"status"`
-	RoleIds  string `form:"role_ids"`
+	UserId   int    `form:"user_id" binding:"required" json:"user_id"`
+	Password string `form:"password" json:"password"`
+	Nickname string `form:"nickname" json:"nickname"`
+	Status   int    `form:"status" json:"status"`
+	RoleIds  string `form:"role_ids" json:"role_ids"`
 }
 
 type UserRoleRequest struct {
-	Id int `form:"id" binding:"required"`
+	Id int `form:"id" binding:"required" json:"id"`
 }
 
 type AccountListAdminRequest struct {
@@ -189,29 +189,35 @@ type NoticeListAdminRequest struct {
 }
 
 type AddGoodsAdminRequest struct {
-	Title      string  `form:"title" binding:"required" json:"title"`
-	MType      int     `form:"m_type" binding:"required" json:"m_type"`
-	DevLimit   int     `form:"dev_limit" binding:"required" json:"dev_limit"`
-	FlowLimit  int64   `form:"flow_limit" json:"flow_limit"`
-	Period     int     `form:"period" binding:"required" json:"period"`
-	Price      float64 `form:"price" binding:"required" json:"price"`
-	IsDiscount int     `form:"is_discount" binding:"required" json:"is_discount"`
-	Low        int     `form:"low" json:"low"`
-	High       int     `form:"high" json:"high"`
+	Title        string  `form:"title" binding:"required" json:"title"`
+	MType        int     `form:"m_type" binding:"required" json:"m_type"`
+	DevLimit     int     `form:"dev_limit" binding:"required" json:"dev_limit"`
+	FlowLimit    int64   `form:"flow_limit" json:"flow_limit"`
+	Period       int     `form:"period" binding:"required" json:"period"`
+	Price        float64 `form:"price" binding:"required" json:"price"`
+	PriceUnit    string  `form:"price_unit" binding:"required" json:"price_unit"`
+	UsdPayPrice  float64 `form:"usd_pay_price" binding:"required" json:"usd_pay_price"`
+	UsdPriceUnit string  `form:"usd_price_unit" binding:"required" json:"usd_price_unit"`
+	IsDiscount   int     `form:"is_discount" binding:"required" json:"is_discount"`
+	Low          int     `form:"low" json:"low"`
+	High         int     `form:"high" json:"high"`
 }
 
 type EditGoodsAdminRequest struct {
-	Id         int64   `form:"id" binding:"required" json:"id"`
-	Title      string  `form:"title" json:"title"`
-	MType      int     `form:"m_type" json:"m_type"`
-	DevLimit   int     `form:"dev_limit" json:"dev_limit"`
-	FlowLimit  int64   `form:"flow_limit" json:"flow_limit"`
-	Period     int     `form:"period" json:"period"`
-	Price      float64 `form:"price" json:"price"`
-	IsDiscount int     `form:"is_discount" json:"is_discount"`
-	Low        int     `form:"low" json:"low"`
-	High       int     `form:"high" json:"high"`
-	Status     int     `form:"status" json:"status"`
+	Id           int64   `form:"id" binding:"required" json:"id"`
+	Title        string  `form:"title" json:"title"`
+	MType        int     `form:"m_type" json:"m_type"`
+	DevLimit     int     `form:"dev_limit" json:"dev_limit"`
+	FlowLimit    int64   `form:"flow_limit" json:"flow_limit"`
+	Period       int     `form:"period" json:"period"`
+	Price        float64 `form:"price" json:"price"`
+	UsdPayPrice  float64 `form:"usd_pay_price" json:"usd_pay_price"`
+	PriceUnit    string  `form:"price_unit" json:"price_unit"`
+	UsdPriceUnit string  `form:"usd_price_unit" json:"usd_price_unit"`
+	IsDiscount   int     `form:"is_discount" json:"is_discount"`
+	Low          int     `form:"low" json:"low"`
+	High         int     `form:"high" json:"high"`
+	Status       int     `form:"status" json:"status"`
 }
 
 type GoodsListAdminRequest struct {

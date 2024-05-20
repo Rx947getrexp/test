@@ -13,15 +13,15 @@ import (
 )
 
 type NodeModifyReq struct {
-	Id      uint64 `binding:"required" form:"id" dc:"机器节点ID"`
-	IP      string `form:"ip" dc:"机器IP, eg: 45.150.236.6"`
-	Server  string `form:"server" dc:"域名, eg: ru.workones.xyz"`
-	Port    uint   `form:"port" dc:"管控端口号，eg: 443"`
-	MinPort uint   `form:"min_port" dc:"监听的端口号，起始端口号, eg: 13001"`
-	MaxPort uint   `form:"max_port" dc:"监听的端口号，结束端口号, eg: 13005"`
-	Weight  uint   `form:"weight" dc:"推荐权重,权重越大的节点优先连接"`
-	Comment string `form:"comment" dc:"备注信息"`
-	Status  uint   `form:"status" dc:"状态。1-已上架；2-已下架"`
+	Id      uint64 `binding:"required" form:"id" json:"id" dc:"机器节点ID"`
+	IP      string `form:"ip" json:"ip" dc:"机器IP, eg: 45.150.236.6"`
+	Server  string `form:"server" json:"server" dc:"域名, eg: ru.workones.xyz"`
+	Port    uint   `form:"port" json:"port" dc:"管控端口号，eg: 443"`
+	MinPort uint   `form:"min_port" json:"min_port" dc:"监听的端口号，起始端口号, eg: 13001"`
+	MaxPort uint   `form:"max_port" json:"max_port" dc:"监听的端口号，结束端口号, eg: 13005"`
+	Weight  uint   `form:"weight" json:"weight" dc:"推荐权重,权重越大的节点优先连接"`
+	Comment string `form:"comment" json:"comment" dc:"备注信息"`
+	Status  uint   `form:"status" json:"status" dc:"状态。1-已上架；2-已下架"`
 }
 
 type NodeModifyRes struct {
