@@ -327,6 +327,64 @@ func GetNodeOnlineUserDayList(c *gin.Context) {
 	response.RespOk(c, i18n.RetMsgSuccess, resp)
 	return
 }
+func GetUserRechargeList(c *gin.Context) {
+	param := new(request.GetReportUserRechargeDayListRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+
+	total, list, err := service.QueryUserRechargeReportDay(c, param.Date, param.GoodsId, param.OrderType, param.Page, param.Size)
+	if err != nil {
+		global.Logger.Err(err).Msg("查询出错！")
+		response.ResFail(c, "查询出错！")
+		return
+	}
+	items := make([]response.ReportUseRechargerDay, 0)
+	for _, item := range list {
+		items = append(items, response.ReportUseRechargerDay{
+			Id:        item.Id,
+			Date:      item.Date,
+			GoodsId:   item.GoodsId,
+			Total:     item.Total,
+			New:       item.New,
+			CreatedAt: item.CreatedAt.String(),
+		})
+	}
+	resp := response.GetReportUseRechargerDayListResponse{Total: total, Items: items}
+	response.RespOk(c, i18n.RetMsgSuccess, resp)
+	return
+}
+func GetUserRechargeTimesList(c *gin.Context) {
+	param := new(request.GetReportUserRechargeTimesDayListRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+
+	total, list, err := service.QueryUserRechargeTimesReportDay(c, param.Date, param.GoodsId, param.OrderType, param.Page, param.Size)
+	if err != nil {
+		global.Logger.Err(err).Msg("查询出错！")
+		response.ResFail(c, "查询出错！")
+		return
+	}
+	items := make([]response.ReportUseRechargerTimesDay, 0)
+	for _, item := range list {
+		items = append(items, response.ReportUseRechargerTimesDay{
+			Id:        item.Id,
+			Date:      item.Date,
+			GoodsId:   item.GoodsId,
+			Total:     item.Total,
+			New:       item.New,
+			CreatedAt: item.CreatedAt.String(),
+		})
+	}
+	resp := response.GetReportUseRechargerTimesDayListResponse{Total: total, Items: items}
+	response.RespOk(c, i18n.RetMsgSuccess, resp)
+	return
+}
 func ComboList(c *gin.Context) {
 	param := new(request.GoodsListAdminRequest)
 	if err := c.ShouldBind(param); err != nil {

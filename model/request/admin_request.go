@@ -531,3 +531,17 @@ type GetNodeDayListRequest struct {
 	Page      int    `form:"page" json:"page" dc:"分页查询page, 从1开始"`
 	Size      int    `form:"size" json:"size" dc:"分页查询size, 最大1000"`
 }
+type GetReportUserRechargeDayListRequest struct {
+	Date      int    `form:"date" json:"date" dc:"报表日期，eg:20240101"`
+	GoodsId   int    `form:"goods_id" json:"goods_id" dc:"商品套餐id"`
+	OrderType string `form:"order_type" json:"order_type" dc:"排序类型，eg: asc|desc"`
+	Page      int    `form:"page" json:"page" dc:"分页查询page, 从1开始"`
+	Size      int    `form:"size" json:"size" dc:"分页查询size, 最大1000"`
+}
+type GetReportUserRechargeTimesDayListRequest struct {
+	Date      int    `form:"date" json:"date" dc:"报表日期，eg:20240101"`
+	GoodsId   int    `form:"goods_id" json:"goods_id" dc:"商品套餐id"`
+	OrderType string `form:"order_type" json:"order_type" dc:"排序类型，eg: asc|desc"`
+	Page      int    `form:"page" json:"page" dc:"分页查询page, 从1开始"`
+	Size      int    `form:"size" json:"size" dc:"分页查询size, 最大1000"`
+}

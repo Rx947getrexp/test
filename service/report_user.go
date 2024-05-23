@@ -233,3 +233,73 @@ func QueryNodeOnlineUserDay(ctx context.Context, date int, channelId string, ema
 	err = sess.Limit(size, offset).OrderBy(fmt.Sprintf("date %s, channel %s", order, order)).Find(&list)
 	return count, list, err
 }
+func QueryUserRechargeReportDay(ctx context.Context, date, GoodsId int, orderType string, page, size int) (int64, []*model.TUserRechargeReportDay, error) {
+	order := "desc"
+	if strings.ToLower(orderType) == "asc" {
+		order = "asc"
+	}
+	if size > constant.MaxPageSize {
+		size = constant.MaxPageSize
+	}
+	if size == 0 {
+		size = 20
+	}
+	var err error
+	var list []*model.TUserRechargeReportDay
+	sessCount := global.Db2.Context(ctx)
+	sess := global.Db2.Context(ctx)
+	if date > 0 {
+		sess = sess.Where(" date = ?", date)
+		sessCount = sessCount.Where(" date = ?", date)
+	}
+	if GoodsId > 0 {
+		sess = sess.Where(" goods_id = ?", GoodsId)
+		sessCount = sessCount.Where(" goods_id = ?", GoodsId)
+	}
+	offset := 0
+	if page > 1 {
+		offset = (page - 1) * size
+	}
+	count, err := sessCount.Table(model.TUserRechargeReportDay{}).Count()
+	if err != nil {
+		return 0, nil, err
+	}
+
+	err = sess.Limit(size, offset).OrderBy(fmt.Sprintf("date %s, goods_id %s", order, order)).Find(&list)
+	return count, list, err
+}
+func QueryUserRechargeTimesReportDay(ctx context.Context, date, GoodsId int, orderType string, page, size int) (int64, []*model.TUserRechargeTimesReportDay, error) {
+	order := "desc"
+	if strings.ToLower(orderType) == "asc" {
+		order = "asc"
+	}
+	if size > constant.MaxPageSize {
+		size = constant.MaxPageSize
+	}
+	if size == 0 {
+		size = 20
+	}
+	var err error
+	var list []*model.TUserRechargeTimesReportDay
+	sessCount := global.Db2.Context(ctx)
+	sess := global.Db2.Context(ctx)
+	if date > 0 {
+		sess = sess.Where(" date = ?", date)
+		sessCount = sessCount.Where(" date = ?", date)
+	}
+	if GoodsId > 0 {
+		sess = sess.Where(" goods_id = ?", GoodsId)
+		sessCount = sessCount.Where(" goods_id = ?", GoodsId)
+	}
+	offset := 0
+	if page > 1 {
+		offset = (page - 1) * size
+	}
+	count, err := sessCount.Table(model.TUserRechargeTimesReportDay{}).Count()
+	if err != nil {
+		return 0, nil, err
+	}
+
+	err = sess.Limit(size, offset).OrderBy(fmt.Sprintf("date %s, goods_id %s", order, order)).Find(&list)
+	return count, list, err
+}
