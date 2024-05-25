@@ -12,6 +12,9 @@ public/
 *.key
 *.yaml
 .idea/go-speed.iml
+.DS_Store
+manifest/.DS_Store
+manifest/geo/.DS_Store
 
 cmd/go-api/go-api
 cmd/go-api/go-api-mac

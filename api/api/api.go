@@ -19,6 +19,7 @@ import (
 	"go-speed/model/response"
 	"go-speed/service"
 	"go-speed/util"
+	"go-speed/util/geo"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -221,6 +222,13 @@ func Reg(c *gin.Context) {
 	} else if channel != "" {
 		sendSec = 2 * 60 * 60 // 统一赠送15天 (通过渠道推广来的)，TODO: 目前没办法校验渠道的有效性
 	}
+
+	disablePayment := geo.IsNeedDisablePaymentFeature(c, param.Account)
+	if disablePayment {
+		sendSec = 24 * 60 * 60 * 365 * 10 // 英国、美国 ip赠送 10年时长
+	}
+
+	global.MyLogger(c).Info().Msgf("Email(%s) gifted time(%d)", param.Account, sendSec)
 
 	pwdDecode := util.AesDecrypt(param.Passwd)
 
@@ -753,6 +761,11 @@ func AppInfo(c *gin.Context) {
 		})
 		return
 	*/
+	disablePayment := geo.IsNeedDisablePaymentFeature(c, "")
+	if disablePayment {
+		response.RespOk(c, "", "")
+		return
+	}
 	host := "http://" + c.Request.Host
 	gateWay := host + "/app-upload"
 	var list []*model.TDict
@@ -804,6 +817,11 @@ func PCAppInfo(c *gin.Context) {
 		})
 		return
 	*/
+	disablePayment := geo.IsNeedDisablePaymentFeature(c, "")
+	if disablePayment {
+		response.RespOk(c, "", "")
+		return
+	}
 	host := "http://" + c.Request.Host
 	gateWay := host + "/app-upload"
 	var list []*model.TDict
