@@ -160,3 +160,27 @@ type NodeOnlineUserDay struct {
 	RegisterDate   string `json:"register_date" dc:"用户注册最早时间"`
 	CreatedAt      string `json:"created_at" dc:"报表数据统计时间"`
 }
+type ReportUseRechargerDay struct {
+	Id        int64  `json:"id" dc:"自增主键ID"`
+	Date      int    `json:"date" dc:"报表日期，eg:20240101"`
+	GoodsId   int    `json:"goods_id" dc:"商品id"`
+	Total     int    `json:"total" dc:"截止到Date，通过渠道ID注册的用户总量"`
+	New       int    `json:"new" dc:"Date日期，通过渠道ID注册的新增用户量"`
+	CreatedAt string `json:"created_at" dc:"报表数据统计时间"`
+}
+type GetReportUseRechargerDayListResponse struct {
+	Total int64                   `json:"total" dc:"数据总条数"`
+	Items []ReportUseRechargerDay `json:"items" dc:"数据明细"`
+}
+type ReportUseRechargerTimesDay struct {
+	Id        int64  `json:"id" dc:"自增主键ID"`
+	Date      int    `json:"date" dc:"报表日期，eg:20240101"`
+	GoodsId   int    `json:"goods_id" dc:"商品id"`
+	Total     int    `json:"total" dc:"截止到Date，通过渠道ID注册的用户总量"`
+	New       int    `json:"new" dc:"Date日期，通过渠道ID注册的新增用户量"`
+	CreatedAt string `json:"created_at" dc:"报表数据统计时间"`
+}
+type GetReportUseRechargerTimesDayListResponse struct {
+	Total int64                        `json:"total" dc:"数据总条数"`
+	Items []ReportUseRechargerTimesDay `json:"items" dc:"数据明细"`
+}

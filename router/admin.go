@@ -23,6 +23,8 @@ func AdminRoute(group *gin.RouterGroup) {
 	group.GET("get_online_user_day_list", admin.GetOnlineUserDayList)
 	group.GET("get_node_day_list", admin.GetNodeDayList)
 	group.GET("get_node_online_user_day_list", admin.GetNodeOnlineUserDayList)
+	group.GET("get_user_recharge_list", admin.GetUserRechargeList)
+	group.GET("get_user_recharge_times_list", admin.GetUserRechargeTimesList)
 	group.GET("get_user_op_log_list", report.GetUserOpLogList)
 
 	nodeReportGroup := group.Group("node_report")
