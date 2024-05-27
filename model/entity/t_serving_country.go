@@ -20,4 +20,5 @@ type TServingCountry struct {
 	Status      int         `orm:"status"       description:"状态:1-正常；2-已软删"`
 	CreatedAt   *gtime.Time `orm:"created_at"   description:"创建时间"`
 	UpdatedAt   *gtime.Time `orm:"updated_at"   description:"更新时间"`
+	Level       int         `orm:"level"        description:"等级：0-所有用户都可以选择；1-青铜、铂金会员可选择；2-铂金会员可选择"`
 }

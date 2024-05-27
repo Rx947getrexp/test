@@ -30,6 +30,7 @@ type TServingCountryColumns struct {
 	Status      string // 状态:1-正常；2-已软删
 	CreatedAt   string // 创建时间
 	UpdatedAt   string // 更新时间
+	Level       string // 等级：0-所有用户都可以选择；1-青铜、铂金会员可选择；2-铂金会员可选择
 }
 
 // tServingCountryColumns holds the columns for table t_serving_country.
@@ -44,6 +45,7 @@ var tServingCountryColumns = TServingCountryColumns{
 	Status:      "status",
 	CreatedAt:   "created_at",
 	UpdatedAt:   "updated_at",
+	Level:       "level",
 }
 
 // NewTServingCountryDao creates and returns a new DAO object for table data access.
