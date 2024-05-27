@@ -222,10 +222,11 @@ func Reg(c *gin.Context) {
 	} else if channel != "" {
 		sendSec = 2 * 60 * 60 // 统一赠送15天 (通过渠道推广来的)，TODO: 目前没办法校验渠道的有效性
 	}
-
+	level := 0
 	disablePayment := geo.IsNeedDisablePaymentFeature(c, param.Account)
 	if disablePayment {
 		sendSec = 24 * 60 * 60 * 365 * 10 // 英国、美国 ip赠送 10年时长
+		level = 2
 	}
 
 	global.MyLogger(c).Info().Msgf("Email(%s) gifted time(%d)", param.Account, sendSec)
@@ -244,7 +245,7 @@ func Reg(c *gin.Context) {
 		Passwd:      util.MD5(pwdDecode),
 		Email:       param.Account,
 		Phone:       "",
-		Level:       0,
+		Level:       level,
 		ExpiredTime: nowTime.Unix() + sendSec,
 		V2rayUuid:   "c541b521-17dd-11ee-bc4e-0c9d92c013fb", //暂时写配置文件的UUID
 		Status:      0,
