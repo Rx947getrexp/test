@@ -68,3 +68,12 @@ type TUserRechargeTimesReportDay struct {
 	New       int       `xorm:"INT"`
 	CreatedAt time.Time `xorm:"comment('创建时间') TIMESTAMP"`
 }
+type TUserChannelRechargeDay struct {
+	Id        int64     `xorm:"pk autoincr comment('自增id') BIGINT"`
+	Date      int       `xorm:"INT"`
+	Channel   string    `xorm:"VARCHAR(32)"`
+	GoodsName string    `xorm:"VARCHAR(32)"`
+	Total     int       `xorm:"INT"`
+	New       int       `xorm:"INT"`
+	CreatedAt time.Time `xorm:"comment('创建时间') TIMESTAMP"`
+}

@@ -385,6 +385,36 @@ func GetUserRechargeTimesList(c *gin.Context) {
 	response.RespOk(c, i18n.RetMsgSuccess, resp)
 	return
 }
+func GetChannelUserRechargeList(c *gin.Context) {
+	param := new(request.GetChannelUserRechargeListRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+
+	total, list, err := service.QueryChannelUserRechargeTimesReportDay(c, param.Date, param.Channel, param.OrderType, param.Page, param.Size)
+	if err != nil {
+		global.Logger.Err(err).Msg("查询出错！")
+		response.ResFail(c, "查询出错！")
+		return
+	}
+	items := make([]response.ReportChannelUseRechargerTimesDay, 0)
+	for _, item := range list {
+		items = append(items, response.ReportChannelUseRechargerTimesDay{
+			Id:        item.Id,
+			Date:      item.Date,
+			Channel:   item.Channel,
+			GoodsName: item.GoodsName,
+			Total:     item.Total,
+			New:       item.New,
+			CreatedAt: item.CreatedAt.String(),
+		})
+	}
+	resp := response.GetReportChannelUseRechargerTimesDayListResponse{Total: total, Items: items}
+	response.RespOk(c, i18n.RetMsgSuccess, resp)
+	return
+}
 func ComboList(c *gin.Context) {
 	param := new(request.GoodsListAdminRequest)
 	if err := c.ShouldBind(param); err != nil {

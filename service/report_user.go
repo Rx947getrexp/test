@@ -156,7 +156,8 @@ func QueryOnlineUserDay(ctx context.Context, date int, channelId string, email, 
 		return 0, nil, err
 	}
 
-	err = sess.Limit(size, offset).OrderBy(fmt.Sprintf("date %s, channel %s", order, order)).Find(&list)
+	//err = sess.Limit(size, offset).OrderBy(fmt.Sprintf("date %s, channel %s", order, order)).Find(&list)
+	err = sess.Limit(size, offset).OrderBy(fmt.Sprintf("id %s", order)).Find(&list)
 	return count, list, err
 }
 func QueryNodeDay(ctx context.Context, date int, Ip string, orderType string, page, size int) (int64, []*model.TUserNodeDay, error) {
@@ -230,7 +231,8 @@ func QueryNodeOnlineUserDay(ctx context.Context, date int, channelId string, ema
 		return 0, nil, err
 	}
 
-	err = sess.Limit(size, offset).OrderBy(fmt.Sprintf("date %s, channel %s", order, order)).Find(&list)
+	//err = sess.Limit(size, offset).OrderBy(fmt.Sprintf("date %s, channel %s", order, order)).Find(&list)
+	err = sess.Limit(size, offset).OrderBy(fmt.Sprintf("id %s", order)).Find(&list)
 	return count, list, err
 }
 func QueryUserRechargeReportDay(ctx context.Context, date, GoodsId int, orderType string, page, size int) (int64, []*model.TUserRechargeReportDay, error) {
@@ -265,7 +267,7 @@ func QueryUserRechargeReportDay(ctx context.Context, date, GoodsId int, orderTyp
 		return 0, nil, err
 	}
 
-	err = sess.Limit(size, offset).OrderBy(fmt.Sprintf("date %s, goods_id %s", order, order)).Find(&list)
+	err = sess.Limit(size, offset).OrderBy(fmt.Sprintf("date %s", order)).Find(&list)
 	return count, list, err
 }
 func QueryUserRechargeTimesReportDay(ctx context.Context, date, GoodsId int, orderType string, page, size int) (int64, []*model.TUserRechargeTimesReportDay, error) {
@@ -300,6 +302,40 @@ func QueryUserRechargeTimesReportDay(ctx context.Context, date, GoodsId int, ord
 		return 0, nil, err
 	}
 
-	err = sess.Limit(size, offset).OrderBy(fmt.Sprintf("date %s, goods_id %s", order, order)).Find(&list)
+	err = sess.Limit(size, offset).OrderBy(fmt.Sprintf("date %s", order)).Find(&list)
+	return count, list, err
+}
+func QueryChannelUserRechargeTimesReportDay(ctx context.Context, date int, Channel string, orderType string, page, size int) (int64, []*model.TUserChannelRechargeDay, error) {
+	order := "desc"
+	if strings.ToLower(orderType) == "asc" {
+		order = "asc"
+	}
+	if size > constant.MaxPageSize {
+		size = constant.MaxPageSize
+	}
+	if size == 0 {
+		size = 20
+	}
+	var err error
+	var list []*model.TUserChannelRechargeDay
+	sessCount := global.Db2.Context(ctx)
+	sess := global.Db2.Context(ctx)
+	if date > 0 {
+		sess = sess.Where(" date = ?", date)
+		sessCount = sessCount.Where(" date = ?", date)
+	}
+	if Channel != "" {
+		sess = sess.Where(" channel = ?", Channel)
+		sessCount = sessCount.Where(" channel = ?", Channel)
+	}
+	offset := 0
+	if page > 1 {
+		offset = (page - 1) * size
+	}
+	count, err := sessCount.Table(model.TUserChannelRechargeDay{}).Count()
+	if err != nil {
+		return 0, nil, err
+	}
+	err = sess.Limit(size, offset).OrderBy(fmt.Sprintf("date %s, channel %s", order, order)).Find(&list)
 	return count, list, err
 }
