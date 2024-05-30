@@ -20,7 +20,7 @@ type ServingCountryModifyReq struct {
 	IsRecommend uint   `form:"is_recommend" json:"is_recommend" dc:"是否为推荐的国家，0:否，1：是"`
 	Weight      uint   `form:"weight" json:"weight" dc:"推荐权重,权重越大的国家展示在越靠前"`
 	Status      uint   `form:"status" json:"status" dc:"状态:0:未上架，1-已上架；2-已下架"`
-	Level       *int   `json:"level" dc:"等级约束：0-所有用户都可以选择；1-青铜、铂金会员可选择；2-铂金会员可选择"`
+	Level       *int   `form:"level" json:"level" dc:"等级约束：0-所有用户都可以选择；1-青铜、铂金会员可选择；2-铂金会员可选择"`
 }
 
 type ServingCountryModifyRes struct {
