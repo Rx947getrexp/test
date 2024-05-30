@@ -184,3 +184,16 @@ type GetReportUseRechargerTimesDayListResponse struct {
 	Total int64                        `json:"total" dc:"数据总条数"`
 	Items []ReportUseRechargerTimesDay `json:"items" dc:"数据明细"`
 }
+type ReportChannelUseRechargerTimesDay struct {
+	Id        int64  `json:"id" dc:"自增主键ID"`
+	Date      int    `json:"date" dc:"报表日期，eg:20240101"`
+	Channel   string `json:"channel" dc:"渠道ID"`
+	GoodsName string `json:"goods_name" dc:"套餐名称"`
+	Total     int    `json:"total" dc:"截止到Date，通过渠道ID注册的用户总量"`
+	New       int    `json:"new" dc:"Date日期，通过渠道ID注册的新增用户量"`
+	CreatedAt string `json:"created_at" dc:"报表数据统计时间"`
+}
+type GetReportChannelUseRechargerTimesDayListResponse struct {
+	Total int64                               `json:"total" dc:"数据总条数"`
+	Items []ReportChannelUseRechargerTimesDay `json:"items" dc:"数据明细"`
+}
