@@ -406,8 +406,10 @@ func GetChannelUserRechargeList(c *gin.Context) {
 			Date:      item.Date,
 			Channel:   item.Channel,
 			GoodsName: item.GoodsName,
-			Total:     item.Total,
-			New:       item.New,
+			UsdTotal:  item.UsdTotal,
+			UsdNew:    item.UsdNew,
+			RubTotal:  item.RubTotal,
+			RubNew:    item.RubNew,
 			CreatedAt: item.CreatedAt.String(),
 		})
 	}

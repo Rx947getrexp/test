@@ -189,8 +189,10 @@ type ReportChannelUseRechargerTimesDay struct {
 	Date      int    `json:"date" dc:"报表日期，eg:20240101"`
 	Channel   string `json:"channel" dc:"渠道ID"`
 	GoodsName string `json:"goods_name" dc:"套餐名称"`
-	Total     int    `json:"total" dc:"截止到Date，通过渠道ID注册的用户总量"`
-	New       int    `json:"new" dc:"Date日期，通过渠道ID注册的新增用户量"`
+	UsdTotal  int    `json:"usd_total" dc:"USD充值次数"`
+	UsdNew    int    `json:"usd_new" dc:"新增USD充值次数"`
+	RubTotal  int    `json:"rub_total" dc:"RUB充值次数"`
+	RubNew    int    `json:"rub_new" dc:"新增RUB充值次数"`
 	CreatedAt string `json:"created_at" dc:"报表数据统计时间"`
 }
 type GetReportChannelUseRechargerTimesDayListResponse struct {

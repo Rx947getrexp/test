@@ -89,6 +89,7 @@ type AccountEditAdminRequest struct {
 	Status    string `form:"status" json:"status"`
 	IsReset   string `form:"is_reset" json:"is_reset"`
 	Auth2Code string `form:"auth2_code" json:"auth2_code"`
+	Channel   string `form:"channel" json:"channel"`
 }
 
 type AccountAddAdminRequest struct {
@@ -97,6 +98,7 @@ type AccountAddAdminRequest struct {
 	NickName  string `form:"nick_name" binding:"required" json:"nick_name"`
 	RoleId    int    `form:"role_id" binding:"required" json:"role_id"`
 	Auth2Code string `form:"auth2_code" json:"auth2_code"`
+	Channel   string `form:"channel" json:"channel"`
 }
 
 type RoleEditAdminRequest struct {

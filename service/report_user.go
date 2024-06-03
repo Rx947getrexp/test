@@ -99,11 +99,11 @@ func QueryUserPromotionChannelDay(ctx context.Context, date int, Channel string,
 		sessCount = sessCount.Where(" date = ?", date)
 	}
 	if Channel == "" {
-		sess = sess.Where("channel BETWEEN ? AND ?", 110000, 120000)
-		sessCount = sessCount.Where("channel BETWEEN ? AND ?", 110000, 120000)
+		sess = sess.Where("channel BETWEEN ? AND ?", 110000, 210000)
+		sessCount = sessCount.Where("channel BETWEEN ? AND ?", 110000, 210000)
 	} else {
 		channelInt, err := strconv.Atoi(Channel)
-		if err != nil || channelInt <= 110000 || channelInt >= 120000 {
+		if err != nil || channelInt <= 110000 || channelInt >= 210000 {
 			return 0, list, nil
 		}
 		sess = sess.Where("channel = ?", Channel)

@@ -17,4 +17,5 @@ type AdminUser struct {
 	IsDel     int       `xorm:"default 0 comment('0-正常；1-软删') INT"`
 	IsReset   int       `xorm:"comment('0-否；1-代表需要重置两步验证码') INT"`
 	IsFirst   int       `xorm:"comment('0-否；1-代表首次登录需要修改密码') INT"`
+	Channel   string    `xorm:"comment('用户可查看的范围') VARCHAR(32)"`
 }

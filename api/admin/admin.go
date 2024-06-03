@@ -2,8 +2,6 @@ package admin
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 	"go-speed/constant"
 	"go-speed/global"
 	"go-speed/lang"
@@ -16,6 +14,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"xorm.io/xorm"
 )
 
@@ -250,6 +251,7 @@ func AddAdminUser(c *gin.Context) {
 	user.CreatedAt = time.Now()
 	user.UpdatedAt = time.Now()
 	user.IsReset = 1
+	user.Channel = param.Channel
 	rows, err := sess.Insert(user)
 	if err != nil || rows < 1 {
 		global.Logger.Err(err).Msg("添加用户失败")
@@ -325,6 +327,10 @@ func EditAdminUser(c *gin.Context) {
 		user.IsReset = 1
 		user.Authkey = ""
 		columns = append(columns, "is_reset", "authkey")
+	}
+	if param.Channel != "" {
+		user.Channel = param.Channel
+		columns = append(columns, "channel")
 	}
 	if param.Status != "" {
 		user.Status, err = strconv.Atoi(param.Status)
@@ -544,7 +550,7 @@ func GetAdminUserList(c *gin.Context) {
 	}
 	var list []map[string]interface{}
 	err = session.
-		Cols("admin_user.id as id,admin_user.uname as account,admin_user.nickname as nick_name,admin_role.name as role_name,admin_role.id as role_id,admin_user.created_at as created_at,admin_user.status as Status").
+		Cols("admin_user.id as id,admin_user.uname as account,admin_user.nickname as nick_name,admin_role.name as role_name,admin_role.id as role_id,admin_user.created_at as created_at,admin_user.status as Status,admin_user.channel as channel").
 		Join("LEFT", model.AdminUserRole{}, "admin_user_role.uid = admin_user.id").
 		Join("LEFT", model.AdminRole{}, "admin_user_role.role_id = admin_role.id").
 		Limit(param.Size, offset).
@@ -634,6 +640,7 @@ func UserInfo(c *gin.Context) {
 	resultMap["is_first"] = user.IsFirst
 	resultMap["nick_name"] = user.Nickname
 	resultMap["status"] = user.Status
+	resultMap["channel"] = user.Channel
 	response.RespOk(c, "成功", resultMap)
 }
 
