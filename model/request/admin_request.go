@@ -502,6 +502,8 @@ type GetReportUserDayListRequest struct {
 	Size      int    `form:"size" json:"size" dc:"分页查询size, 最大1000"`
 }
 type GetChannelUserDayListRequest struct {
+	StartDate int    `form:"startDate" json:"startDate" dc:"报表日期，eg:20240101"`
+	EndDate   int    `form:"endDate" json:"endDate" dc:"报表日期，eg:20240101"`
 	Date      int    `form:"date" json:"date" dc:"报表日期，eg:20240101"`
 	Channel   string `form:"channel" json:"channel" dc:"推广渠道ID"`
 	OrderType string `form:"order_type" json:"order_type" dc:"排序类型，eg: asc|desc"`
@@ -548,6 +550,8 @@ type GetReportUserRechargeTimesDayListRequest struct {
 	Size      int    `form:"size" json:"size" dc:"分页查询size, 最大1000"`
 }
 type GetChannelUserRechargeListRequest struct {
+	StartDate int    `form:"startDate" json:"startDate" dc:"报表日期，eg:20240101"`
+	EndDate   int    `form:"endDate" json:"endDate" dc:"报表日期，eg:20240101"`
 	Date      int    `form:"date" json:"date" dc:"报表日期，eg:20240101"`
 	Channel   string `form:"channel" json:"channel" dc:"推广渠道ID"`
 	OrderType string `form:"order_type" json:"order_type" dc:"排序类型，eg: asc|desc"`

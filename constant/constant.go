@@ -56,3 +56,7 @@ const (
 const (
 	DaySeconds = 60 * 60 * 24
 )
+const (
+	MaxChannel = 210000 //合作渠道最大查询范围
+	MinChannel = 110000 //合作渠道最小查询范围
+)

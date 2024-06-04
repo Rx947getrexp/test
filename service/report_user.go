@@ -79,7 +79,7 @@ func QueryUserChannelDay(ctx context.Context, date int, Channel string, orderTyp
 	err = sess.Limit(size, offset).OrderBy(fmt.Sprintf("date %s, channel %s", order, order)).Find(&list)
 	return count, list, err
 }
-func QueryUserPromotionChannelDay(ctx context.Context, date int, Channel string, orderType string, page, size int) (int64, []*model.TUserChannelDay, error) {
+func QueryUserPromotionChannelDay(ctx context.Context, startDate, endDate, date int, Channel string, orderType string, page, size int) (int64, []*model.TUserChannelDay, error) {
 	order := "desc"
 	if strings.ToLower(orderType) == "asc" {
 		order = "asc"
@@ -98,12 +98,16 @@ func QueryUserPromotionChannelDay(ctx context.Context, date int, Channel string,
 		sess = sess.Where(" date = ?", date)
 		sessCount = sessCount.Where(" date = ?", date)
 	}
+	if startDate > 0 && endDate > 0 {
+		sess = sess.Where(" date BETWEEN ? AND ?", startDate, endDate)
+		sessCount = sessCount.Where(" date BETWEEN ? AND ?", startDate, endDate)
+	}
 	if Channel == "" {
-		sess = sess.Where("channel BETWEEN ? AND ?", 110000, 210000)
-		sessCount = sessCount.Where("channel BETWEEN ? AND ?", 110000, 210000)
+		sess = sess.Where("channel BETWEEN ? AND ?", constant.MinChannel, constant.MaxChannel)
+		sessCount = sessCount.Where("channel BETWEEN ? AND ?", constant.MinChannel, constant.MaxChannel)
 	} else {
 		channelInt, err := strconv.Atoi(Channel)
-		if err != nil || channelInt <= 110000 || channelInt >= 210000 {
+		if err != nil || channelInt <= constant.MinChannel || channelInt >= constant.MaxChannel {
 			return 0, list, nil
 		}
 		sess = sess.Where("channel = ?", Channel)
@@ -305,7 +309,7 @@ func QueryUserRechargeTimesReportDay(ctx context.Context, date, GoodsId int, ord
 	err = sess.Limit(size, offset).OrderBy(fmt.Sprintf("date %s", order)).Find(&list)
 	return count, list, err
 }
-func QueryChannelUserRechargeTimesReportDay(ctx context.Context, date int, Channel string, orderType string, page, size int) (int64, []*model.TUserChannelRechargeDay, error) {
+func QueryChannelUserRechargeTimesReportDay(ctx context.Context, startDate, endDate, date int, Channel string, orderType string, page, size int) (int64, []*model.TUserChannelRechargeDay, error) {
 	order := "desc"
 	if strings.ToLower(orderType) == "asc" {
 		order = "asc"
@@ -323,6 +327,10 @@ func QueryChannelUserRechargeTimesReportDay(ctx context.Context, date int, Chann
 	if date > 0 {
 		sess = sess.Where(" date = ?", date)
 		sessCount = sessCount.Where(" date = ?", date)
+	}
+	if startDate > 0 && endDate > 0 {
+		sess = sess.Where(" date BETWEEN ? AND ?", startDate, endDate)
+		sessCount = sessCount.Where(" date BETWEEN ? AND ?", startDate, endDate)
 	}
 	if Channel != "" {
 		sess = sess.Where(" channel = ?", Channel)

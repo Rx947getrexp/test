@@ -211,7 +211,7 @@ func GetPromotionChannelUserDayList(c *gin.Context) {
 		response.ResFail(c, "参数错误")
 		return
 	}
-	total, list, err := service.QueryUserPromotionChannelDay(c, param.Date, param.Channel, param.OrderType, param.Page, param.Size)
+	total, list, err := service.QueryUserPromotionChannelDay(c, param.StartDate, param.EndDate, param.Date, param.Channel, param.OrderType, param.Page, param.Size)
 	if err != nil {
 		global.Logger.Err(err).Msg("查询出错！")
 		response.ResFail(c, "查询出错！")
@@ -393,7 +393,7 @@ func GetChannelUserRechargeList(c *gin.Context) {
 		return
 	}
 
-	total, list, err := service.QueryChannelUserRechargeTimesReportDay(c, param.Date, param.Channel, param.OrderType, param.Page, param.Size)
+	total, list, err := service.QueryChannelUserRechargeTimesReportDay(c, param.StartDate, param.EndDate, param.Date, param.Channel, param.OrderType, param.Page, param.Size)
 	if err != nil {
 		global.Logger.Err(err).Msg("查询出错！")
 		response.ResFail(c, "查询出错！")
