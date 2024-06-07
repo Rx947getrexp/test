@@ -95,12 +95,12 @@ func QueryUserPromotionChannelDay(ctx context.Context, startDate, endDate, date 
 	sessCount := global.Db2.Context(ctx)
 	sess := global.Db2.Context(ctx)
 	if date > 0 {
-		sess = sess.Where(" date = ?", date)
-		sessCount = sessCount.Where(" date = ?", date)
+		sess = sess.Where("date = ?", date)
+		sessCount = sessCount.Where("date = ?", date)
 	}
 	if startDate > 0 && endDate > 0 {
-		sess = sess.Where(" date BETWEEN ? AND ?", startDate, endDate)
-		sessCount = sessCount.Where(" date BETWEEN ? AND ?", startDate, endDate)
+		sess = sess.Where("date BETWEEN ? AND ?", startDate, endDate)
+		sessCount = sessCount.Where("date BETWEEN ? AND ?", startDate, endDate)
 	}
 	if Channel == "" {
 		sess = sess.Where("channel BETWEEN ? AND ?", constant.MinChannel, constant.MaxChannel)
@@ -122,8 +122,16 @@ func QueryUserPromotionChannelDay(ctx context.Context, startDate, endDate, date 
 		return 0, nil, err
 	}
 	err = sess.Limit(size, offset).OrderBy(fmt.Sprintf("date %s, channel %s", order, order)).Find(&list)
+	if err != nil {
+		return 0, nil, err
+	}
+	// 将 Date 字段的整数值转换为字符串
+	for _, item := range list {
+		item.Date = fmt.Sprintf("%d", item.Date)
+	}
 	return count, list, err
 }
+
 func QueryOnlineUserDay(ctx context.Context, date int, channelId string, email, orderType string, page, size int) (int64, []*model.TUserOnlineDay, error) {
 	order := "desc"
 	if strings.ToLower(orderType) == "asc" {
