@@ -87,7 +87,7 @@ const (
 	RetMsgAuthorizationTokenInvalid = "Token无效"
 	RetMsgCreatePayOrderFailed      = "创建支付订单失败，请稍后重试。如果持续失败，请联系客服处理！"
 	RetMsgMemberExpirationReminder  = "会员还有三天即将到期，请及时续费！"
-	RetMsgOrderUnpaidLimit          = "您还有订单未支付，请先支付或者取消后再继续创建新的订单。"
+	RetMsgOrderUnpaidLimit          = "您还有订单未支付且未支付订单数量超过平台限制，请先支付或者取消后再继续创建新的订单。"
 	RetMsgOrderClosedLimit          = "您取消的订单次数超过限制。"
 	RetMsgOrderFailedLimit          = "当前订单支付失败的次数太多，请稍后重试。"
 	RetMsgProofUploadLimit          = "您已经上传过凭证，请不要重复上传。"
@@ -124,8 +124,8 @@ func Init() {
 	}
 
 	ReturnMsgMap[RetMsgOrderUnpaidLimit] = map[string]string{
-		LangEN: "You have an unpaid order. Please pay or cancel it before creating a new order.",
-		LangRU: "У вас есть неоплаченный заказ. Пожалуйста, оплатите или отмените его, прежде чем создавать новый заказ.",
+		LangEN: "You have unpaid orders and the number of unpaid orders exceeds the platform limit. Please pay or cancel them before creating new orders.",
+		LangRU: "У вас есть неоплаченные заказы, и количество неоплаченных заказов превышает лимит платформы. Пожалуйста, оплатите их или отмените, прежде чем создавать новые заказы.",
 	}
 
 	ReturnMsgMap[RetMsgCreatePayOrderFailed] = map[string]string{

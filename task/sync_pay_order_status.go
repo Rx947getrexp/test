@@ -17,8 +17,8 @@ import (
 
 const (
 	leaderLockKeySyncOrderStatus       = "hs-fly-SyncPayOrderStatus-leader-lock"
-	electionIntervalSyncPayOrderStatus = 10 * time.Second
-	lockTimeoutSyncPayOrderStatus      = electionIntervalSyncPayOrderStatus + 10*time.Second
+	electionIntervalSyncPayOrderStatus = 20 * time.Second
+	lockTimeoutSyncPayOrderStatus      = electionIntervalSyncPayOrderStatus + 20*time.Second
 )
 
 // SyncPayOrderStatus 同步订单支付状态
@@ -51,16 +51,17 @@ func doSyncPayOrderStatus() {
 	)
 	err = dao.TPayOrder.Ctx(ctx).
 		Where(do.TPayOrder{
-			PaymentChannelId: constant.PayChannelUPay,
+			PaymentChannelId: []string{constant.PayChannelUPay, constant.PayChannelPnSafePay},
 			Status:           []string{constant.ParOrderStatusInit, constant.ParOrderStatusUnpaid},
 		}).
-		WhereGTE(dao.TPayOrder.Columns().CreatedAt, gtime.Now().Add(-7*time.Hour*24)).
+		WhereGTE(dao.TPayOrder.Columns().CreatedAt, gtime.Now().Add(-1*time.Hour*24)).
 		Order(dao.TPayOrder.Columns().Id, "DESC").
 		Scan(&items)
 	if err != nil {
 		global.Logger.Err(err).Msg("query TPayOrder failed")
 		return
 	}
+	global.Logger.Info().Msgf("len(items): %d", len(items))
 
 	c, _ := gin.CreateTestContext(httptest.NewRecorder())
 	defer c.Done()

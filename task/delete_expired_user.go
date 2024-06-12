@@ -52,7 +52,7 @@ func DoDeleteExpiredUser() {
 	//whiteList := []string{"zzz@qq.com"}
 	// TODO：后续要注意时区
 	nowTime := time.Now().Unix() // 过期30分钟后才执行踢人
-	err = global.Db.Where("email != 'zzz@qq.com' and status = 0 and expired_time <= ? and expired_time > ?", nowTime, nowTime-24*60*60).OrderBy("expired_time asc").Find(&list)
+	err = global.Db.Where("email != 'zzz@qq.com' and status = 0 and expired_time <= ? and expired_time > ?", nowTime, nowTime-3*24*60*60).OrderBy("expired_time asc").Find(&list)
 	if err != nil {
 		global.Logger.Err(err).Msg("get expired users failed")
 		time.Sleep(time.Second * 10)
