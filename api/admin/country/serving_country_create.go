@@ -1,6 +1,7 @@
 package country
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gogf/gf/v2/os/gtime"
 	"go-speed/dao"
@@ -18,6 +19,7 @@ type ServingCountryCreateReq struct {
 	PingUrl     string `form:"ping_url" binding:"required" json:"ping_url" dc:"ping的地址，供前端使用"`
 	IsRecommend uint   `form:"is_recommend" json:"is_recommend" dc:"是否为推荐的国家，0:否，1：是"`
 	Weight      uint   `form:"weight" json:"weight" dc:"推荐权重,权重越大的国家展示在越靠前"`
+	Level       int    `form:"level" json:"level" dc:"等级约束：0-所有用户都可以选择；1-青铜、铂金会员可选择；2-铂金会员可选择"`
 }
 
 type ServingCountryCreateRes struct {
@@ -46,6 +48,11 @@ func ServingCountryCreate(ctx *gin.Context) {
 	if countryEntity == nil {
 		global.MyLogger(ctx).Err(err).Msgf("country name invalid")
 		response.ResFail(ctx, i18n.RetMsgParamInvalid)
+		return
+	}
+	if req.Level < 0 || req.Level > 2 {
+		global.MyLogger(ctx).Err(err).Msgf(`param "Level" invalid`)
+		response.ResFail(ctx, fmt.Sprintf(`param "Level"(%d) invalid`, req.Level))
 		return
 	}
 

@@ -206,7 +206,8 @@ func CreateOrder(ctx *gin.Context) {
 func ValidateOrderLimit(ctx *gin.Context, user *entity.TUser, channel *entity.TPaymentChannel) (err error) {
 	// query unpaid order
 	var orders []entity.TPayOrder
-	err = dao.TPayOrder.Ctx(ctx).Where(do.TPayOrder{UserId: user.Id}).
+	err = dao.TPayOrder.Ctx(ctx).
+		Where(do.TPayOrder{UserId: user.Id, PaymentChannelId: channel.ChannelId}).
 		WhereGTE(dao.TPayOrder.Columns().CreatedAt, getNDurationAgoTime(time.Minute*time.Duration(channel.TimeoutDuration))).
 		WhereNotIn(dao.TPayOrder.Columns().Status, []string{constant.ParOrderStatusPaid}).
 		Order(dao.TPayOrder.Columns().Id, constant.OrderTypeDesc).Scan(&orders)
@@ -216,16 +217,11 @@ func ValidateOrderLimit(ctx *gin.Context, user *entity.TUser, channel *entity.TP
 		return
 	}
 
-	var closedNum, failedNum int
+	var unpaidNum, closedNum, failedNum int
 	for _, order := range orders {
 		switch order.Status {
 		case constant.ParOrderStatusInit, constant.ParOrderStatusUnpaid:
-			if channel.ChannelId == order.PaymentChannelId {
-				err = fmt.Errorf(i18n.RetMsgOrderUnpaidLimit)
-				global.MyLogger(ctx).Err(err).Msgf("%s", order.OrderNo)
-				response.RespFail(ctx, i18n.RetMsgOrderUnpaidLimit, nil)
-				return
-			}
+			unpaidNum++
 
 		case constant.ParOrderStatusClosed, constant.ParOrderStatusTimeout:
 			closedNum++
@@ -233,6 +229,13 @@ func ValidateOrderLimit(ctx *gin.Context, user *entity.TUser, channel *entity.TP
 		case constant.ParOrderStatusPaidFailed:
 			failedNum++
 		}
+	}
+
+	if unpaidNum >= global.Config.PayConfig.OrderUnpaidLimitNum {
+		err = fmt.Errorf(i18n.RetMsgOrderUnpaidLimit)
+		global.MyLogger(ctx).Err(err).Msgf("unpaidNum: %d", unpaidNum)
+		response.RespFail(ctx, i18n.RetMsgOrderUnpaidLimit, nil)
+		return
 	}
 
 	if closedNum >= global.Config.PayConfig.OrderClosedLimitNum {
@@ -443,7 +446,7 @@ func genPayAmount(price, priceUSD float64, channelId string) (amount float64, am
 		amount, _ = strconv.ParseFloat(amountString, 64)
 		return amount, amountString, CurrencyRUB
 	default:
-		return price, fmt.Sprintf("%f", price), CurrencyRUB
+		return price, fmt.Sprintf("%.2f", price), CurrencyRUB
 	}
 }
 

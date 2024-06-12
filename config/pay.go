@@ -13,6 +13,7 @@ type PNSafePay struct {
 type PayConfig struct {
 	MaxFreeTrialDays          int    `mapstructure:"max_free_trial_days"`
 	GiftDurationPercentage    int    `mapstructure:"gift_duration_percentage"`
+	OrderUnpaidLimitNum       int    `mapstructure:"order_unpaid_limit_num"`
 	OrderClosedLimitNum       int    `mapstructure:"order_closed_limit_num"`
 	OrderFailedLimitNum       int    `mapstructure:"order_failed_limit_num"`
 	DisablePaymentCountryList string `mapstructure:"disable_payment_country_list"`

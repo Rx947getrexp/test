@@ -55,6 +55,11 @@ func SetPreferredCountry(ctx *gin.Context) {
 			response.RespFail(ctx, i18n.RetMsgParamInvalid, nil)
 			return
 		}
+		if countryEntity.Level > userEntity.Level {
+			global.MyLogger(ctx).Err(err).Msgf(i18n.RetMsgOpLimitedCurrentUserLevel)
+			response.RespFail(ctx, i18n.RetMsgOpLimitedCurrentUserLevel, nil)
+			return
+		}
 	}
 
 	if userEntity.PreferredCountry == req.CountryName {

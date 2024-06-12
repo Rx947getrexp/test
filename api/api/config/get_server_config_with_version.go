@@ -11,6 +11,7 @@ import (
 	"go-speed/model/do"
 	"go-speed/model/entity"
 	"go-speed/model/response"
+	"go-speed/util/geo"
 	"net/http"
 )
 
@@ -51,6 +52,7 @@ func GetServerConfigWithoutRules(ctx *gin.Context) {
 		return
 	}
 
+	dnss := make([]string, 0)
 	v2rayServers := make([]Server, 0)
 	for _, item := range nodeEntities {
 		nodeId := item.Id
@@ -72,8 +74,12 @@ func GetServerConfigWithoutRules(ctx *gin.Context) {
 			for _, nodePort := range nodePorts {
 				v2rayServers = append(v2rayServers, Server{Password: userEntity.V2RayUuid, Port: nodePort, Address: dns.Dns})
 			}
+			if !geo.IsInArrayIgnoreCase(dns.Dns, dnss) {
+				dnss = append(dnss, dns.Dns)
+			}
 		}
 	}
+	global.MyLogger(ctx).Info().Msgf(">>>>> dnss: %+v", dnss)
 	global.MyLogger(ctx).Info().Msgf(">>>>> v2rayServers: %+v", v2rayServers)
 
 	v, err := json.Marshal(GenV2rayConfig(ctx, v2rayServers, winCountry.Name, true))
