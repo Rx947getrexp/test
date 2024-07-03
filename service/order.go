@@ -13,6 +13,7 @@ import (
 	"go-speed/model/entity"
 	"go-speed/util/pay/pnsafepay"
 	"go-speed/util/pay/upay"
+	"go-speed/util/pay/webmoney"
 	"golang.org/x/exp/rand"
 	"runtime/debug"
 	"strconv"
@@ -98,6 +99,57 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string) (status string, err error
 	case constant.PayChannelBankCardPay:
 		// 银行卡支付，后台无法校验，直接标记支付成功
 		resultStatus, orderRealityAmount = constant.ReturnStatusSuccess, payOrder.OrderAmount
+	case constant.PayChannelWebMoneyPay:
+		var resp *webmoney.Operation
+		resp, err = webmoney.QueryOrder(ctx, payOrder.OrderNo)
+		if err != nil {
+			global.MyLogger(ctx).Err(err).Msgf("QueryDeal failed")
+			return
+		}
+		// -0 – simple (or protected, successfully completed),
+		// -4 – protected (not completed),
+		// -12 – protected (refunded).
+		if resp == nil || resp.OperType == "4" {
+			global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ orderNo: %s, waiting to pay (not completed)", orderNo)
+			return constant.ReturnStatusWaiting, nil
+		}
+		if resp.OperType == "12" {
+			global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ orderNo: %s, refunded", orderNo)
+			return constant.ReturnStatusFail, nil
+		}
+
+		if resp.OperType == "0" {
+			pass, err := checkAmount(ctx, resp.Amount, payOrder.OrderAmount)
+			if err != nil {
+				return constant.ReturnStatusWaiting, err
+			}
+
+			if !pass {
+				global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ OrderAmount: %s, waiting to pay", orderNo)
+				return constant.ReturnStatusWaiting, nil
+			}
+			resultStatus, orderRealityAmount = constant.ReturnStatusSuccess, resp.Amount
+		} else {
+			global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ orderNo: %s, waiting to pay", orderNo)
+			return constant.ReturnStatusWaiting, nil
+		}
+
+		////0 – unpaid 1 – paid with protection 2 – fully paid or paid without protection 3 – rejected
+		//if resp == nil || resp.State == 0 {
+		//	global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ orderNo: %s, waiting to pay", orderNo)
+		//	return constant.ReturnStatusWaiting, nil
+		//}
+		//if resp.State == 3 {
+		//	global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ orderNo: %s, rejected", orderNo)
+		//	return constant.ReturnStatusFail, nil
+		//}
+		//
+		//if resp.State == 1 || resp.State == 2 {
+		//	resultStatus, orderRealityAmount = constant.ReturnStatusSuccess, strconv.FormatFloat(resp.Amount, 'f', -1, 64)
+		//} else {
+		//	global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ orderNo: %s, waiting to pay", orderNo)
+		//	return constant.ReturnStatusWaiting, nil
+		//}
 	}
 
 	// 查询用户信息
@@ -339,4 +391,29 @@ func randomGiftDay(min, max int) int {
 		randomNumber = min
 	}
 	return randomNumber
+}
+
+func checkAmount(ctx *gin.Context, amount, orderAmount string) (bool, error) {
+	global.MyLogger(ctx).Info().Msgf("response amount: (%s), order amount: (%s)", amount, orderAmount)
+	if amount == orderAmount {
+		return true, nil
+	}
+	amountFloat, err := strconv.ParseFloat(amount, 64)
+	if err != nil {
+		global.MyLogger(ctx).Err(err).Msgf("response amount ParseFloat failed, (%s)", amount)
+		return false, err
+	}
+
+	orderAmountFloat, err := strconv.ParseFloat(orderAmount, 64)
+	if err != nil {
+		global.MyLogger(ctx).Err(err).Msgf("order amount ParseFloat failed, (%s)", orderAmount)
+		return false, err
+	}
+	if amountFloat == orderAmountFloat {
+		return true, nil
+	}
+
+	err = fmt.Errorf("order amount is not eq, response amount: (%s), order amount: (%s)", amount, orderAmount)
+	global.MyLogger(ctx).Err(err).Msgf("amount not eq")
+	return false, err
 }

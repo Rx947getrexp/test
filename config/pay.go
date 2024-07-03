@@ -19,3 +19,9 @@ type PayConfig struct {
 	DisablePaymentCountryList string `mapstructure:"disable_payment_country_list"`
 	DisablePaymentEmailList   string `mapstructure:"disable_payment_email_list"`
 }
+
+type WebMoneyConfig struct {
+	WmId     string `mapstructure:"wmid"`
+	Purse    string `mapstructure:"purse"`
+	RandCode string `mapstructure:"rand_code"`
+}

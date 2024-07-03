@@ -25,20 +25,21 @@ const (
 func DeleteExpiredUser() {
 	global.Recovery()
 	global.Logger.Info().Msg("DeleteExpiredUser start...")
-	ctx := context.Background()
+	//ctx := context.Background()
 	for {
-		isLeader, err := tryAcquireLock(ctx, leaderLockKey, lockTimeout)
-		if err != nil {
-			global.Logger.Err(err).Msg("tryAcquireLock failed")
-		} else if isLeader {
-			global.Logger.Info().Msg("I am the leader")
-			// 在这里执行主进程的逻辑
-			DoDeleteExpiredUser()
-			releaseLock(ctx, leaderLockKey)
-		} else {
-			global.Logger.Info().Msg("I am a follower")
-			// 在这里执行从进程的逻辑
-		}
+		//isLeader, err := tryAcquireLock(ctx, leaderLockKey, lockTimeout)
+		//if err != nil {
+		//	global.Logger.Err(err).Msg("tryAcquireLock failed")
+		//} else if isLeader {
+		//	global.Logger.Info().Msg("I am the leader")
+		//	// 在这里执行主进程的逻辑
+		//	DoDeleteExpiredUser()
+		//	releaseLock(ctx, leaderLockKey)
+		//} else {
+		//	global.Logger.Info().Msg("I am a follower")
+		//	// 在这里执行从进程的逻辑
+		//}
+		DoDeleteExpiredUser()
 		time.Sleep(electionInterval)
 	}
 }

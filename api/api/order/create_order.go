@@ -25,6 +25,7 @@ import (
 const (
 	CurrencyRUB              = "RUB"   // 俄罗斯卢布
 	CurrencyU                = "USD"   // U支付
+	CurrencyWMZ              = "WMZ"   // webmoney
 	RussianOnlineBankingCode = "29001" // 俄罗斯网银
 )
 
@@ -41,6 +42,7 @@ type CreateOrderRes struct {
 	OrderUrl    string  `json:"order_url" dc:"支付平台链接. (u支付和银行卡支付此字段无效)"`
 	IsGifted    bool    `json:"is_gifted" dc:"本次是否因为支付渠道关闭而赠送了时长. (u支付和银行卡支付此字段无效)"`
 	GiftedDays  int     `json:"gifted_days" dc:"本次是否因为支付渠道关闭而赠送的天数 (u支付和银行卡支付此字段无效)" eg:"success,fail"`
+	Purse       string  `json:"purse" dc:"purse"`
 }
 
 // CreateOrder 创建订单
@@ -95,9 +97,12 @@ func CreateOrder(ctx *gin.Context) {
 	}
 
 	// create order
-	amount, amountString, currency := genPayAmount(goodsEntity.Price, goodsEntity.UsdPayPrice, req.ChannelId)
-	global.MyLogger(ctx).Info().Msgf("channel: %s, amount: %f, amountString: %s, currency: %s",
-		req.ChannelId, amount, amountString, currency)
+	amount, amountString, currency := genPayAmount(goodsEntity.Price, goodsEntity.UsdPayPrice, goodsEntity.WebmoneyPayPrice, req.ChannelId)
+	global.MyLogger(ctx).Info().Msgf(
+		"channel: %s, amount: %f, amountString: %s, currency: %s",
+		req.ChannelId, amount, amountString, currency,
+	)
+
 	lastInsertId, err = dao.TPayOrder.Ctx(ctx).Data(do.TPayOrder{
 		UserId:           userEntity.Id,
 		Email:            userEntity.Email,
@@ -150,18 +155,25 @@ func CreateOrder(ctx *gin.Context) {
 			payOrderUpdate.PaymentChannelErr = constant.PaymentChannelErrYes
 		}
 
-	case constant.PayChannelUPay: // 用户选择的是 usd pay 支付渠道
+	case constant.PayChannelUPay:
+		// 用户选择的是 usd pay 支付渠道
 		// U支付只需要返回支付连接给前端
 		res.Status = constant.ReturnStatusSuccess
 		payOrderUpdate.ReturnStatus = constant.ReturnStatusSuccess
 		payOrderUpdate.StatusMes = "U-Pay directly returns the payment code"
 
-	case constant.PayChannelBankCardPay: // 用户选择银行卡支付
+	case constant.PayChannelBankCardPay:
+		// 用户选择银行卡支付
 		// 银行卡支付只需要返回银行卡给前端
 		res.Status = constant.ReturnStatusSuccess
 		payOrderUpdate.ReturnStatus = constant.ReturnStatusSuccess
 		payOrderUpdate.StatusMes = "BankCard-Pay directly returns the bank card number"
 
+	case constant.PayChannelWebMoneyPay:
+		// webmoney
+		res.Status = constant.ReturnStatusSuccess
+		payOrderUpdate.ReturnStatus = constant.ReturnStatusSuccess
+		payOrderUpdate.StatusMes = "Webmoney"
 	default:
 		err = fmt.Errorf("ChannelId %s 无效", req.ChannelId)
 		global.MyLogger(ctx).Err(err).Msgf("ChannelId not exist")
@@ -198,12 +210,16 @@ func CreateOrder(ctx *gin.Context) {
 			res.GiftedDays = paymentEntity.FreeTrialDays
 		}
 	}
-	res.OrderAmount, res.Currency = amount, currency
+	res.OrderAmount, res.Currency, res.Purse = amount, currency, paymentEntity.PayTypeCode
+	global.MyLogger(ctx).Info().Msgf("res: %+v", res)
 	response.RespOk(ctx, i18n.RetMsgSuccess, res)
 	return
 }
 
 func ValidateOrderLimit(ctx *gin.Context, user *entity.TUser, channel *entity.TPaymentChannel) (err error) {
+	if channel.ChannelId == constant.PayChannelWebMoneyPay {
+		return nil
+	}
 	// query unpaid order
 	var orders []entity.TPayOrder
 	err = dao.TPayOrder.Ctx(ctx).
@@ -265,9 +281,8 @@ func generateOrderID() string {
 	second := now.Second()
 
 	rand.Seed(time.Now().UnixNano())
-	randomNumber := rand.Intn(1000000) // 生成一个0到1000000之间的随机数
-
-	return fmt.Sprintf("%04d%02d%02d%02d%02d%02d%06d", year, month, day, hour, minute, second, randomNumber)
+	randomNumber := rand.Intn(999) // 生成一个0到1000000之间的随机数
+	return fmt.Sprintf("%02d%02d%02d%02d%02d%02d%03d", year-2014, month, day, hour, minute, second, randomNumber)
 }
 
 // 系统赠送时长
@@ -433,7 +448,7 @@ func genUPayAmount2DecimalPartValue() int {
 	return randomNumber % 100
 }
 
-func genPayAmount(price, priceUSD float64, channelId string) (amount float64, amountString string, currency string) {
+func genPayAmount(price, priceUSD, webMoneyPrice float64, channelId string) (amount float64, amountString string, currency string) {
 	switch channelId {
 	case constant.PayChannelUPay:
 		amountInt := int((priceUSD-1)*10000) + genUPayAmountDecimalPartValue()
@@ -445,6 +460,8 @@ func genPayAmount(price, priceUSD float64, channelId string) (amount float64, am
 		amountString = fmt.Sprintf("%d.%d", amountInt/100, amountInt%100)
 		amount, _ = strconv.ParseFloat(amountString, 64)
 		return amount, amountString, CurrencyRUB
+	case constant.PayChannelWebMoneyPay:
+		return webMoneyPrice, fmt.Sprintf("%.2f", webMoneyPrice), CurrencyWMZ
 	default:
 		return price, fmt.Sprintf("%.2f", price), CurrencyRUB
 	}
@@ -482,6 +499,9 @@ func ValidatePayChannel(ctx *gin.Context, channelId string) (pc *entity.TPayment
 		global.MyLogger(ctx).Err(err).Msgf("channelId not exist")
 		response.RespFail(ctx, i18n.RetMsgParamInvalid, nil)
 		return
+	}
+	if pc.ChannelId == constant.PayChannelWebMoneyPay {
+		pc.PayTypeCode = global.Config.WebMoneyConfig.Purse
 	}
 	return
 }
