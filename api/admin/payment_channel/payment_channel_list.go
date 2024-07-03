@@ -27,6 +27,8 @@ type PaymentChannel struct {
 	PaymentQRCode       string              `json:"payment_qr_code" dc:"支付收款码. eg: U支付收款码"`
 	PaymentQRUrl        string              `json:"payment_qr_url" dc:"支付收款码链接"`
 	UsdNetwork          string              `json:"usd_network" dc:"USD支付网络"`
+	MerNo               string              `json:"mer_no" dc:"商户号"`
+	PayTypeCode         string              `json:"pay_type_code" dc:"支付码"`
 	BankCardInfo        []BankCardInfo      `json:"bank_card_info" dc:"银行卡信息"`
 	CustomerServiceInfo CustomerServiceInfo `json:"customer_service_info" dc:"客服信息"`
 	Weight              int                 `json:"weight" dc:"权重，根据权重排序"`
@@ -72,6 +74,8 @@ func PaymentChannelList(ctx *gin.Context) {
 			PaymentQRCode:       item.PaymentQrCode,
 			PaymentQRUrl:        item.PaymentQrUrl,
 			UsdNetwork:          item.UsdNetwork,
+			MerNo:               item.MerNo,
+			PayTypeCode:         item.PayTypeCode,
 			BankCardInfo:        bankCardInfo,
 			CustomerServiceInfo: customerServiceInfo,
 			Weight:              item.Weight,

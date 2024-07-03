@@ -458,24 +458,25 @@ func AddCombo(c *gin.Context) {
 		return
 	}
 	goods := &model.TGoods{
-		MType:        param.MType,
-		Title:        param.Title,
-		TitleEn:      "",
-		Price:        decimal.NewFromFloat(param.Price).Truncate(2).String(),
-		UsdPayPrice:  decimal.NewFromFloat(param.UsdPayPrice).Truncate(2).String(),
-		PriceUnit:    param.PriceUnit,
-		UsdPriceUnit: param.UsdPriceUnit,
-		Period:       param.Period,
-		DevLimit:     param.DevLimit,
-		FlowLimit:    param.FlowLimit,
-		Status:       1,
-		Author:       user.Uname,
-		IsDiscount:   param.IsDiscount,
-		Low:          param.Low,
-		High:         param.High,
-		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now(),
-		Comment:      "",
+		MType:            param.MType,
+		Title:            param.Title,
+		TitleEn:          "",
+		Price:            decimal.NewFromFloat(param.Price).Truncate(2).String(),
+		UsdPayPrice:      decimal.NewFromFloat(param.UsdPayPrice).Truncate(2).String(),
+		WebmoneyPayPrice: decimal.NewFromFloat(param.WebmoneyPayPrice).Truncate(2).String(),
+		PriceUnit:        param.PriceUnit,
+		UsdPriceUnit:     param.UsdPriceUnit,
+		Period:           param.Period,
+		DevLimit:         param.DevLimit,
+		FlowLimit:        param.FlowLimit,
+		Status:           1,
+		Author:           user.Uname,
+		IsDiscount:       param.IsDiscount,
+		Low:              param.Low,
+		High:             param.High,
+		CreatedAt:        time.Now(),
+		UpdatedAt:        time.Now(),
+		Comment:          "",
 	}
 	rows, err := global.Db.Insert(goods)
 	if err != nil || rows != 1 {
@@ -535,6 +536,11 @@ func EditCombo(c *gin.Context) {
 	if param.UsdPriceUnit != "" {
 		cols = append(cols, "usd_price_unit")
 		bean.UsdPriceUnit = param.UsdPriceUnit
+	}
+	global.Logger.Info().Msgf("param: %+v", *param)
+	if param.WebmoneyPayPrice > 0 {
+		cols = append(cols, "webmoney_pay_price")
+		bean.WebmoneyPayPrice = decimal.NewFromFloat(param.WebmoneyPayPrice).Truncate(2).String()
 	}
 	if param.Title != "" {
 		cols = append(cols, "title")

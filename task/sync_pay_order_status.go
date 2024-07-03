@@ -1,7 +1,6 @@
 package task
 
 import (
-	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/gogf/gf/os/gctx"
 	"github.com/gogf/gf/v2/os/gtime"
@@ -25,20 +24,21 @@ const (
 func SyncPayOrderStatus() {
 	global.Recovery()
 	global.Logger.Info().Msg("SyncPayOrderStatus start...")
-	ctx := context.Background()
+	//ctx := context.Background()
 	for {
-		isLeader, err := tryAcquireLock(ctx, leaderLockKeySyncOrderStatus, lockTimeoutSyncPayOrderStatus)
-		if err != nil {
-			global.Logger.Err(err).Msg("tryAcquireLock failed")
-		} else if isLeader {
-			global.Logger.Info().Msg("I am the leader")
-			// 在这里执行主进程的逻辑
-			doSyncPayOrderStatus()
-			releaseLock(ctx, leaderLockKeySyncOrderStatus)
-		} else {
-			global.Logger.Info().Msg("I am a follower")
-			// 在这里执行从进程的逻辑
-		}
+		//isLeader, err := tryAcquireLock(ctx, leaderLockKeySyncOrderStatus, lockTimeoutSyncPayOrderStatus)
+		//if err != nil {
+		//	global.Logger.Err(err).Msg("tryAcquireLock failed")
+		//} else if isLeader {
+		//	global.Logger.Info().Msg("I am the leader")
+		//	// 在这里执行主进程的逻辑
+		//	doSyncPayOrderStatus()
+		//	releaseLock(ctx, leaderLockKeySyncOrderStatus)
+		//} else {
+		//	global.Logger.Info().Msg("I am a follower")
+		//	// 在这里执行从进程的逻辑
+		//}
+		doSyncPayOrderStatus()
 		time.Sleep(electionIntervalSyncPayOrderStatus)
 	}
 }
@@ -51,11 +51,12 @@ func doSyncPayOrderStatus() {
 	)
 	err = dao.TPayOrder.Ctx(ctx).
 		Where(do.TPayOrder{
-			PaymentChannelId: []string{constant.PayChannelUPay, constant.PayChannelPnSafePay},
+			PaymentChannelId: []string{constant.PayChannelUPay, constant.PayChannelPnSafePay, constant.PayChannelWebMoneyPay},
 			Status:           []string{constant.ParOrderStatusInit, constant.ParOrderStatusUnpaid},
 		}).
-		WhereGTE(dao.TPayOrder.Columns().CreatedAt, gtime.Now().Add(-1*time.Hour*24)).
-		Order(dao.TPayOrder.Columns().Id, "DESC").
+		//Where(do.TPayOrder{OrderNo: "100701092254247"}).
+		WhereGTE(dao.TPayOrder.Columns().CreatedAt, gtime.Now().Add(-2*time.Hour)).
+		Order(dao.TPayOrder.Columns().Id, "DESC").Limit(1000).
 		Scan(&items)
 	if err != nil {
 		global.Logger.Err(err).Msg("query TPayOrder failed")

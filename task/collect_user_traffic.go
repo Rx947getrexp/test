@@ -1,7 +1,6 @@
 package task
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"go-speed/constant"
@@ -27,20 +26,21 @@ const (
 func CollectUserTraffic() {
 	global.Recovery()
 	global.Logger.Info().Msg("CollectUserTraffic start...")
-	ctx := context.Background()
+	//ctx := context.Background()
 	for {
-		isLeader, err := tryAcquireLock(ctx, leaderLockKeyTraffic, lockTimeoutTraffic)
-		if err != nil {
-			global.Logger.Err(err).Msg("tryAcquireLock failed")
-		} else if isLeader {
-			global.Logger.Info().Msg("I am the leader")
-			// 在这里执行主进程的逻辑
-			DoCollectUserTraffic()
-			releaseLock(ctx, leaderLockKeyTraffic)
-		} else {
-			global.Logger.Info().Msg("I am a follower")
-			// 在这里执行从进程的逻辑
-		}
+		//isLeader, err := tryAcquireLock(ctx, leaderLockKeyTraffic, lockTimeoutTraffic)
+		//if err != nil {
+		//	global.Logger.Err(err).Msg("tryAcquireLock failed")
+		//} else if isLeader {
+		//	global.Logger.Info().Msg("I am the leader")
+		//	// 在这里执行主进程的逻辑
+		//
+		//	releaseLock(ctx, leaderLockKeyTraffic)
+		//} else {
+		//	global.Logger.Info().Msg("I am a follower")
+		//	// 在这里执行从进程的逻辑
+		//}
+		DoCollectUserTraffic()
 		time.Sleep(intervalTraffic)
 	}
 }
