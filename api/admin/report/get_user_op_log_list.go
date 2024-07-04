@@ -1,13 +1,14 @@
 package report
 
 import (
-	"github.com/gin-gonic/gin"
 	"go-speed/dao"
 	"go-speed/global"
 	"go-speed/i18n"
 	"go-speed/model/do"
 	"go-speed/model/entity"
 	"go-speed/model/response"
+
+	"github.com/gin-gonic/gin"
 )
 
 type GetUserOpLogListReq struct {
@@ -74,7 +75,7 @@ func GetUserOpLogList(ctx *gin.Context) {
 		doWhere.Result = req.Result
 	}
 	size := req.Size
-	if size < 1 || size > 1000 {
+	if size < 1 || size > 8000 {
 		size = 20
 	}
 	offset := 0
