@@ -228,20 +228,20 @@ func GetPromotionChannelUserDayList(c *gin.Context) {
 				Id:                 0,
 				Date:               dateRange, // 使用 dateRange 作为 Date 的值
 				Channel:            item.Channel,
-				Total:              0,
+				Total:              item.Total,
 				New:                0,
 				Retained:           0,
-				TotalRecharge:      0,
-				TotalRechargeMoney: 0,
+				TotalRecharge:      item.TotalRecharge,
+				TotalRechargeMoney: item.TotalRechargeMoney,
 				NewRechargeMoney:   0,
 				CreatedAt:          "",
 			}
 		}
-		groupedData[item.Channel].Total += item.Total
+		//groupedData[item.Channel].Total += item.Total
 		groupedData[item.Channel].New += item.New
 		groupedData[item.Channel].Retained += item.Retained
-		groupedData[item.Channel].TotalRecharge += item.TotalRecharge
-		groupedData[item.Channel].TotalRechargeMoney += item.TotalRechargeMoney
+		//groupedData[item.Channel].TotalRecharge += item.TotalRecharge
+		//groupedData[item.Channel].TotalRechargeMoney += item.TotalRechargeMoney
 		groupedData[item.Channel].NewRechargeMoney += item.NewRechargeMoney
 	}
 	items := make([]response.ChannelUserDay, 0, len(groupedData))
