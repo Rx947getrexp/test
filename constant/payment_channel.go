@@ -7,4 +7,5 @@ const (
 	PayChannelPnSafePay   = "pnsafepay"
 	PayChannelUPay        = "usd"
 	PayChannelBankCardPay = "bankcard"
+	PayChannelWebMoneyPay = "webmoney"
 )

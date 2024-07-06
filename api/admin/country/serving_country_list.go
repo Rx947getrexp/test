@@ -26,6 +26,7 @@ type ServingCountry struct {
 	Status      uint   `json:"status" dc:"状态。1-已上架；2-已下架"`
 	CreatedAt   string `json:"created_at" dc:"创建时间"`
 	UpdatedAt   string `json:"updated_at" dc:"更新时间"`
+	Level       int    `json:"level" dc:"等级约束：0-所有用户都可以选择；1-青铜、铂金会员可选择；2-铂金会员可选择"`
 }
 
 // ServingCountryList 查询国家列表
@@ -52,6 +53,7 @@ func ServingCountryList(ctx *gin.Context) {
 			Status:      uint(item.Status),
 			CreatedAt:   item.CreatedAt.String(),
 			UpdatedAt:   item.UpdatedAt.String(),
+			Level:       item.Level,
 		})
 	}
 	response.RespOk(ctx, i18n.RetMsgSuccess, ServingCountryListRes{

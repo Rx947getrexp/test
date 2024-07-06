@@ -32,6 +32,8 @@ type PaymentChannel struct {
 	BankCardInfo        BankCardInfo        `json:"bank_card_info" dc:"银行卡信息"`
 	CustomerServiceInfo CustomerServiceInfo `json:"customer_service_info" dc:"客服信息"`
 	Weight              int                 `json:"weight" dc:"权重，根据权重排序"`
+	WmId                string              `json:"wmid" dc:"wmid"`
+	Purse               string              `json:"purse" dc:"purse"`
 }
 
 type BankCardInfo struct {
@@ -82,6 +84,11 @@ func PaymentChannelList(ctx *gin.Context) {
 			}
 		}
 
+		var wmId, purse string
+		if item.ChannelId == constant.PayChannelWebMoneyPay {
+			wmId, purse = global.Config.WebMoneyConfig.WmId, global.Config.WebMoneyConfig.Purse
+		}
+
 		items = append(items, PaymentChannel{
 			ChannelId:           item.ChannelId,
 			ChannelName:         item.ChannelName,
@@ -91,6 +98,8 @@ func PaymentChannelList(ctx *gin.Context) {
 			BankCardInfo:        card,
 			CustomerServiceInfo: customerServiceInfo,
 			Weight:              item.Weight,
+			WmId:                wmId,
+			Purse:               purse,
 		})
 	}
 	response.RespOk(ctx, i18n.RetMsgSuccess, PaymentChannelListRes{Items: items})

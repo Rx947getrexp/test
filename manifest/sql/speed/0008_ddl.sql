@@ -1,0 +1,1 @@
+ALTER TABLE `t_serving_country` ADD COLUMN `level` int DEFAULT NULL COMMENT '等级：0-所有用户都可以选择；1-青铜、铂金会员可选择；2-铂金会员可选择';

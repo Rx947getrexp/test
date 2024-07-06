@@ -191,35 +191,37 @@ type NoticeListAdminRequest struct {
 }
 
 type AddGoodsAdminRequest struct {
-	Title        string  `form:"title" binding:"required" json:"title"`
-	MType        int     `form:"m_type" binding:"required" json:"m_type"`
-	DevLimit     int     `form:"dev_limit" binding:"required" json:"dev_limit"`
-	FlowLimit    int64   `form:"flow_limit" json:"flow_limit"`
-	Period       int     `form:"period" binding:"required" json:"period"`
-	Price        float64 `form:"price" binding:"required" json:"price"`
-	PriceUnit    string  `form:"price_unit" binding:"required" json:"price_unit"`
-	UsdPayPrice  float64 `form:"usd_pay_price" binding:"required" json:"usd_pay_price"`
-	UsdPriceUnit string  `form:"usd_price_unit" binding:"required" json:"usd_price_unit"`
-	IsDiscount   int     `form:"is_discount" binding:"required" json:"is_discount"`
-	Low          int     `form:"low" json:"low"`
-	High         int     `form:"high" json:"high"`
+	Title            string  `form:"title" binding:"required" json:"title"`
+	MType            int     `form:"m_type" binding:"required" json:"m_type"`
+	DevLimit         int     `form:"dev_limit" binding:"required" json:"dev_limit"`
+	FlowLimit        int64   `form:"flow_limit" json:"flow_limit"`
+	Period           int     `form:"period" binding:"required" json:"period"`
+	Price            float64 `form:"price" binding:"required" json:"price"`
+	PriceUnit        string  `form:"price_unit" binding:"required" json:"price_unit"`
+	UsdPayPrice      float64 `form:"usd_pay_price" binding:"required" json:"usd_pay_price"`
+	WebmoneyPayPrice float64 `form:"webmoney_pay_price" binding:"required" json:"webmoney_pay_price"`
+	UsdPriceUnit     string  `form:"usd_price_unit" binding:"required" json:"usd_price_unit"`
+	IsDiscount       int     `form:"is_discount" binding:"required" json:"is_discount"`
+	Low              int     `form:"low" json:"low"`
+	High             int     `form:"high" json:"high"`
 }
 
 type EditGoodsAdminRequest struct {
-	Id           int64   `form:"id" binding:"required" json:"id"`
-	Title        string  `form:"title" json:"title"`
-	MType        int     `form:"m_type" json:"m_type"`
-	DevLimit     int     `form:"dev_limit" json:"dev_limit"`
-	FlowLimit    int64   `form:"flow_limit" json:"flow_limit"`
-	Period       int     `form:"period" json:"period"`
-	Price        float64 `form:"price" json:"price"`
-	UsdPayPrice  float64 `form:"usd_pay_price" json:"usd_pay_price"`
-	PriceUnit    string  `form:"price_unit" json:"price_unit"`
-	UsdPriceUnit string  `form:"usd_price_unit" json:"usd_price_unit"`
-	IsDiscount   int     `form:"is_discount" json:"is_discount"`
-	Low          int     `form:"low" json:"low"`
-	High         int     `form:"high" json:"high"`
-	Status       int     `form:"status" json:"status"`
+	Id               int64   `form:"id" binding:"required" json:"id"`
+	Title            string  `form:"title" json:"title"`
+	MType            int     `form:"m_type" json:"m_type"`
+	DevLimit         int     `form:"dev_limit" json:"dev_limit"`
+	FlowLimit        int64   `form:"flow_limit" json:"flow_limit"`
+	Period           int     `form:"period" json:"period"`
+	Price            float64 `form:"price" json:"price"`
+	UsdPayPrice      float64 `form:"usd_pay_price" json:"usd_pay_price"`
+	WebmoneyPayPrice float64 `form:"webmoney_pay_price" json:"webmoney_pay_price"`
+	PriceUnit        string  `form:"price_unit" json:"price_unit"`
+	UsdPriceUnit     string  `form:"usd_price_unit" json:"usd_price_unit"`
+	IsDiscount       int     `form:"is_discount" json:"is_discount"`
+	Low              int     `form:"low" json:"low"`
+	High             int     `form:"high" json:"high"`
+	Status           int     `form:"status" json:"status"`
 }
 
 type GoodsListAdminRequest struct {

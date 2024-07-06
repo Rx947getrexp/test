@@ -80,5 +80,6 @@ func ApiRoute(group *gin.RouterGroup) {
 		group.POST("confirm_order", order.ConfirmOrder)
 		group.POST("cancel_order", order.CancelOrder)
 		group.POST("order_list", order.GetOrderList)
+		group.POST("query_order", order.QueryOrder)
 	}
 }
