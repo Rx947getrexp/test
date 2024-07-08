@@ -1,0 +1,1 @@
+ALTER TABLE `t_serving_country` ADD COLUMN `is_free` int DEFAULT 0 COMMENT '是否为免费站点，0: 不免费,1: 免费';

@@ -3,12 +3,15 @@ package task
 import (
 	"context"
 	"fmt"
+	"github.com/gogf/gf/os/gctx"
 	"go-speed/constant"
+	"go-speed/dao"
 	"go-speed/global"
 	"go-speed/model"
+	"go-speed/model/do"
+	"go-speed/model/entity"
 	"go-speed/model/request"
 	"go-speed/model/response"
-	"go-speed/service"
 	"go-speed/util"
 	"os"
 	"strings"
@@ -89,8 +92,33 @@ func DeleteUser(user *model.TUser) error {
 	}
 
 	// TODO：白名单逻辑
-	nodeList, _ := service.FindNodes(user.Level + 1)
-	for _, node := range nodeList {
+	ctx := gctx.New()
+	var (
+		countryEntities  []entity.TServingCountry
+		nodeEntities  []entity.TNode
+		countryNames []string
+	)
+	err := dao.TServingCountry.Ctx(ctx).Where(do.TServingCountry{Status: 1}).Scan(&countryEntities)
+	if err != nil {
+		global.Logger.Err(err).Msg("get TServingCountry failed.")
+		return err
+	}
+	for _, s := range countryEntities{
+		if s.IsFree == constant.IsFreeSiteNo {
+			countryNames = append(countryNames)
+		}
+	}
+	err = dao.TNode.Ctx(ctx).
+		Where(do.TNode{Status:    1}).
+		WhereIn(dao.TNode.Columns().CountryEn, countryNames).
+		Scan(&nodeEntities)
+	if err != nil {
+		global.Logger.Err(err).Msg("get TNode failed.")
+		return err
+	}
+
+	//nodeList, _ := service.FindNodes(user.Level + 1)
+	for _, node := range nodeEntities {
 		url := fmt.Sprintf("https://%s/site-api/node/add_sub", node.Server)
 		if strings.Contains(node.Server, "http") {
 			url = fmt.Sprintf("%s/node/add_sub", node.Server)
