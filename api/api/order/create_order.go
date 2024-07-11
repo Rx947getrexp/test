@@ -451,7 +451,10 @@ func genUPayAmount2DecimalPartValue() int {
 func genPayAmount(price, priceUSD, webMoneyPrice float64, channelId string) (amount float64, amountString string, currency string) {
 	switch channelId {
 	case constant.PayChannelUPay:
-		amountInt := int((priceUSD-1)*10000) + genUPayAmountDecimalPartValue()
+		if priceUSD > 1.0 {
+			priceUSD = priceUSD - 1
+		}
+		amountInt := int(priceUSD*10000) + genUPayAmountDecimalPartValue()
 		amountString = fmt.Sprintf("%d.%d", amountInt/10000, amountInt%10000)
 		amount, _ = strconv.ParseFloat(amountString, 64)
 		return amount, amountString, CurrencyU

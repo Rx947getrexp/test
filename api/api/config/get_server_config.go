@@ -118,6 +118,21 @@ func chooseCountryForUser(ctx *gin.Context, userId uint64, countryName string) (
 		return
 	}
 
+	var match bool
+	for _, country := range countryEntities {
+		if country.Name == countryName || country.Name == userEntity.PreferredCountry {
+			match = true
+			break
+		}
+	}
+	if service.IsVIPExpired(userEntity) && !match {
+		err = fmt.Errorf("AccountExpired")
+		global.MyLogger(ctx).Err(err).Msgf(">>>>>>>>> 过期 user: %s, ExpiredTime: %d, 用户选择的不是免费站点",
+			userEntity.Uname, userEntity.ExpiredTime)
+		response.RespFail(ctx, i18n.RetMsgAccountExpired, nil)
+		return
+	}
+
 	for _, country := range countryEntities {
 		// 优先选择用户指定的国家
 		if country.Name == countryName {
