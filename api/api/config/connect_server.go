@@ -45,20 +45,20 @@ func ConnectServer(ctx *gin.Context) {
 		return
 	}
 
-	// 账号过期
-	if userEntity.ExpiredTime < time.Now().Unix() {
-		global.MyLogger(ctx).Error().Msgf(">>>>>>>>> 过期 user: %s, ExpiredTime: %d", userEntity.Uname, userEntity.ExpiredTime)
-		response.RespFail(ctx, i18n.RetMsgAccountExpired, nil)
-		return
-	}
-
 	winCountry, nodeEntities, err = chooseCountryForUser(ctx, req.UserId, req.CountryName)
 	if err != nil {
 		return
 	}
 
+	// 账号过期
+	if len(nodeEntities) == 0 && userEntity.ExpiredTime < time.Now().Unix() {
+		global.MyLogger(ctx).Error().Msgf(">>>>>>>>> 过期 user: %s, ExpiredTime: %d", userEntity.Uname, userEntity.ExpiredTime)
+		response.RespFail(ctx, i18n.RetMsgAccountExpired, nil)
+		return
+	}
+
 	nodeAddSubRequest := &request.NodeAddSubRequest{}
-	if userEntity.ExpiredTime >= time.Now().Unix() {
+	if userEntity.ExpiredTime >= time.Now().Unix() || winCountry.IsFree == constant.IsFreeSiteYes {
 		nodeAddSubRequest.Tag = "1"
 	} else {
 		nodeAddSubRequest.Tag = "2"

@@ -20,6 +20,7 @@ type ServingCountryCreateReq struct {
 	IsRecommend uint   `form:"is_recommend" json:"is_recommend" dc:"是否为推荐的国家，0:否，1：是"`
 	Weight      uint   `form:"weight" json:"weight" dc:"推荐权重,权重越大的国家展示在越靠前"`
 	Level       int    `form:"level" json:"level" dc:"等级约束：0-所有用户都可以选择；1-青铜、铂金会员可选择；2-铂金会员可选择"`
+	IsFree      int    `form:"is_free" json:"is_free" dc:"是否为免费站点，0: 不免费,1: 免费"`
 }
 
 type ServingCountryCreateRes struct {
@@ -66,6 +67,7 @@ func ServingCountryCreate(ctx *gin.Context) {
 		Status:      1,
 		CreatedAt:   gtime.Now(),
 		UpdatedAt:   gtime.Now(),
+		IsFree:      req.IsFree,
 	}).InsertAndGetId()
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("add serving country failed")

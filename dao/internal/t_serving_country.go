@@ -31,6 +31,7 @@ type TServingCountryColumns struct {
 	CreatedAt   string // 创建时间
 	UpdatedAt   string // 更新时间
 	Level       string // 等级：0-所有用户都可以选择；1-青铜、铂金会员可选择；2-铂金会员可选择
+	IsFree      string // 是否为免费站点，0: 不免费,1: 免费
 }
 
 // tServingCountryColumns holds the columns for table t_serving_country.
@@ -46,6 +47,7 @@ var tServingCountryColumns = TServingCountryColumns{
 	CreatedAt:   "created_at",
 	UpdatedAt:   "updated_at",
 	Level:       "level",
+	IsFree:      "is_free",
 }
 
 // NewTServingCountryDao creates and returns a new DAO object for table data access.

@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go-speed/api/api/common"
+	"go-speed/constant"
 	"go-speed/dao"
 	"go-speed/global"
 	"go-speed/i18n"
 	"go-speed/model/do"
 	"go-speed/model/entity"
 	"go-speed/model/response"
+	"go-speed/service"
 	"net/http"
 )
 
@@ -98,14 +100,36 @@ func chooseCountryForUser(ctx *gin.Context, userId uint64, countryName string) (
 	if err != nil {
 		return
 	}
+	where := do.TServingCountry{Status: 1}
+
+	// 过期用户只能选择免费节点
+	if service.IsVIPExpired(userEntity) {
+		global.MyLogger(ctx).Info().Msgf("######## (%s) expired, choose free site #######", userEntity.Email)
+		where.IsFree = constant.IsFreeSiteYes
+	}
 
 	err = dao.TServingCountry.Ctx(ctx).
-		Where(do.TServingCountry{Status: 1}).
+		Where(where).
 		Order(dao.TServingCountry.Columns().Weight, "Desc").
 		Scan(&countryEntities)
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("get serving country failed")
 		response.RespFail(ctx, i18n.RetMsgDBErr, nil)
+		return
+	}
+
+	var match bool
+	for _, country := range countryEntities {
+		if country.Name == countryName || country.Name == userEntity.PreferredCountry {
+			match = true
+			break
+		}
+	}
+	if service.IsVIPExpired(userEntity) && !match {
+		err = fmt.Errorf("AccountExpired")
+		global.MyLogger(ctx).Err(err).Msgf(">>>>>>>>> 过期 user: %s, ExpiredTime: %d, 用户选择的不是免费站点",
+			userEntity.Uname, userEntity.ExpiredTime)
+		response.RespFail(ctx, i18n.RetMsgAccountExpired, nil)
 		return
 	}
 
