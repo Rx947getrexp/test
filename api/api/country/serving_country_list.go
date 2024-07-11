@@ -26,6 +26,7 @@ type ServingCountry struct {
 	LogoLink    string `json:"logo_link" dc:"国家图片地址"`
 	Weight      int    `json:"weight" dc:"权重。权重越高越靠前"`
 	Level       int    `json:"level" dc:"等级约束：0-所有用户都可以选择；1-青铜、铂金会员可选择；2-铂金会员可选择"`
+	IsFree      int    `json:"is_free" dc:"是否为免费站点，0: 不免费,1: 免费"`
 }
 
 // ServingCountryList 查询国家列表
@@ -65,6 +66,7 @@ func ServingCountryList(ctx *gin.Context) {
 			LogoLink:    item.LogoLink,
 			Weight:      item.Weight,
 			Level:       item.Level,
+			IsFree:      item.IsFree,
 		})
 	}
 	response.RespOk(ctx, i18n.RetMsgSuccess, ServingCountryListRes{

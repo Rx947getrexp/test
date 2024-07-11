@@ -79,7 +79,7 @@ const (
 	RetMsgUploadLogFailed           = "上传日志失败。"
 	RetMsgDealCreateFailed          = "创建订单失败。"
 	RetMsgRemoveDevFailed           = "踢除设备失败。"
-	RetMsgAccountExpired            = "账户已过期。"
+	RetMsgAccountExpired            = "您的帐户已过期。请续订您的订阅或手动选择免费服务器。"
 	RetMsgLogoutFailed              = "注销失败。"
 	RetMsgAuthExpired               = "授权已过期，请重新登陆！"
 	RetMsgDevIdInvalid              = "Dev-Id无效"
@@ -241,8 +241,8 @@ func Init() {
 		LangRU: "Не удалось удалить устройство.",
 	}
 	ReturnMsgMap[RetMsgAccountExpired] = map[string]string{
-		LangEN: "The account has expired.",
-		LangRU: "Срок действия учетной записи истек.",
+		LangEN: "Your account has expired. Please renew your subscription or manually select a free server.",
+		LangRU: "Ваш аккаунт истек. Пожалуйста, продлите подписку или вручную выберите бесплатный сервер.",
 	}
 	ReturnMsgMap[RetMsgLogoutFailed] = map[string]string{
 		LangEN: "Logout failed.",

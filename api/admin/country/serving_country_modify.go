@@ -21,6 +21,7 @@ type ServingCountryModifyReq struct {
 	Weight      uint   `form:"weight" json:"weight" dc:"推荐权重,权重越大的国家展示在越靠前"`
 	Status      uint   `form:"status" json:"status" dc:"状态:0:未上架，1-已上架；2-已下架"`
 	Level       *int   `form:"level" json:"level" dc:"等级约束：0-所有用户都可以选择；1-青铜、铂金会员可选择；2-铂金会员可选择"`
+	IsFree      *int   `form:"is_free" json:"is_free" dc:"是否为免费站点，0: 不免费,1: 免费"`
 }
 
 type ServingCountryModifyRes struct {
@@ -78,6 +79,9 @@ func ServingCountryModify(ctx *gin.Context) {
 	}
 	if req.Level != nil {
 		updateData.Level = *req.Level
+	}
+	if req.IsFree != nil {
+		updateData.IsFree = *req.IsFree
 	}
 	affected, err = dao.TServingCountry.Ctx(ctx).Data(updateData).Where(do.TServingCountry{
 		Name: req.Name,
