@@ -82,3 +82,15 @@ type TUserChannelRechargeDay struct {
 	RubNew    int       `xorm:"INT"`
 	CreatedAt time.Time `xorm:"comment('创建时间') TIMESTAMP"`
 }
+type TUserDeviceActionDay struct {
+	Id                       int64     `xorm:"pk autoincr comment('自增id') BIGINT"`
+	Date                     int       `xorm:"INT"`
+	Device                   string    `xorm:"VARCHAR(32)"`
+	TotalClicks              int       `xorm:"INT"`
+	YesterdayDayClicks       int       `xorm:"INT"`
+	WeeklyClicks             int       `xorm:"INT"`
+	TotalUsersClicked        int       `xorm:"INT"`
+	YesterdayDayUsersClicked int       `xorm:"INT"`
+	WeeklyUsersClicked       int       `xorm:"INT"`
+	CreatedAt                time.Time `xorm:"comment('创建时间') TIMESTAMP"`
+}

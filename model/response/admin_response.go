@@ -202,3 +202,19 @@ type GetReportChannelUseRechargerTimesDayListResponse struct {
 	Total int64                               `json:"total" dc:"数据总条数"`
 	Items []ReportChannelUseRechargerTimesDay `json:"items" dc:"数据明细"`
 }
+type TUserDeviceActionDay struct {
+	Id                       int64  `json:"id" dc:"自增主键ID"`
+	Date                     int    `json:"date" dc:"报表日期，eg:20240101"`
+	Device                   string `json:"device" dc:"渠道设备"`
+	TotalClicks              int    `json:"total_clicks" dc:"总点击次数"`
+	YesterdayDayClicks       int    `json:"yesterday_day_clicks" dc:"次日点击次数"`
+	WeeklyClicks             int    `json:"weekly_clicks" dc:"周点击次数"`
+	TotalUsersClicked        int    `json:"total_users_clicked" dc:"总点击人数"`
+	YesterdayDayUsersClicked int    `json:"yesterday_day_users_clicked" dc:"次日点击人数"`
+	WeeklyUsersClicked       int    `json:"weekly_users_clicked" dc:"周点击人数"`
+	CreatedAt                string `json:"created_at" dc:"记录创建时间"`
+}
+type GetTUserDeviceActionDayListResponse struct {
+	Total int64                  `json:"total" dc:"数据总条数"`
+	Items []TUserDeviceActionDay `json:"items" dc:"数据明细"`
+}
