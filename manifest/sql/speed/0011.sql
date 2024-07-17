@@ -1,0 +1,4 @@
+insert into t_payment_channel set channel_id='freekassa-12',channel_name='МИР',is_active=1,free_trial_days=3,timeout_duration=60,weight=50,created_at=now(),updated_at=now(),usd_network='12';
+insert into t_payment_channel set channel_id='freekassa-36',channel_name='Card RUB',is_active=1,free_trial_days=3,timeout_duration=60,weight=50,created_at=now(),updated_at=now(),usd_network='36';
+insert into t_payment_channel set channel_id='freekassa-43',channel_name='СБЕР Pay',is_active=1,free_trial_days=3,timeout_duration=60,weight=50,created_at=now(),updated_at=now(),usd_network='43';
+insert into t_payment_channel set channel_id='freekassa-44',channel_name='СБП (НСПК)',is_active=1,free_trial_days=3,timeout_duration=60,weight=50,created_at=now(),updated_at=now(),usd_network='44';

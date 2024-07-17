@@ -170,10 +170,14 @@ func CreateOrder(ctx *gin.Context) {
 		payOrderUpdate.StatusMes = "BankCard-Pay directly returns the bank card number"
 
 	case constant.PayChannelWebMoneyPay:
-		// webmoney
 		res.Status = constant.ReturnStatusSuccess
 		payOrderUpdate.ReturnStatus = constant.ReturnStatusSuccess
 		payOrderUpdate.StatusMes = "Webmoney"
+	case constant.PayChannelFreekassa_12, constant.PayChannelFreekassa_36,
+		constant.PayChannelFreekassa_43, constant.PayChannelFreekassa_44:
+		res.Status = constant.ReturnStatusSuccess
+		payOrderUpdate.ReturnStatus = constant.ReturnStatusSuccess
+		payOrderUpdate.StatusMes = "Freekassa"
 	default:
 		err = fmt.Errorf("ChannelId %s 无效", req.ChannelId)
 		global.MyLogger(ctx).Err(err).Msgf("ChannelId not exist")

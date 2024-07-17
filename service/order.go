@@ -11,6 +11,7 @@ import (
 	"go-speed/global"
 	"go-speed/model/do"
 	"go-speed/model/entity"
+	"go-speed/util/pay/freekassa"
 	"go-speed/util/pay/pnsafepay"
 	"go-speed/util/pay/upay"
 	"go-speed/util/pay/webmoney"
@@ -150,6 +151,37 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string) (status string, err error
 		//	global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ orderNo: %s, waiting to pay", orderNo)
 		//	return constant.ReturnStatusWaiting, nil
 		//}
+
+	case constant.PayChannelFreekassa_12, constant.PayChannelFreekassa_36,
+		constant.PayChannelFreekassa_43, constant.PayChannelFreekassa_44:
+		var order *freekassa.Order
+		order, err = freekassa.QueryOrder(ctx, payOrder.OrderNo)
+		if err != nil {
+			global.MyLogger(ctx).Err(err).Msgf("freekassa.QueryOrder failed")
+			return
+		}
+		if order == nil {
+			global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ orderNo: %s, waiting to pay (resp order is nil)", orderNo)
+			return constant.ReturnStatusWaiting, nil
+		}
+		global.MyLogger(ctx).Info().Msgf("freekassa.QueryOrder failed")
+
+		if order.Status == 0 {
+			var pass bool
+			pass, err = checkAmount(ctx, fmt.Sprintf("%f", order.Amount), payOrder.OrderAmount)
+			if err != nil {
+				return constant.ReturnStatusWaiting, err
+			}
+
+			if !pass {
+				global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ OrderAmount: %s, waiting to pay", orderNo)
+				return constant.ReturnStatusWaiting, nil
+			}
+			resultStatus, orderRealityAmount = constant.ReturnStatusSuccess, fmt.Sprintf("%f", order.Amount)
+		} else {
+			global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ orderNo: %s, waiting to pay", orderNo)
+			return constant.ReturnStatusWaiting, nil
+		}
 	}
 
 	// 查询用户信息
