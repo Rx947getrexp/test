@@ -25,3 +25,8 @@ type WebMoneyConfig struct {
 	Purse    string `mapstructure:"purse"`
 	RandCode string `mapstructure:"rand_code"`
 }
+
+// '168.119.157.136', '168.119.60.227', '178.154.197.79', '51.250.54.238'
+type FreekassaConfig struct {
+	NotifyClientIp string `mapstructure:"notify_client_ip"`
+}

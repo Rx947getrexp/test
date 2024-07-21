@@ -26,4 +26,8 @@ type TPaymentChannel struct {
 	CreatedAt           *gtime.Time `orm:"created_at"            description:"创建时间"`
 	UpdatedAt           *gtime.Time `orm:"updated_at"            description:"更新时间"`
 	UsdNetwork          string      `orm:"usd_network"           description:"USD支付网络"`
+	CurrencyType        string      `orm:"currency_type"         description:"支付渠道币种"`
+	FreekassaCode       string      `orm:"freekassa_code"        description:"freekassa支付通道"`
+	CommissionRate      float64     `orm:"commission_rate"       description:"手续费比例"`
+	Commission          float64     `orm:"commission"            description:"手续费"`
 }

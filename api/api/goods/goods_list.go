@@ -39,6 +39,10 @@ type Goods struct {
 	High             int     `json:"high" dc:"最高赠送(天)"`
 	WebmoneyPayPrice float64 `json:"webmoney_pay_price" dc:"webmoney价格"`
 	WebmoneyPayUnit  string  `json:"webmoney_pay_unit" dc:"webmoney价格单位"`
+	PriceRUB         float64 `json:"price_rub" dc:"卢布价格"`
+	PriceWMZ         float64 `json:"price_wmz" dc:"WMZ价格"`
+	PriceUSD         float64 `json:"price_usd" dc:"USD价格"`
+	PriceUAH         float64 `json:"price_uah" dc:"UAH价格"`
 }
 
 func GoodsList(ctx *gin.Context) {
@@ -81,6 +85,10 @@ func GoodsList(ctx *gin.Context) {
 			Low:              item.Low,
 			High:             item.High,
 			DiscountTitle:    BuildDiscountTitle(ctx, item.Low, item.High),
+			PriceRUB:         item.PriceRub,
+			PriceWMZ:         item.PriceWmz,
+			PriceUSD:         item.PriceUsd,
+			PriceUAH:         item.PriceUah,
 		})
 	}
 	response.RespOk(ctx, i18n.RetMsgSuccess, GoodsListRes{Items: items})

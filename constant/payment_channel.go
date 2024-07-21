@@ -8,6 +8,7 @@ const (
 	PayChannelUPay         = "usd"
 	PayChannelBankCardPay  = "bankcard"
 	PayChannelWebMoneyPay  = "webmoney"
+	PayChannelFreekassa_7  = "freekassa-7"
 	PayChannelFreekassa_12 = "freekassa-12"
 	PayChannelFreekassa_36 = "freekassa-36"
 	PayChannelFreekassa_43 = "freekassa-43"

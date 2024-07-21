@@ -26,6 +26,7 @@ const (
 	CurrencyRUB              = "RUB"   // 俄罗斯卢布
 	CurrencyU                = "USD"   // U支付
 	CurrencyWMZ              = "WMZ"   // webmoney
+	CurrencyUAH              = "UAH"   // UAH
 	RussianOnlineBankingCode = "29001" // 俄罗斯网银
 )
 
@@ -43,6 +44,7 @@ type CreateOrderRes struct {
 	IsGifted    bool    `json:"is_gifted" dc:"本次是否因为支付渠道关闭而赠送了时长. (u支付和银行卡支付此字段无效)"`
 	GiftedDays  int     `json:"gifted_days" dc:"本次是否因为支付渠道关闭而赠送的天数 (u支付和银行卡支付此字段无效)" eg:"success,fail"`
 	Purse       string  `json:"purse" dc:"purse"`
+	Commission  float64 `json:"commission" dc:"手续费"`
 }
 
 // CreateOrder 创建订单
@@ -97,10 +99,16 @@ func CreateOrder(ctx *gin.Context) {
 	}
 
 	// create order
-	amount, amountString, currency := genPayAmount(goodsEntity.Price, goodsEntity.UsdPayPrice, goodsEntity.WebmoneyPayPrice, req.ChannelId)
+	//amount, amountString, currency := genPayAmount(goodsEntity.Price, goodsEntity.UsdPayPrice, goodsEntity.WebmoneyPayPrice, req.ChannelId)
+	amount, commission, amountString, currency, err := genPayAmount(goodsEntity, paymentEntity)
+	if err != nil {
+		global.MyLogger(ctx).Err(err).Msgf("genPayAmount failed")
+		response.RespFail(ctx, i18n.RetMsgParamParseErr, nil)
+		return
+	}
 	global.MyLogger(ctx).Info().Msgf(
-		"channel: %s, amount: %f, amountString: %s, currency: %s",
-		req.ChannelId, amount, amountString, currency,
+		"channel: %s, amount: %f, commission: %f, amountString: %s, currency: %s",
+		req.ChannelId, amount, commission, amountString, currency,
 	)
 
 	lastInsertId, err = dao.TPayOrder.Ctx(ctx).Data(do.TPayOrder{
@@ -116,6 +124,7 @@ func CreateOrder(ctx *gin.Context) {
 		CreatedAt:        gtime.Now(),
 		UpdatedAt:        gtime.Now(),
 		Version:          constant.VersionInit,
+		Commission:       commission,
 	}).InsertAndGetId()
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("insert pay order failed")
@@ -173,11 +182,14 @@ func CreateOrder(ctx *gin.Context) {
 		res.Status = constant.ReturnStatusSuccess
 		payOrderUpdate.ReturnStatus = constant.ReturnStatusSuccess
 		payOrderUpdate.StatusMes = "Webmoney"
+
 	case constant.PayChannelFreekassa_12, constant.PayChannelFreekassa_36,
-		constant.PayChannelFreekassa_43, constant.PayChannelFreekassa_44:
+		constant.PayChannelFreekassa_43, constant.PayChannelFreekassa_44,
+		constant.PayChannelFreekassa_7:
 		res.Status = constant.ReturnStatusSuccess
 		payOrderUpdate.ReturnStatus = constant.ReturnStatusSuccess
 		payOrderUpdate.StatusMes = "Freekassa"
+
 	default:
 		err = fmt.Errorf("ChannelId %s 无效", req.ChannelId)
 		global.MyLogger(ctx).Err(err).Msgf("ChannelId not exist")
@@ -214,7 +226,7 @@ func CreateOrder(ctx *gin.Context) {
 			res.GiftedDays = paymentEntity.FreeTrialDays
 		}
 	}
-	res.OrderAmount, res.Currency, res.Purse = amount, currency, paymentEntity.PayTypeCode
+	res.OrderAmount, res.Commission, res.Currency, res.Purse = amount, commission, currency, paymentEntity.PayTypeCode
 	global.MyLogger(ctx).Info().Msgf("res: %+v", res)
 	response.RespOk(ctx, i18n.RetMsgSuccess, res)
 	return
@@ -452,25 +464,71 @@ func genUPayAmount2DecimalPartValue() int {
 	return randomNumber % 100
 }
 
-func genPayAmount(price, priceUSD, webMoneyPrice float64, channelId string) (amount float64, amountString string, currency string) {
-	switch channelId {
+//
+//func genPayAmount(price, priceUSD, webMoneyPrice float64, channelId string) (amount float64, amountString string, currency string) {
+//	switch channelId {
+//	case constant.PayChannelUPay:
+//		if priceUSD > 1.0 {
+//			priceUSD = priceUSD - 1
+//		}
+//		amountInt := int(priceUSD*10000) + genUPayAmountDecimalPartValue()
+//		amountString = fmt.Sprintf("%d.%d", amountInt/10000, amountInt%10000)
+//		amount, _ = strconv.ParseFloat(amountString, 64)
+//		return amount, amountString, CurrencyU
+//	case constant.PayChannelBankCardPay:
+//		amountInt := int((price-1)*100) + genUPayAmount2DecimalPartValue()
+//		amountString = fmt.Sprintf("%d.%d", amountInt/100, amountInt%100)
+//		amount, _ = strconv.ParseFloat(amountString, 64)
+//		return amount, amountString, CurrencyRUB
+//	case constant.PayChannelWebMoneyPay:
+//		return webMoneyPrice, fmt.Sprintf("%.2f", webMoneyPrice), CurrencyWMZ
+//	default:
+//		return price, fmt.Sprintf("%.2f", price), CurrencyRUB
+//	}
+//}
+
+/*
+update t_payment_channel currency_type = 'RUB' where channel_id in ('bankcard', 'pnsafepay', 'freekassa-12', 'freekassa-36', 'freekassa-43', 'freekassa-44');
+update t_payment_channel currency_type = 'WMZ' where channel_id in ('webmoney');
+update t_payment_channel currency_type = 'USD' where channel_id in ('usd');
+update t_payment_channel currency_type = 'UAH' where channel_id in ('freekassa-7');
+*/
+func genPayAmount(goodsEntity *entity.TGoods, paymentEntity *entity.TPaymentChannel) (
+	amount, commission float64, amountString string, currency string, err error) {
+	switch paymentEntity.ChannelId {
 	case constant.PayChannelUPay:
+		priceUSD := goodsEntity.PriceUsd
 		if priceUSD > 1.0 {
 			priceUSD = priceUSD - 1
 		}
 		amountInt := int(priceUSD*10000) + genUPayAmountDecimalPartValue()
 		amountString = fmt.Sprintf("%d.%d", amountInt/10000, amountInt%10000)
 		amount, _ = strconv.ParseFloat(amountString, 64)
-		return amount, amountString, CurrencyU
+		return amount, paymentEntity.Commission, amountString, CurrencyU, nil
+
 	case constant.PayChannelBankCardPay:
-		amountInt := int((price-1)*100) + genUPayAmount2DecimalPartValue()
+		priceRUB := goodsEntity.PriceRub
+		if priceRUB > 1.0 {
+			priceRUB = priceRUB - 1
+		}
+		amountInt := int((priceRUB-1)*100) + genUPayAmount2DecimalPartValue()
 		amountString = fmt.Sprintf("%d.%d", amountInt/100, amountInt%100)
 		amount, _ = strconv.ParseFloat(amountString, 64)
-		return amount, amountString, CurrencyRUB
+		return amount, paymentEntity.Commission, amountString, CurrencyRUB, nil
+
+	case constant.PayChannelPnSafePay,
+		constant.PayChannelFreekassa_12, constant.PayChannelFreekassa_36,
+		constant.PayChannelFreekassa_43, constant.PayChannelFreekassa_44:
+		return goodsEntity.PriceRub, paymentEntity.Commission, fmt.Sprintf("%.2f", goodsEntity.PriceRub), CurrencyRUB, nil
+
 	case constant.PayChannelWebMoneyPay:
-		return webMoneyPrice, fmt.Sprintf("%.2f", webMoneyPrice), CurrencyWMZ
+		return goodsEntity.PriceWmz, paymentEntity.Commission, fmt.Sprintf("%.2f", goodsEntity.PriceWmz), CurrencyWMZ, nil
+
+	case constant.PayChannelFreekassa_7:
+		return goodsEntity.PriceUah, paymentEntity.Commission, fmt.Sprintf("%.2f", goodsEntity.PriceUah), CurrencyUAH, nil
+
 	default:
-		return price, fmt.Sprintf("%.2f", price), CurrencyRUB
+		return 0.0, 0.0, "", "", fmt.Errorf("invalid `PayChannelID`")
 	}
 }
 

@@ -175,3 +175,8 @@ curl -X POST -H "Lang: cn" -H "Content-Type: application/json" http://localhost:
 }'
 
 curl -X POST -H "Lang: cn" -H "Content-Type: application/json"  http://localhost:13001/order/pay_order_list -d '{"order_no":"20240506024451529790","page":1,"size":10,"email":"zzz@qq.com"}'
+
+
+curl -X POST -H "Lang: cn" -H "Content-Type: application/json"  http://localhost:13001/confirm_order -d '{"order_no":"100718114744251"}'
+
+

@@ -477,6 +477,10 @@ func AddCombo(c *gin.Context) {
 		CreatedAt:        time.Now(),
 		UpdatedAt:        time.Now(),
 		Comment:          "",
+		PriceRub:         decimal.NewFromFloat(param.PriceRUB).Truncate(2).String(),
+		PriceWmz:         decimal.NewFromFloat(param.PriceWMZ).Truncate(2).String(),
+		PriceUsd:         decimal.NewFromFloat(param.PriceUSD).Truncate(2).String(),
+		PriceUah:         decimal.NewFromFloat(param.PriceUAH).Truncate(2).String(),
 	}
 	rows, err := global.Db.Insert(goods)
 	if err != nil || rows != 1 {
@@ -561,6 +565,22 @@ func EditCombo(c *gin.Context) {
 	if param.High > 0 {
 		cols = append(cols, "high")
 		bean.High = param.High
+	}
+	if param.PriceRUB > 0 {
+		cols = append(cols, "price_rub")
+		bean.PriceRub = decimal.NewFromFloat(param.PriceRUB).Truncate(2).String()
+	}
+	if param.PriceWMZ > 0 {
+		cols = append(cols, "price_wmz")
+		bean.PriceWmz = decimal.NewFromFloat(param.PriceWMZ).Truncate(2).String()
+	}
+	if param.PriceUSD > 0 {
+		cols = append(cols, "price_usd")
+		bean.PriceUsd = decimal.NewFromFloat(param.PriceUSD).Truncate(2).String()
+	}
+	if param.PriceUAH > 0 {
+		cols = append(cols, "price_uah")
+		bean.PriceUah = decimal.NewFromFloat(param.PriceUAH).Truncate(2).String()
 	}
 	rows, err := global.Db.Cols(cols...).Where("id = ?", param.Id).Update(bean)
 	if err != nil || rows != 1 {

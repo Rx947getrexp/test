@@ -34,6 +34,10 @@ type PaymentChannel struct {
 	Weight              int                 `json:"weight" dc:"权重，根据权重排序"`
 	WmId                string              `json:"wmid" dc:"wmid"`
 	Purse               string              `json:"purse" dc:"purse"`
+	CurrencyType        string              `json:"currency_type" dc:"支付渠道币种"`
+	FreekassaCode       string              `json:"freekassa_code" dc:"freekassa支付通道"`
+	CommissionRate      float64             `json:"commission_rate" dc:"手续费比例"`
+	Commission          float64             `json:"commission" dc:"手续费"`
 }
 
 type BankCardInfo struct {
@@ -100,6 +104,10 @@ func PaymentChannelList(ctx *gin.Context) {
 			Weight:              item.Weight,
 			WmId:                wmId,
 			Purse:               purse,
+			CurrencyType:        item.CurrencyType,
+			FreekassaCode:       item.FreekassaCode,
+			CommissionRate:      item.CommissionRate,
+			Commission:          item.Commission,
 		})
 	}
 	response.RespOk(ctx, i18n.RetMsgSuccess, PaymentChannelListRes{Items: items})

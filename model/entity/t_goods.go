@@ -31,4 +31,8 @@ type TGoods struct {
 	UsdPayPrice      float64     `orm:"usd_pay_price"      description:"usd_pay价格(U)"`
 	UsdPriceUnit     string      `orm:"usd_price_unit"     description:"USD支付的价格单位"`
 	WebmoneyPayPrice float64     `orm:"webmoney_pay_price" description:"webmoney价格(wmz)"`
+	PriceRub         float64     `orm:"price_rub"          description:"卢布价格(RUB)"`
+	PriceWmz         float64     `orm:"price_wmz"          description:"WMZ价格(WMZ)"`
+	PriceUsd         float64     `orm:"price_usd"          description:"USD价格(USD)"`
+	PriceUah         float64     `orm:"price_uah"          description:"UAH价格(UAH)"`
 }

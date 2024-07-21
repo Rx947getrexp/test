@@ -41,6 +41,10 @@ type TGoodsColumns struct {
 	UsdPayPrice      string // usd_pay价格(U)
 	UsdPriceUnit     string // USD支付的价格单位
 	WebmoneyPayPrice string // webmoney价格(wmz)
+	PriceRub         string // 卢布价格(RUB)
+	PriceWmz         string // WMZ价格(WMZ)
+	PriceUsd         string // USD价格(USD)
+	PriceUah         string // UAH价格(UAH)
 }
 
 // tGoodsColumns holds the columns for table t_goods.
@@ -66,6 +70,10 @@ var tGoodsColumns = TGoodsColumns{
 	UsdPayPrice:      "usd_pay_price",
 	UsdPriceUnit:     "usd_price_unit",
 	WebmoneyPayPrice: "webmoney_pay_price",
+	PriceRub:         "price_rub",
+	PriceWmz:         "price_wmz",
+	PriceUsd:         "price_usd",
+	PriceUah:         "price_uah",
 }
 
 // NewTGoodsDao creates and returns a new DAO object for table data access.

@@ -11,7 +11,6 @@ import (
 	"go-speed/global"
 	"go-speed/model/do"
 	"go-speed/model/entity"
-	"go-speed/util/pay/freekassa"
 	"go-speed/util/pay/pnsafepay"
 	"go-speed/util/pay/upay"
 	"go-speed/util/pay/webmoney"
@@ -22,7 +21,18 @@ import (
 	"time"
 )
 
-func SyncOrderStatus(ctx *gin.Context, orderNo string) (status string, err error) {
+type PayNotifyReq struct {
+	MerchantId string `form:"MERCHANT_ID" json:"MERCHANT_ID"`
+	Amount     string `form:"AMOUNT" json:"AMOUNT"`
+	IntId      string `form:"intid" json:"intid"`
+	OrderId    string `form:"MERCHANT_ORDER_ID" json:"MERCHANT_ORDER_ID"`
+	PEmail     string `form:"P_EMAIL" json:"P_EMAIL"`
+	CurId      string `form:"CUR_ID" json:"CUR_ID"`
+	Commission string `form:"commission" json:"commission"`
+	Sign       string `form:"SIGN" json:"SIGN"`
+}
+
+func SyncOrderStatus(ctx *gin.Context, orderNo string, notifyData interface{}) (status string, err error) {
 	var (
 		affected             int64
 		lastInsertId         int64
@@ -153,35 +163,24 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string) (status string, err error
 		//}
 
 	case constant.PayChannelFreekassa_12, constant.PayChannelFreekassa_36,
-		constant.PayChannelFreekassa_43, constant.PayChannelFreekassa_44:
-		var order *freekassa.Order
-		order, err = freekassa.QueryOrder(ctx, payOrder.OrderNo)
+		constant.PayChannelFreekassa_43, constant.PayChannelFreekassa_44, constant.PayChannelFreekassa_7:
+		if notifyData == nil {
+			return payOrder.Status, nil
+		}
+
+		notifyReq := notifyData.(*PayNotifyReq)
+
+		var pass bool
+		pass, err = checkAmount(ctx, notifyReq.Amount, payOrder.OrderAmount)
 		if err != nil {
-			global.MyLogger(ctx).Err(err).Msgf("freekassa.QueryOrder failed")
-			return
+			return constant.ReturnStatusWaiting, err
 		}
-		if order == nil {
-			global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ orderNo: %s, waiting to pay (resp order is nil)", orderNo)
+
+		if !pass {
+			global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ OrderAmount: %s, waiting to pay", orderNo)
 			return constant.ReturnStatusWaiting, nil
 		}
-		global.MyLogger(ctx).Info().Msgf("freekassa.QueryOrder failed")
-
-		if order.Status == 0 {
-			var pass bool
-			pass, err = checkAmount(ctx, fmt.Sprintf("%f", order.Amount), payOrder.OrderAmount)
-			if err != nil {
-				return constant.ReturnStatusWaiting, err
-			}
-
-			if !pass {
-				global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ OrderAmount: %s, waiting to pay", orderNo)
-				return constant.ReturnStatusWaiting, nil
-			}
-			resultStatus, orderRealityAmount = constant.ReturnStatusSuccess, fmt.Sprintf("%f", order.Amount)
-		} else {
-			global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ orderNo: %s, waiting to pay", orderNo)
-			return constant.ReturnStatusWaiting, nil
-		}
+		resultStatus, orderRealityAmount = constant.ReturnStatusSuccess, notifyReq.Amount
 	}
 
 	// 查询用户信息
@@ -234,8 +233,10 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string) (status string, err error
 			global.MyLogger(_ctx).Info().Msgf(`2`)
 			if IsVIPExpired(userEntity) {
 				newExpiredTime = time.Now().Unix() + addExpiredTime
+				global.MyLogger(_ctx).Info().Msgf(`--------------11 newExpiredTime: %d`, newExpiredTime)
 			} else {
 				newExpiredTime = userEntity.ExpiredTime + addExpiredTime
+				global.MyLogger(_ctx).Info().Msgf(`--------------12 newExpiredTime: %d`, newExpiredTime)
 			}
 			// 随机赠送
 			giftDay := randomGiftDay(goodsEntity.Low, goodsEntity.High)

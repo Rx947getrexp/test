@@ -202,6 +202,10 @@ type AddGoodsAdminRequest struct {
 	IsDiscount       int     `form:"is_discount" binding:"required" json:"is_discount"`
 	Low              int     `form:"low" json:"low"`
 	High             int     `form:"high" json:"high"`
+	PriceRUB         float64 `form:"price_rub" binding:"required" json:"price_rub" dc:"卢布价格"`
+	PriceWMZ         float64 `form:"price_wmz" binding:"required" json:"price_wmz" dc:"WMZ价格"`
+	PriceUSD         float64 `form:"price_usd" binding:"required" json:"price_usd" dc:"USD价格"`
+	PriceUAH         float64 `form:"price_uah" binding:"required" json:"price_uah" dc:"UAH价格"`
 }
 
 type EditGoodsAdminRequest struct {
@@ -220,6 +224,10 @@ type EditGoodsAdminRequest struct {
 	Low              int     `form:"low" json:"low"`
 	High             int     `form:"high" json:"high"`
 	Status           int     `form:"status" json:"status"`
+	PriceRUB         float64 `form:"price_rub" json:"price_rub"`
+	PriceWMZ         float64 `form:"price_wmz" json:"price_wmz"`
+	PriceUSD         float64 `form:"price_usd" json:"price_usd"`
+	PriceUAH         float64 `form:"price_uah" json:"price_uah"`
 }
 
 type GoodsListAdminRequest struct {

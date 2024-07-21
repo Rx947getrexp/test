@@ -67,7 +67,7 @@ func doSyncPayOrderStatus() {
 	c, _ := gin.CreateTestContext(httptest.NewRecorder())
 	defer c.Done()
 	for _, item := range items {
-		_, err = service.SyncOrderStatus(c, item.OrderNo)
+		_, err = service.SyncOrderStatus(c, item.OrderNo, nil)
 		if err != nil {
 			global.Logger.Err(err).Msgf("SyncOrderStatus failed, orderNo: %s", item.OrderNo)
 			continue

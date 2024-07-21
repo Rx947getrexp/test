@@ -35,7 +35,7 @@ func ApiRoute(group *gin.RouterGroup) {
 	group.POST("report_node_ping_result", node.ReportNodePingResult) //上报ping结果
 	group.POST("report_user_op_log", report.ReportUserOpLog)         // 连接代理
 	group.GET("get_rules", config.GetRules)                          // 获取ip和域名列表
-	group.POST("pay_notify", order.PayNotify)
+	group.GET("pay_notify", order.PayNotify)
 
 	group.Use(api.JWTAuth())
 	{
