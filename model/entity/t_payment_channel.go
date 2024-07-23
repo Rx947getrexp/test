@@ -30,4 +30,5 @@ type TPaymentChannel struct {
 	FreekassaCode       string      `orm:"freekassa_code"        description:"freekassa支付通道"`
 	CommissionRate      float64     `orm:"commission_rate"       description:"手续费比例"`
 	Commission          float64     `orm:"commission"            description:"手续费"`
+	MinPayAmount        float64     `orm:"min_pay_amount"        description:"最低支付金额"`
 }

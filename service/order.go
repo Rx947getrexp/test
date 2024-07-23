@@ -442,7 +442,7 @@ func checkAmount(ctx *gin.Context, amount, orderAmount string) (bool, error) {
 		global.MyLogger(ctx).Err(err).Msgf("order amount ParseFloat failed, (%s)", orderAmount)
 		return false, err
 	}
-	if amountFloat == orderAmountFloat {
+	if amountFloat >= orderAmountFloat {
 		return true, nil
 	}
 

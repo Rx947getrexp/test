@@ -38,6 +38,7 @@ type PaymentChannel struct {
 	FreekassaCode       string              `json:"freekassa_code" dc:"freekassa支付通道"`
 	CommissionRate      float64             `json:"commission_rate" dc:"手续费比例"`
 	Commission          float64             `json:"commission" dc:"手续费"`
+	MinPayAmount        float64             `json:"min_pay_amount" dc:"最低支付金额"`
 }
 
 type BankCardInfo struct {
@@ -108,6 +109,7 @@ func PaymentChannelList(ctx *gin.Context) {
 			FreekassaCode:       item.FreekassaCode,
 			CommissionRate:      item.CommissionRate,
 			Commission:          item.Commission,
+			MinPayAmount:        item.MinPayAmount,
 		})
 	}
 	response.RespOk(ctx, i18n.RetMsgSuccess, PaymentChannelListRes{Items: items})

@@ -32,4 +32,5 @@ type TPaymentChannel struct {
 	FreekassaCode       interface{} // freekassa支付通道
 	CommissionRate      interface{} // 手续费比例
 	Commission          interface{} // 手续费
+	MinPayAmount        interface{} // 最低支付金额
 }

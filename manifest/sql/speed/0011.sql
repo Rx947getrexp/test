@@ -14,6 +14,7 @@ ALTER TABLE `t_payment_channel`ADD COLUMN `currency_type` varchar(64) default NU
 ALTER TABLE `t_payment_channel`ADD COLUMN `freekassa_code` varchar(64) default NULL COMMENT 'freekassa支付通道';
 ALTER TABLE `t_payment_channel`ADD COLUMN `commission_rate` decimal(10,2) NOT NULL COMMENT '手续费比例';
 ALTER TABLE `t_payment_channel`ADD COLUMN `commission` decimal(10,2) NOT NULL default 0.0 COMMENT '手续费';
+ALTER TABLE `t_payment_channel`ADD COLUMN `min_pay_amount` decimal(10,2) NOT NULL default 0.0 COMMENT '最低支付金额';
 
 
 --  PayChannelPnSafePay    = "pnsafepay" // RUB
