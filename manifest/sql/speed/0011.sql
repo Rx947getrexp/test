@@ -1,8 +1,8 @@
-insert into t_payment_channel set channel_id='freekassa-12',channel_name='МИР',is_active=1,free_trial_days=3,timeout_duration=60,weight=50,created_at=now(),updated_at=now(),usd_network='',freekassa_code='12';
-insert into t_payment_channel set channel_id='freekassa-36',channel_name='Card RUB',is_active=1,free_trial_days=3,timeout_duration=60,weight=50,created_at=now(),updated_at=now(),usd_network='',freekassa_code='36';
-insert into t_payment_channel set channel_id='freekassa-43',channel_name='СБЕР Pay',is_active=1,free_trial_days=3,timeout_duration=60,weight=50,created_at=now(),updated_at=now(),usd_network='',freekassa_code='43';
-insert into t_payment_channel set channel_id='freekassa-44',channel_name='СБП (НСПК)',is_active=1,free_trial_days=3,timeout_duration=60,weight=50,created_at=now(),updated_at=now(),usd_network='',freekassa_code='44';
-insert into t_payment_channel set channel_id='freekassa-7',channel_name='VISA/MasterCard',is_active=1,free_trial_days=3,timeout_duration=60,weight=50,created_at=now(),updated_at=now(),usd_network='',freekassa_code='7';
+insert into t_payment_channel set channel_id='freekassa-12',channel_name='МИР',is_active=1,free_trial_days=3,timeout_duration=60,weight=50,created_at=now(),updated_at=now(),usd_network='',freekassa_code='12',commission_rate=0;
+insert into t_payment_channel set channel_id='freekassa-36',channel_name='Card RUB',is_active=1,free_trial_days=3,timeout_duration=60,weight=50,created_at=now(),updated_at=now(),usd_network='',freekassa_code='36',commission_rate=0;
+insert into t_payment_channel set channel_id='freekassa-43',channel_name='СБЕР Pay',is_active=1,free_trial_days=3,timeout_duration=60,weight=50,created_at=now(),updated_at=now(),usd_network='',freekassa_code='43',commission_rate=0;
+insert into t_payment_channel set channel_id='freekassa-44',channel_name='СБП (НСПК)',is_active=1,free_trial_days=3,timeout_duration=60,weight=50,created_at=now(),updated_at=now(),usd_network='',freekassa_code='44',commission_rate=0;
+insert into t_payment_channel set channel_id='freekassa-7',channel_name='VISA/MasterCard',is_active=1,free_trial_days=3,timeout_duration=60,weight=50,created_at=now(),updated_at=now(),usd_network='',freekassa_code='7',commission_rate=0;
 
 
 

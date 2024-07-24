@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"go-speed/api/api/common"
+	"go-speed/util/pay/freekassa"
 	"math/rand"
 	"strconv"
 	"time"
@@ -186,9 +187,24 @@ func CreateOrder(ctx *gin.Context) {
 	case constant.PayChannelFreekassa_12, constant.PayChannelFreekassa_36,
 		constant.PayChannelFreekassa_43, constant.PayChannelFreekassa_44,
 		constant.PayChannelFreekassa_7:
-		res.Status = constant.ReturnStatusSuccess
-		payOrderUpdate.ReturnStatus = constant.ReturnStatusSuccess
-		payOrderUpdate.StatusMes = "Freekassa"
+		resp, err := freekassa.CreateOrder(ctx, freekassa.CreateOrderReq{
+			PaymentId: res.OrderNo,
+			I:         paymentEntity.FreekassaCode,
+			Email:     userEntity.Email,
+			Ip:        ctx.ClientIP(),
+			Amount:    amount,
+			Currency:  currency,
+		})
+		if err != nil && (resp == nil) {
+			global.MyLogger(ctx).Err(err).Msgf("freekassa CreatePayOrder failed")
+			response.RespFail(ctx, i18n.RetMsgCreatePayOrderFailed, nil)
+			return
+		}
+		res.Status = resp.Type
+		res.OrderUrl = resp.Location
+		payOrderUpdate.ReturnStatus = resp.Type
+		payOrderUpdate.StatusMes = resp.Location
+		payOrderUpdate.OrderData = resp.OrderId
 
 	default:
 		err = fmt.Errorf("ChannelId %s 无效", req.ChannelId)
@@ -263,21 +279,21 @@ func ValidateOrderLimit(ctx *gin.Context, user *entity.TUser, channel *entity.TP
 		}
 	}
 
-	if unpaidNum >= global.Config.PayConfig.OrderUnpaidLimitNum {
+	if unpaidNum > global.Config.PayConfig.OrderUnpaidLimitNum {
 		err = fmt.Errorf(i18n.RetMsgOrderUnpaidLimit)
 		global.MyLogger(ctx).Err(err).Msgf("unpaidNum: %d", unpaidNum)
 		response.RespFail(ctx, i18n.RetMsgOrderUnpaidLimit, nil)
 		return
 	}
 
-	if closedNum >= global.Config.PayConfig.OrderClosedLimitNum {
+	if closedNum > global.Config.PayConfig.OrderClosedLimitNum {
 		err = fmt.Errorf(i18n.RetMsgOrderClosedLimit)
 		global.MyLogger(ctx).Err(err).Msgf("closedNum: %d", closedNum)
 		response.RespFail(ctx, i18n.RetMsgOrderClosedLimit, nil)
 		return
 	}
 
-	if failedNum >= global.Config.PayConfig.OrderFailedLimitNum {
+	if failedNum > global.Config.PayConfig.OrderFailedLimitNum {
 		err = fmt.Errorf(i18n.RetMsgOrderFailedLimit)
 		global.MyLogger(ctx).Err(err).Msgf("failedNum: %d", failedNum)
 		response.RespFail(ctx, i18n.RetMsgOrderFailedLimit, nil)

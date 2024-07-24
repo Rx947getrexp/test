@@ -47,18 +47,18 @@ type Order struct {
 }
 
 var apiKey = "19c44da8067cdbe4bc7f0b4db68891d3"
+var apiShopId = 52928
 
 func QueryOrder(ctx *gin.Context, orderId string) (order *Order, err error) {
-
-	shopID := 52928
+	shopID := apiShopId
 	nonce := time.Now().Unix()
 	mapData := make(map[string]interface{}, 0)
 	mapData["shopId"] = shopID
 	mapData["nonce"] = nonce
 	mapData["paymentId"] = orderId
-	mapData["dateFrom"] = time.Now().Add(-5 * time.Hour * 24).Format("2006-01-02 15:04:05")
-	mapData["dateTo"] = time.Now().Format("2006-01-02 15:04:05")
-	mapData["page"] = 1
+	//mapData["dateFrom"] = time.Now().Add(-5 * time.Hour * 24).Format("2006-01-02 15:04:05")
+	//mapData["dateTo"] = time.Now().Format("2006-01-02 15:04:05")
+	//mapData["page"] = 1
 	mapData["signature"] = getSignature(mapData)
 	fmt.Println("请求地址:", "https://api.freekassa.com/v1/orders")
 	fmt.Println("请求参数:", mapData)
@@ -74,6 +74,7 @@ func QueryOrder(ctx *gin.Context, orderId string) (order *Order, err error) {
 	}
 	for _, i := range response.Orders {
 		if i.MerchantOrderId == orderId {
+			global.MyLogger(ctx).Info().Msgf("############### find MerchantOrder: %#v", i)
 			return &i, nil
 		}
 	}

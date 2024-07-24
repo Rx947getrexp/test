@@ -51,8 +51,13 @@ func doSyncPayOrderStatus() {
 	)
 	err = dao.TPayOrder.Ctx(ctx).
 		Where(do.TPayOrder{
-			PaymentChannelId: []string{constant.PayChannelUPay, constant.PayChannelPnSafePay, constant.PayChannelWebMoneyPay},
-			Status:           []string{constant.ParOrderStatusInit, constant.ParOrderStatusUnpaid},
+			PaymentChannelId: []string{
+				constant.PayChannelUPay, constant.PayChannelWebMoneyPay,
+				constant.PayChannelFreekassa_7, constant.PayChannelFreekassa_12,
+				constant.PayChannelFreekassa_36, constant.PayChannelFreekassa_43,
+				constant.PayChannelFreekassa_44,
+			},
+			Status: []string{constant.ParOrderStatusInit, constant.ParOrderStatusUnpaid},
 		}).
 		//Where(do.TPayOrder{OrderNo: "100701092254247"}).
 		WhereGTE(dao.TPayOrder.Columns().CreatedAt, gtime.Now().Add(-2*time.Hour)).

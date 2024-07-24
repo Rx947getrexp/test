@@ -11,6 +11,7 @@ import (
 	"go-speed/global"
 	"go-speed/model/do"
 	"go-speed/model/entity"
+	"go-speed/util/pay/freekassa"
 	"go-speed/util/pay/pnsafepay"
 	"go-speed/util/pay/upay"
 	"go-speed/util/pay/webmoney"
@@ -164,23 +165,29 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string, notifyData interface{}) (
 
 	case constant.PayChannelFreekassa_12, constant.PayChannelFreekassa_36,
 		constant.PayChannelFreekassa_43, constant.PayChannelFreekassa_44, constant.PayChannelFreekassa_7:
-		if notifyData == nil {
-			return payOrder.Status, nil
-		}
-
-		notifyReq := notifyData.(*PayNotifyReq)
-
 		var pass bool
-		pass, err = checkAmount(ctx, notifyReq.Amount, payOrder.OrderAmount)
-		if err != nil {
-			return constant.ReturnStatusWaiting, err
+		if notifyData == nil {
+			order, err := freekassa.QueryOrder(ctx, orderNo)
+			if order.Status == 1 {
+				pass, err = checkAmountFloat64(ctx, order.Amount, payOrder.OrderAmount)
+				if err != nil {
+					return constant.ReturnStatusWaiting, err
+				}
+			}
+			orderRealityAmount = payOrder.OrderAmount
+		} else {
+			notifyReq := notifyData.(*PayNotifyReq)
+			pass, err = checkAmount(ctx, notifyReq.Amount, payOrder.OrderAmount)
+			if err != nil {
+				return constant.ReturnStatusWaiting, err
+			}
+			orderRealityAmount = notifyReq.Amount
 		}
-
 		if !pass {
 			global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ OrderAmount: %s, waiting to pay", orderNo)
 			return constant.ReturnStatusWaiting, nil
 		}
-		resultStatus, orderRealityAmount = constant.ReturnStatusSuccess, notifyReq.Amount
+		resultStatus = constant.ReturnStatusSuccess
 	}
 
 	// 查询用户信息
@@ -443,6 +450,22 @@ func checkAmount(ctx *gin.Context, amount, orderAmount string) (bool, error) {
 		return false, err
 	}
 	if amountFloat >= orderAmountFloat {
+		return true, nil
+	}
+
+	err = fmt.Errorf("order amount is not eq, response amount: (%s), order amount: (%s)", amount, orderAmount)
+	global.MyLogger(ctx).Err(err).Msgf("amount not eq")
+	return false, err
+}
+
+func checkAmountFloat64(ctx *gin.Context, amount float64, orderAmount string) (bool, error) {
+	global.MyLogger(ctx).Info().Msgf("response amount: (%f), order amount: (%s)", amount, orderAmount)
+	orderAmountFloat, err := strconv.ParseFloat(orderAmount, 64)
+	if err != nil {
+		global.MyLogger(ctx).Err(err).Msgf("order amount ParseFloat failed, (%s)", orderAmount)
+		return false, err
+	}
+	if amount >= orderAmountFloat {
 		return true, nil
 	}
 
