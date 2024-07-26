@@ -100,11 +100,16 @@ func CreateOrder(ctx *gin.Context, req CreateOrderReq) (orderResponse *OrderResp
 	mapData["currency"] = req.Currency
 	mapData["successUrl"] = global.Config.PNSafePay.CallBackUrl
 	mapData["signature"] = getSignature(mapData)
-	orderResponse, err = createOrder(ctx, mapData)
-	if err != nil {
-		global.MyLogger(ctx).Err(err).Msg(">>>>>> createOrder is not ok")
-		return
+	for n := 1; n <= 10; n++ {
+		orderResponse, err = createOrder(ctx, mapData)
+		if err != nil {
+			global.MyLogger(ctx).Info().Msgf("createOrder failed >>>>>>>>>>>>>>>>>> n = %d", n)
+			time.Sleep(time.Duration(n*10) * time.Millisecond)
+		}
+		if err == nil {
+			global.MyLogger(ctx).Info().Msgf(">>>>>> createOrder success, orderResponse: %#v", *orderResponse)
+			return
+		}
 	}
-	global.MyLogger(ctx).Info().Msgf(">>>>>> orderResponse: %#v", *orderResponse)
 	return
 }

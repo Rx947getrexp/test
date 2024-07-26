@@ -168,6 +168,11 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string, notifyData interface{}) (
 		var pass bool
 		if notifyData == nil {
 			order, err := freekassa.QueryOrder(ctx, orderNo)
+			if order == nil {
+				global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ OrderAmount: %s, waiting to pay", orderNo)
+				return constant.ReturnStatusWaiting, nil
+			}
+
 			if order.Status == 1 {
 				pass, err = checkAmountFloat64(ctx, order.Amount, payOrder.OrderAmount)
 				if err != nil {

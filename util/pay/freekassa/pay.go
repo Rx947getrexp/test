@@ -62,7 +62,15 @@ func QueryOrder(ctx *gin.Context, orderId string) (order *Order, err error) {
 	mapData["signature"] = getSignature(mapData)
 	fmt.Println("请求地址:", "https://api.freekassa.com/v1/orders")
 	fmt.Println("请求参数:", mapData)
-	response, err := getOrderList(ctx, mapData)
+	var response *OrderListResponse
+	for n := 1; n <= 10; n++ {
+		response, err = getOrderList(ctx, mapData)
+		if err == nil {
+			global.MyLogger(ctx).Info().Msgf("getOrderList failed >>>>>>>>>>>>>>>>>> n = %d", n)
+			break
+		}
+		time.Sleep(time.Duration(n*10) * time.Millisecond)
+	}
 	if err != nil {
 		return
 	}
