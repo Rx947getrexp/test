@@ -36,6 +36,11 @@ type TPaymentChannelColumns struct {
 	CreatedAt           string // 创建时间
 	UpdatedAt           string // 更新时间
 	UsdNetwork          string // USD支付网络
+	CurrencyType        string // 支付渠道币种
+	FreekassaCode       string // freekassa支付通道
+	CommissionRate      string // 手续费比例
+	Commission          string // 手续费
+	MinPayAmount        string // 最低支付金额
 }
 
 // tPaymentChannelColumns holds the columns for table t_payment_channel.
@@ -56,6 +61,11 @@ var tPaymentChannelColumns = TPaymentChannelColumns{
 	CreatedAt:           "created_at",
 	UpdatedAt:           "updated_at",
 	UsdNetwork:          "usd_network",
+	CurrencyType:        "currency_type",
+	FreekassaCode:       "freekassa_code",
+	CommissionRate:      "commission_rate",
+	Commission:          "commission",
+	MinPayAmount:        "min_pay_amount",
 }
 
 // NewTPaymentChannelDao creates and returns a new DAO object for table data access.

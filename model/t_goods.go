@@ -26,4 +26,8 @@ type TGoods struct {
 	UpdatedAt        time.Time `xorm:"comment('更新时间') TIMESTAMP"`
 	Author           string    `xorm:"comment('作者') VARCHAR(255)"`
 	Comment          string    `xorm:"comment('备注信息') VARCHAR(255)"`
+	PriceRub         string    `xorm:"not null comment('卢布价格') DECIMAL(10,2)"`
+	PriceWmz         string    `xorm:"not null comment('WMZ价格') DECIMAL(10,2)"`
+	PriceUsd         string    `xorm:"not null comment('USD价格') DECIMAL(10,2)"`
+	PriceUah         string    `xorm:"not null comment('UAH价格') DECIMAL(10,2)"`
 }

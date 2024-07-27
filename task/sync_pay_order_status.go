@@ -51,8 +51,13 @@ func doSyncPayOrderStatus() {
 	)
 	err = dao.TPayOrder.Ctx(ctx).
 		Where(do.TPayOrder{
-			PaymentChannelId: []string{constant.PayChannelUPay, constant.PayChannelPnSafePay, constant.PayChannelWebMoneyPay},
-			Status:           []string{constant.ParOrderStatusInit, constant.ParOrderStatusUnpaid},
+			PaymentChannelId: []string{
+				constant.PayChannelUPay, constant.PayChannelWebMoneyPay,
+				constant.PayChannelFreekassa_7, constant.PayChannelFreekassa_12,
+				constant.PayChannelFreekassa_36, constant.PayChannelFreekassa_43,
+				constant.PayChannelFreekassa_44,
+			},
+			Status: []string{constant.ParOrderStatusInit, constant.ParOrderStatusUnpaid},
 		}).
 		//Where(do.TPayOrder{OrderNo: "100701092254247"}).
 		WhereGTE(dao.TPayOrder.Columns().CreatedAt, gtime.Now().Add(-2*time.Hour)).
@@ -67,7 +72,7 @@ func doSyncPayOrderStatus() {
 	c, _ := gin.CreateTestContext(httptest.NewRecorder())
 	defer c.Done()
 	for _, item := range items {
-		_, err = service.SyncOrderStatus(c, item.OrderNo)
+		_, err = service.SyncOrderStatus(c, item.OrderNo, nil)
 		if err != nil {
 			global.Logger.Err(err).Msgf("SyncOrderStatus failed, orderNo: %s", item.OrderNo)
 			continue

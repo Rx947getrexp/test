@@ -40,6 +40,7 @@ type TPayOrderColumns struct {
 	CreatedAt          string // 创建时间
 	UpdatedAt          string // 更新时间
 	Version            string // 数据版本号
+	Commission         string // 手续费
 }
 
 // tPayOrderColumns holds the columns for table t_pay_order.
@@ -64,6 +65,7 @@ var tPayOrderColumns = TPayOrderColumns{
 	CreatedAt:          "created_at",
 	UpdatedAt:          "updated_at",
 	Version:            "version",
+	Commission:         "commission",
 }
 
 // NewTPayOrderDao creates and returns a new DAO object for table data access.

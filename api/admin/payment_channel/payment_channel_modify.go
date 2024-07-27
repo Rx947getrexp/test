@@ -26,6 +26,11 @@ type PaymentChannelModifyReq struct {
 	BankCardInfo        []bankCardInfo       `form:"bank_card_info" json:"bank_card_info" dc:"银行卡信息"`
 	CustomerServiceInfo *customerServiceInfo `form:"customer_service_info" json:"customer_service_info" dc:"客服信息"`
 	Weight              int                  `form:"weight" json:"weight" dc:"权重，根据权重排序"`
+	CommissionRate      *float64             `form:"commission_rate" json:"commission_rate" dc:"手续费比例"`
+	Commission          *float64             `form:"commission" json:"commission" dc:"手续费"`
+	MinPayAmount        *float64             `form:"min_pay_amount" json:"min_pay_amount" dc:"最低支付金额"`
+	//CurrencyType        *string              `form:"currency_type" json:"currency_type" dc:"支付渠道币种"`
+	//FreekassaCode       *string              `form:"freekassa_code" json:"freekassa_code" dc:"freekassa支付通道"`
 }
 
 type bankCardInfo struct {
@@ -104,6 +109,15 @@ func PaymentChannelModify(ctx *gin.Context) {
 	}
 	if req.Weight > 0 {
 		updateData.Weight = req.Weight
+	}
+	if req.CommissionRate != nil {
+		updateData.CommissionRate = req.CommissionRate
+	}
+	if req.Commission != nil {
+		updateData.Commission = req.Commission
+	}
+	if req.MinPayAmount != nil {
+		updateData.MinPayAmount = req.MinPayAmount
 	}
 	if len(req.BankCardInfo) > 0 {
 		bytes, err := json.Marshal(req.BankCardInfo)
