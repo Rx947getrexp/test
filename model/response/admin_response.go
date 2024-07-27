@@ -218,3 +218,19 @@ type GetTUserDeviceActionDayListResponse struct {
 	Total int64                  `json:"total" dc:"数据总条数"`
 	Items []TUserDeviceActionDay `json:"items" dc:"数据明细"`
 }
+type TUserDeviceDay struct {
+	Id                 int64   `json:"id" dc:"自增主键ID"`
+	Date               int     `json:"date" dc:"报表日期，eg:20240101"`
+	Device             string  `json:"device" dc:"渠道设备"`
+	Total              int     `json:"total" dc:"截止到Date，通过渠道ID注册的用户总量"`
+	New                int     `json:"new" dc:"Date日期，通过渠道ID注册的新增用户量"`
+	Retained           int     `json:"retained" dc:"通过渠道ID注册的用户，Date日期内有使用APP的用户量（留存）"`
+	TotalRecharge      int     `json:"total_recharge" dc:"充值总人数"`
+	TotalRechargeMoney float64 `json:"total_recharge_money" dc:"充值总金额"`
+	NewRechargeMoney   float64 `json:"new_recharge_money" dc:"新增充值金额"`
+	CreatedAt          string  `json:"created_at" dc:"记录创建时间"`
+}
+type GetTUserDeviceDayListResponse struct {
+	Total int64            `json:"total" dc:"数据总条数"`
+	Items []TUserDeviceDay `json:"items" dc:"数据明细"`
+}

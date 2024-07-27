@@ -127,7 +127,7 @@ func QueryUserPromotionChannelDay(ctx context.Context, startDate, endDate, date 
 	}
 	// 将 Date 字段的整数值转换为字符串
 	for _, item := range list {
-		item.Date = fmt.Sprintf("%d", item.Date)
+		item.Date = fmt.Sprintf("%s", item.Date)
 	}
 	return count, list, err
 }
@@ -383,6 +383,40 @@ func QueryDeviceActionDay(ctx context.Context, date int, Device string, orderTyp
 		offset = (page - 1) * size
 	}
 	count, err := sessCount.Table(model.TUserDeviceActionDay{}).Count()
+	if err != nil {
+		return 0, nil, err
+	}
+	err = sess.Limit(size, offset).OrderBy(fmt.Sprintf("id %s", order)).Find(&list)
+	return count, list, err
+}
+func QueryDeviceDay(ctx context.Context, date int, Device string, orderType string, page, size int) (int64, []*model.TUserDeviceDay, error) {
+	order := "desc"
+	if strings.ToLower(orderType) == "asc" {
+		order = "asc"
+	}
+	if size > constant.MaxPageSize {
+		size = constant.MaxPageSize
+	}
+	if size == 0 {
+		size = 20
+	}
+	var err error
+	var list []*model.TUserDeviceDay
+	sessCount := global.Db2.Context(ctx)
+	sess := global.Db2.Context(ctx)
+	if date > 0 {
+		sess = sess.Where(" date = ?", date)
+		sessCount = sessCount.Where(" date = ?", date)
+	}
+	if Device != "" {
+		sess = sess.Where(" device = ?", Device)
+		sessCount = sessCount.Where(" device = ?", Device)
+	}
+	offset := 0
+	if page > 1 {
+		offset = (page - 1) * size
+	}
+	count, err := sessCount.Table(model.TUserDeviceDay{}).Count()
 	if err != nil {
 		return 0, nil, err
 	}

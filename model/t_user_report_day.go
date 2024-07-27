@@ -94,3 +94,15 @@ type TUserDeviceActionDay struct {
 	WeeklyUsersClicked       int       `xorm:"INT"`
 	CreatedAt                time.Time `xorm:"comment('创建时间') TIMESTAMP"`
 }
+type TUserDeviceDay struct {
+	Id                 int64     `xorm:"pk autoincr comment('自增id') BIGINT"`
+	Date               int       `xorm:"INT"`
+	Device             string    `xorm:"VARCHAR(32)"`
+	Total              int       `xorm:"INT"`
+	New                int       `xorm:"INT"`
+	Retained           int       `xorm:"INT"`
+	TotalRecharge      int       `xorm:"INT"`
+	TotalRechargeMoney float64   `xorm:"decimal(10,2)"`
+	NewRechargeMoney   float64   `xorm:"decimal(10,2)"`
+	CreatedAt          time.Time `xorm:"comment('创建时间') TIMESTAMP"`
+}
