@@ -35,7 +35,6 @@ func ApiRoute(group *gin.RouterGroup) {
 	group.POST("report_node_ping_result", node.ReportNodePingResult) //上报ping结果
 	group.POST("report_user_op_log", report.ReportUserOpLog)         // 连接代理
 	group.GET("get_rules", config.GetRules)                          // 获取ip和域名列表
-<<<<<<< HEAD
 	group.POST("pay_notify", order.PayNotify)
 	//签名验证
 	switchStateGroup := group.Group("switch")
@@ -43,10 +42,7 @@ func ApiRoute(group *gin.RouterGroup) {
 	{
 		switchStateGroup.POST("machine_states_witching", api.ServerStateSwitching) //踢机器的接口
 	}
-=======
 	group.GET("pay_notify", order.PayNotify)
-
->>>>>>> main
 	group.Use(api.JWTAuth())
 	{
 		group.POST("change_passwd", api.ChangePasswd)
