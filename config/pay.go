@@ -18,6 +18,7 @@ type PayConfig struct {
 	OrderFailedLimitNum       int    `mapstructure:"order_failed_limit_num"`
 	DisablePaymentCountryList string `mapstructure:"disable_payment_country_list"`
 	DisablePaymentEmailList   string `mapstructure:"disable_payment_email_list"`
+	NewChannelWhitelist       string `mapstructure:"new_channel_whitelist"`
 }
 
 type WebMoneyConfig struct {

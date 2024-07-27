@@ -1,7 +1,10 @@
 insert into t_payment_channel set channel_id='freekassa-12',channel_name='МИР',is_active=1,free_trial_days=3,timeout_duration=60,weight=50,created_at=now(),updated_at=now(),usd_network='',freekassa_code='12',commission_rate=0;
-insert into t_payment_channel set channel_id='freekassa-36',channel_name='Card RUB',is_active=1,free_trial_days=3,timeout_duration=60,weight=50,created_at=now(),updated_at=now(),usd_network='',freekassa_code='36',commission_rate=0;
+
 insert into t_payment_channel set channel_id='freekassa-43',channel_name='СБЕР Pay',is_active=1,free_trial_days=3,timeout_duration=60,weight=50,created_at=now(),updated_at=now(),usd_network='',freekassa_code='43',commission_rate=0;
-insert into t_payment_channel set channel_id='freekassa-44',channel_name='СБП (НСПК)',is_active=1,free_trial_days=3,timeout_duration=60,weight=50,created_at=now(),updated_at=now(),usd_network='',freekassa_code='44',commission_rate=0;
+
+insert into t_payment_channel set channel_id='freekassa-36',channel_name='Card RUB',is_active=1,free_trial_days=3,timeout_duration=60,weight=50,created_at=now(),updated_at=now(),usd_network='',freekassa_code='36',commission_rate=0;
+insert into t_payment_channel set channel_id='freekassa-44',channel_name='СБП(НСПК)',is_active=1,free_trial_days=3,timeout_duration=60,weight=50,created_at=now(),updated_at=now(),usd_network='',freekassa_code='44',commission_rate=0;
+
 insert into t_payment_channel set channel_id='freekassa-7',channel_name='VISA/MasterCard',is_active=1,free_trial_days=3,timeout_duration=60,weight=50,created_at=now(),updated_at=now(),usd_network='',freekassa_code='7',commission_rate=0;
 
 
@@ -15,6 +18,13 @@ ALTER TABLE `t_payment_channel`ADD COLUMN `freekassa_code` varchar(64) default N
 ALTER TABLE `t_payment_channel`ADD COLUMN `commission_rate` decimal(10,2) NOT NULL COMMENT '手续费比例';
 ALTER TABLE `t_payment_channel`ADD COLUMN `commission` decimal(10,2) NOT NULL default 0.0 COMMENT '手续费';
 ALTER TABLE `t_payment_channel`ADD COLUMN `min_pay_amount` decimal(10,2) NOT NULL default 0.0 COMMENT '最低支付金额';
+
+ALTER TABLE `t_pay_order`ADD COLUMN `commission` decimal(10,2) DEFAULT NULL COMMENT '手续费';
+
+ALTER TABLE `t_goods` ADD COLUMN `price_rub` decimal(10,2) NOT NULL COMMENT '卢布价格(RUB)';
+ALTER TABLE `t_goods` ADD COLUMN `price_wmz` decimal(10,2) NOT NULL COMMENT 'WMZ价格(WMZ)';
+ALTER TABLE `t_goods` ADD COLUMN `price_usd` decimal(10,2) NOT NULL COMMENT 'USD价格(USD)';
+ALTER TABLE `t_goods` ADD COLUMN `price_uah` decimal(10,2) NOT NULL COMMENT 'UAH价格(UAH)';
 
 
 --  PayChannelPnSafePay    = "pnsafepay" // RUB
@@ -38,10 +48,7 @@ update t_payment_channel set currency_type = 'UAH' where channel_id in ('freekas
 -- PriceUSD         float64 `json:"price_usd" dc:"USD价格"`
 -- PriceUAH         float64 `json:"price_uah" dc:"UAH价格"`
 
-ALTER TABLE `t_goods` ADD COLUMN `price_rub` decimal(10,2) NOT NULL COMMENT '卢布价格(RUB)';
-ALTER TABLE `t_goods` ADD COLUMN `price_wmz` decimal(10,2) NOT NULL COMMENT 'WMZ价格(WMZ)';
-ALTER TABLE `t_goods` ADD COLUMN `price_usd` decimal(10,2) NOT NULL COMMENT 'USD价格(USD)';
-ALTER TABLE `t_goods` ADD COLUMN `price_uah` decimal(10,2) NOT NULL COMMENT 'UAH价格(UAH)';
+
 
 -- select id, period, title, price,usd_pay_price,webmoney_pay_price from t_goods;
 --
@@ -57,4 +64,3 @@ ALTER TABLE `t_goods` ADD COLUMN `price_uah` decimal(10,2) NOT NULL COMMENT 'UAH
 -- select id, period, title, price,usd_pay_price,webmoney_pay_price, price_rub, price_wmz, price_usd, price_uah from t_goods;
 
 
-ALTER TABLE `t_pay_order`ADD COLUMN `commission` decimal(10,2) DEFAULT NULL COMMENT '手续费';

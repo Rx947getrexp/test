@@ -10,7 +10,9 @@ import (
 	"go-speed/model/do"
 	"go-speed/model/entity"
 	"go-speed/model/response"
+	"go-speed/util"
 	"golang.org/x/exp/rand"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -58,7 +60,7 @@ func PaymentChannelList(ctx *gin.Context) {
 		err         error
 		entityItems []entity.TPaymentChannel
 	)
-	_, err = common.ValidateClaims(ctx)
+	user, err := common.ValidateClaims(ctx)
 	if err != nil {
 		return
 	}
@@ -74,6 +76,15 @@ func PaymentChannelList(ctx *gin.Context) {
 
 	items := make([]PaymentChannel, 0)
 	for _, item := range entityItems {
+		if !inWhitelist(ctx, user.Email) &&
+			(item.ChannelId == constant.PayChannelFreekassa_7 ||
+				item.ChannelId == constant.PayChannelFreekassa_12 ||
+				item.ChannelId == constant.PayChannelFreekassa_36 ||
+				item.ChannelId == constant.PayChannelFreekassa_43 ||
+				item.ChannelId == constant.PayChannelFreekassa_44) {
+			global.MyLogger(ctx).Info().Msg("not in whitelist")
+			continue
+		}
 		bankCardInfo := make([]BankCardInfo, 0)
 		customerServiceInfo := CustomerServiceInfo{}
 		_ = json.Unmarshal([]byte(item.BankCardInfo), &bankCardInfo)
@@ -118,4 +129,18 @@ func PaymentChannelList(ctx *gin.Context) {
 func genRandForBankCard(n int) int {
 	rand.Seed(uint64(time.Now().UnixNano()))
 	return rand.Intn(n) // 生成一个0到9999之间的随机数
+}
+
+func inWhitelist(ctx *gin.Context, email string) bool {
+	emailList := global.Config.PayConfig.NewChannelWhitelist
+	if emailList == "*" {
+		return true
+	}
+	emails := strings.Split(emailList, ",")
+	if util.IsInArrayIgnoreCase(email, emails) {
+		global.MyLogger(ctx).Info().Msgf("email(%s) is in(%s), user in whitelist", email, emails)
+		return true
+	}
+	global.MyLogger(ctx).Info().Msgf("email(%s) is not in(%s)", email, emails)
+	return false
 }
