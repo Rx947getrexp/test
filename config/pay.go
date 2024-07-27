@@ -18,10 +18,16 @@ type PayConfig struct {
 	OrderFailedLimitNum       int    `mapstructure:"order_failed_limit_num"`
 	DisablePaymentCountryList string `mapstructure:"disable_payment_country_list"`
 	DisablePaymentEmailList   string `mapstructure:"disable_payment_email_list"`
+	NewChannelWhitelist       string `mapstructure:"new_channel_whitelist"`
 }
 
 type WebMoneyConfig struct {
 	WmId     string `mapstructure:"wmid"`
 	Purse    string `mapstructure:"purse"`
 	RandCode string `mapstructure:"rand_code"`
+}
+
+// '168.119.157.136', '168.119.60.227', '178.154.197.79', '51.250.54.238'
+type FreekassaConfig struct {
+	NotifyClientIp string `mapstructure:"notify_client_ip"`
 }

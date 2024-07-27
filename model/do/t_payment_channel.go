@@ -28,4 +28,9 @@ type TPaymentChannel struct {
 	CreatedAt           *gtime.Time // 创建时间
 	UpdatedAt           *gtime.Time // 更新时间
 	UsdNetwork          interface{} // USD支付网络
+	CurrencyType        interface{} // 支付渠道币种
+	FreekassaCode       interface{} // freekassa支付通道
+	CommissionRate      interface{} // 手续费比例
+	Commission          interface{} // 手续费
+	MinPayAmount        interface{} // 最低支付金额
 }

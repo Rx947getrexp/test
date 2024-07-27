@@ -112,11 +112,9 @@ curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:
 }'
 
 
-curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13002/create_order -d '{
-"user_id": 10123,
-"product_no": "vip-month",
-"currency": "RUB",
-"order_amount": 500
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13001/create_order -d '{
+"channel_id": "freekassa-44",
+"goods_id": 1
 }'
 
 
@@ -175,3 +173,8 @@ curl -X POST -H "Lang: cn" -H "Content-Type: application/json" http://localhost:
 }'
 
 curl -X POST -H "Lang: cn" -H "Content-Type: application/json"  http://localhost:13001/order/pay_order_list -d '{"order_no":"20240506024451529790","page":1,"size":10,"email":"zzz@qq.com"}'
+
+
+curl -X POST -H "Lang: cn" -H "Content-Type: application/json"  http://localhost:13001/confirm_order -d '{"order_no":"100725013401746"}'
+
+

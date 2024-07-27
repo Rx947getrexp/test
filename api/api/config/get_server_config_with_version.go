@@ -15,6 +15,10 @@ import (
 	"net/http"
 )
 
+var (
+	UserGetConfigCounter int64 = 0
+)
+
 type GetServerConfigWithoutRulesReq struct {
 	UserId      uint64 `form:"user_id" binding:"required" json:"user_id"`
 	CountryName string `form:"country_name" json:"country_name"`
@@ -51,10 +55,21 @@ func GetServerConfigWithoutRules(ctx *gin.Context) {
 	if err != nil {
 		return
 	}
+	global.MyLogger(ctx).Info().Msgf(">>> winCountry: %s, len(nodeEntities): %d", winCountry.Name, len(nodeEntities))
 
 	dnss := make([]string, 0)
 	v2rayServers := make([]Server, 0)
-	for _, item := range nodeEntities {
+
+	index := 0
+	if len(nodeEntities) > 1 {
+		index = int(userEntity.Id % int64(len(nodeEntities)))
+	}
+	global.MyLogger(ctx).Info().Msgf(">>> userId: %d, index: %d", userEntity.Id, index)
+	for i, item := range nodeEntities {
+		if i != index {
+			continue
+		}
+
 		nodeId := item.Id
 		nodePorts := []int{item.Port}
 		for x := item.MinPort; x <= item.MaxPort; x++ {

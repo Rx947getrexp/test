@@ -48,7 +48,7 @@ func QueryOrder(ctx *gin.Context) {
 	}
 
 	// sync order status
-	_, err = service.SyncOrderStatus(ctx, req.OrderNo)
+	_, err = service.SyncOrderStatus(ctx, req.OrderNo, nil)
 	if err != nil {
 		response.ResFail(ctx, err.Error())
 		return

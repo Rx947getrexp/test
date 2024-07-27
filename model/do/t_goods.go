@@ -33,4 +33,8 @@ type TGoods struct {
 	UsdPayPrice      interface{} // usd_pay价格(U)
 	UsdPriceUnit     interface{} // USD支付的价格单位
 	WebmoneyPayPrice interface{} // webmoney价格(wmz)
+	PriceRub         interface{} // 卢布价格(RUB)
+	PriceWmz         interface{} // WMZ价格(WMZ)
+	PriceUsd         interface{} // USD价格(USD)
+	PriceUah         interface{} // UAH价格(UAH)
 }

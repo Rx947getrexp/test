@@ -11,6 +11,7 @@ import (
 	"go-speed/global"
 	"go-speed/model/do"
 	"go-speed/model/entity"
+	"go-speed/util/pay/freekassa"
 	"go-speed/util/pay/pnsafepay"
 	"go-speed/util/pay/upay"
 	"go-speed/util/pay/webmoney"
@@ -21,7 +22,18 @@ import (
 	"time"
 )
 
-func SyncOrderStatus(ctx *gin.Context, orderNo string) (status string, err error) {
+type PayNotifyReq struct {
+	MerchantId string `form:"MERCHANT_ID" json:"MERCHANT_ID"`
+	Amount     string `form:"AMOUNT" json:"AMOUNT"`
+	IntId      string `form:"intid" json:"intid"`
+	OrderId    string `form:"MERCHANT_ORDER_ID" json:"MERCHANT_ORDER_ID"`
+	PEmail     string `form:"P_EMAIL" json:"P_EMAIL"`
+	CurId      string `form:"CUR_ID" json:"CUR_ID"`
+	Commission string `form:"commission" json:"commission"`
+	Sign       string `form:"SIGN" json:"SIGN"`
+}
+
+func SyncOrderStatus(ctx *gin.Context, orderNo string, notifyData interface{}) (status string, err error) {
 	var (
 		affected             int64
 		lastInsertId         int64
@@ -150,6 +162,37 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string) (status string, err error
 		//	global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ orderNo: %s, waiting to pay", orderNo)
 		//	return constant.ReturnStatusWaiting, nil
 		//}
+
+	case constant.PayChannelFreekassa_12, constant.PayChannelFreekassa_36,
+		constant.PayChannelFreekassa_43, constant.PayChannelFreekassa_44, constant.PayChannelFreekassa_7:
+		var pass bool
+		if notifyData == nil {
+			order, err := freekassa.QueryOrder(ctx, orderNo)
+			if order == nil {
+				global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ OrderAmount: %s, waiting to pay", orderNo)
+				return constant.ReturnStatusWaiting, nil
+			}
+
+			if order.Status == 1 {
+				pass, err = checkAmountFloat64(ctx, order.Amount, payOrder.OrderAmount)
+				if err != nil {
+					return constant.ReturnStatusWaiting, err
+				}
+			}
+			orderRealityAmount = payOrder.OrderAmount
+		} else {
+			notifyReq := notifyData.(*PayNotifyReq)
+			pass, err = checkAmount(ctx, notifyReq.Amount, payOrder.OrderAmount)
+			if err != nil {
+				return constant.ReturnStatusWaiting, err
+			}
+			orderRealityAmount = notifyReq.Amount
+		}
+		if !pass {
+			global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ OrderAmount: %s, waiting to pay", orderNo)
+			return constant.ReturnStatusWaiting, nil
+		}
+		resultStatus = constant.ReturnStatusSuccess
 	}
 
 	// 查询用户信息
@@ -202,8 +245,10 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string) (status string, err error
 			global.MyLogger(_ctx).Info().Msgf(`2`)
 			if IsVIPExpired(userEntity) {
 				newExpiredTime = time.Now().Unix() + addExpiredTime
+				global.MyLogger(_ctx).Info().Msgf(`--------------11 newExpiredTime: %d`, newExpiredTime)
 			} else {
 				newExpiredTime = userEntity.ExpiredTime + addExpiredTime
+				global.MyLogger(_ctx).Info().Msgf(`--------------12 newExpiredTime: %d`, newExpiredTime)
 			}
 			// 随机赠送
 			giftDay := randomGiftDay(goodsEntity.Low, goodsEntity.High)
@@ -409,7 +454,23 @@ func checkAmount(ctx *gin.Context, amount, orderAmount string) (bool, error) {
 		global.MyLogger(ctx).Err(err).Msgf("order amount ParseFloat failed, (%s)", orderAmount)
 		return false, err
 	}
-	if amountFloat == orderAmountFloat {
+	if amountFloat >= orderAmountFloat {
+		return true, nil
+	}
+
+	err = fmt.Errorf("order amount is not eq, response amount: (%s), order amount: (%s)", amount, orderAmount)
+	global.MyLogger(ctx).Err(err).Msgf("amount not eq")
+	return false, err
+}
+
+func checkAmountFloat64(ctx *gin.Context, amount float64, orderAmount string) (bool, error) {
+	global.MyLogger(ctx).Info().Msgf("response amount: (%f), order amount: (%s)", amount, orderAmount)
+	orderAmountFloat, err := strconv.ParseFloat(orderAmount, 64)
+	if err != nil {
+		global.MyLogger(ctx).Err(err).Msgf("order amount ParseFloat failed, (%s)", orderAmount)
+		return false, err
+	}
+	if amount >= orderAmountFloat {
 		return true, nil
 	}
 
