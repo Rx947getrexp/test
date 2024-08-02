@@ -3,6 +3,8 @@ package common
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/gogf/gf/v2/os/gtime"
+	"github.com/mssola/user_agent"
 	"go-speed/dao"
 	"go-speed/global"
 	"go-speed/i18n"
@@ -55,5 +57,32 @@ func CheckDevId(ctx *gin.Context, devId string) (devEntity *entity.TDev, err err
 		response.RespFail(ctx, i18n.RetMsgDevIdNotExitsErr, nil)
 		return
 	}
+	return
+}
+
+func SaveDeviceID(ctx *gin.Context, uid int64) {
+	deviceID := global.GetClientId(ctx)
+	if deviceID == "" {
+		global.MyLogger(ctx).Warn().Msgf("deviceID is empty, userId: %d", uid)
+		return
+	}
+	userAgent := global.GetUserAgent(ctx)
+	ua := user_agent.New(userAgent)
+	os := ua.OS()
+	if os == "" {
+		os = userAgent
+	}
+
+	lastInsertId, err := dao.TUserDevice.Ctx(ctx).Data(do.TUserDevice{
+		UserId:    uid,
+		ClientId:  deviceID,
+		Os:        os,
+		CreatedAt: gtime.Now(),
+	}).InsertIgnore()
+	if err != nil {
+		global.MyLogger(ctx).Err(err).Msgf("add TUserDevice failed")
+		return
+	}
+	global.MyLogger(ctx).Debug().Msgf("add TUserDevice success, lastInsertId: %d", lastInsertId)
 	return
 }

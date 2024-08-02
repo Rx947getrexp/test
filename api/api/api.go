@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"go-speed/api"
+	"go-speed/api/api/common"
 	v2rayConfig "go-speed/api/api/config"
 	"go-speed/constant"
 	"go-speed/dao"
@@ -1712,7 +1713,7 @@ func JWTAuth() gin.HandlerFunc {
 			}
 
 		}
-
+		common.SaveDeviceID(c, claims.UserId)
 		c.Set("claims", claims)
 		//uu := c.MustGet("claims").(*service.CustomClaims)
 		//fmt.Println("claims...", uu.UserId)
