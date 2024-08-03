@@ -2,6 +2,11 @@ package config
 
 import (
 	"github.com/gin-gonic/gin"
+	"go-speed/dao"
+	"go-speed/global"
+	"go-speed/model/do"
+	"go-speed/model/entity"
+	"go-speed/util"
 )
 
 const (
@@ -63,6 +68,16 @@ func GenRuleIp(ctx *gin.Context, country string, withoutRules bool) (ips []strin
 		//"ff00::/8",
 		"geoip:private",
 	}
+	var items []entity.TAppDns
+	e := dao.TAppDns.Ctx(ctx).Where(do.TAppDns{Status: 1, Level: 1}).Scan(&items)
+	if e != nil {
+		global.MyLogger(ctx).Err(e).Msgf(">>>>> Get TAppDns failed: %+v", e.Error())
+	}
+	for _, i := range items {
+		if !util.IsInArrayIgnoreCase(i.Ip, ips) {
+			ips = append(ips, i.Ip)
+		}
+	}
 	if withoutRules {
 		return ips
 	}
@@ -85,6 +100,16 @@ func GenRuleDomain(ctx *gin.Context, country string, withoutRules bool) (domains
 		"icloud",
 		"apple",
 		"geosite:private",
+	}
+	var items []entity.TAppDns
+	e := dao.TAppDns.Ctx(ctx).Where(do.TAppDns{Status: 1, Level: 1}).Scan(&items)
+	if e != nil {
+		global.MyLogger(ctx).Err(e).Msgf(">>>>> Get TAppDns failed: %+v", e.Error())
+	}
+	for _, i := range items {
+		if !util.IsInArrayIgnoreCase(i.Dns, domains) {
+			domains = append(domains, i.Dns)
+		}
 	}
 	if withoutRules {
 		return domains
