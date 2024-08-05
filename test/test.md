@@ -178,3 +178,23 @@ curl -X POST -H "Lang: cn" -H "Content-Type: application/json"  http://localhost
 curl -X POST -H "Lang: cn" -H "Content-Type: application/json"  http://localhost:13001/confirm_order -d '{"order_no":"100725013401746"}'
 
 
+
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13001/official_docs/list
+
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13001/official_docs/add -d '{
+    "type": "help",
+    "name": "help-question",
+    "desc": "官方文档",
+    "content": "12344\n123123\n12312312\n123123sfasjdlakjdlakj\n"
+}'
+
+
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13001/official_docs/edit -d '{
+    "id": 1,
+    "type": "help2",
+    "name": "help-question2",
+    "desc": "官方文档2",
+    "content": "12344\n123123\n12312312\n123123sfasjdlakjdlakj222222222\n"
+}'
+
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13001/get_official_docs

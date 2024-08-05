@@ -1,6 +1,7 @@
 package router
 
 import (
+	"go-speed/api/admin/official_docs"
 	"go-speed/api/api"
 	"go-speed/api/api/config"
 	"go-speed/api/api/country"
@@ -36,6 +37,7 @@ func ApiRoute(group *gin.RouterGroup) {
 	group.POST("report_user_op_log", report.ReportUserOpLog)         // 连接代理
 	group.GET("get_rules", config.GetRules)                          // 获取ip和域名列表
 	group.GET("pay_notify", order.PayNotify)
+	group.POST("get_official_docs", official_docs.OfficialDocsList)
 
 	group.Use(api.JWTAuth())
 	{

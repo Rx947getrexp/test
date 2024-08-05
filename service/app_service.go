@@ -178,10 +178,6 @@ func UpdateUserDev(devId int64, user *model.TUser) error {
 
 // 检查登录设备是否到达上限
 func CheckDevNumLimits(devId int64, user *model.TUser) (bool, error) {
-	if !HasDev(devId) {
-		return false, errors.New("设备号不存在。")
-	}
-
 	// 登录设备数量上限，根据用户等级来定义
 	// TODO：先简单处理，目前还没有产品形态定义
 	limits := 6

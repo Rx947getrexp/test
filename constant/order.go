@@ -35,8 +35,9 @@ const (
 )
 
 const (
-	UploadFilePathOrder   = "order"
-	UploadFilePathPayment = "payment"
+	UploadFilePathOrder        = "order"
+	UploadFilePathPayment      = "payment"
+	UploadFilePathOfficialDocs = "official_docs"
 )
 
 const (
