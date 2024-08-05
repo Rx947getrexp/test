@@ -3,13 +3,14 @@ package model
 import "time"
 
 type TUserReportDay struct {
-	Id        int64     `xorm:"pk autoincr comment('自增id') BIGINT"`
-	Date      int       `xorm:"INT"`
-	ChannelId int       `xorm:"INT"`
-	Total     int       `xorm:"INT"`
-	New       int       `xorm:"INT"`
-	Retained  int       `xorm:"INT"`
-	CreatedAt time.Time `xorm:"comment('创建时间') TIMESTAMP"`
+	Id            int64     `xorm:"pk autoincr comment('自增id') BIGINT"`
+	Date          int       `xorm:"INT"`
+	ChannelId     int       `xorm:"INT"`
+	Total         int       `xorm:"INT"`
+	New           int       `xorm:"INT"`
+	Retained      int       `xorm:"INT"`
+	MonthRetained int       `xorm:"INT"`
+	CreatedAt     time.Time `xorm:"comment('创建时间') TIMESTAMP"`
 }
 type TUserChannelDay struct {
 	Id                 int64     `xorm:"pk autoincr comment('自增id') BIGINT"`

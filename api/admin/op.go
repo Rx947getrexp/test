@@ -163,13 +163,14 @@ func GetReportUserDayList(c *gin.Context) {
 	items := make([]response.ReportUserDay, 0)
 	for _, item := range list {
 		items = append(items, response.ReportUserDay{
-			Id:        item.Id,
-			Date:      item.Date,
-			ChannelId: item.ChannelId,
-			Total:     item.Total,
-			New:       item.New,
-			Retained:  item.Retained,
-			CreatedAt: item.CreatedAt.String(),
+			Id:            item.Id,
+			Date:          item.Date,
+			ChannelId:     item.ChannelId,
+			Total:         item.Total,
+			New:           item.New,
+			Retained:      item.Retained,
+			MonthRetained: item.MonthRetained,
+			CreatedAt:     item.CreatedAt.String(),
 		})
 	}
 	resp := response.GetReportUserDayListResponse{Total: total, Items: items}
@@ -252,7 +253,50 @@ func GetPromotionChannelUserDayList(c *gin.Context) {
 	response.RespOk(c, i18n.RetMsgSuccess, resp)
 	return
 }
+func GetChannelUserRecharge(c *gin.Context) {
+	param := new(request.GetChannelUserRechargeRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
 
+	total, list, err := service.QueryGetChannelUserRechargeDay(c, param.StartDate, param.EndDate, param.Date, param.Channel, param.OrderType, param.Page, param.Size)
+	if err != nil {
+		global.Logger.Err(err).Msg("查询出错！")
+		response.ResFail(c, "查询出错！")
+		return
+	}
+	// 二次处理数据
+	groupedData := make(map[string]*response.ChannelUserDay)
+	dateRange := fmt.Sprintf("%d-%d", param.StartDate, param.EndDate)
+	for _, item := range list {
+		if _, exists := groupedData[item.Channel]; !exists {
+			groupedData[item.Channel] = &response.ChannelUserDay{
+				Id:                 0,
+				Date:               dateRange, // 使用 dateRange 作为 Date 的值
+				Channel:            item.Channel,
+				Total:              item.Total,
+				New:                0,
+				Retained:           0,
+				TotalRecharge:      item.TotalRecharge,
+				TotalRechargeMoney: item.TotalRechargeMoney,
+				NewRechargeMoney:   0,
+				CreatedAt:          "",
+			}
+		}
+		groupedData[item.Channel].New += item.New
+		groupedData[item.Channel].Retained += item.Retained
+		groupedData[item.Channel].NewRechargeMoney += item.NewRechargeMoney
+	}
+	items := make([]response.ChannelUserDay, 0, len(groupedData))
+	for _, item := range groupedData {
+		items = append(items, *item)
+	}
+	resp := response.GetChannelUserDayListResponse{Total: total, Items: items}
+	response.RespOk(c, i18n.RetMsgSuccess, resp)
+	return
+}
 func GetOnlineUserDayList(c *gin.Context) {
 	param := new(request.GetOnlineUserDayListRequest)
 	if err := c.ShouldBind(param); err != nil {
