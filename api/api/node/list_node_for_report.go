@@ -16,8 +16,8 @@ func ListNodeForReport(c *gin.Context) {
 	if token != "" {
 		claims, err := service.ParseTokenByUser(token, service.CommonUserType)
 		if err != nil {
-			global.MyLogger(c).Err(err).Msgf("token出错")
-			response.RespFail(c, i18n.RetMsgParamParseErr, nil)
+			global.MyLogger(c).Err(err).Msgf("ParseTokenByUser failed")
+			response.RespFail(c, i18n.RetMsgAuthExpired, nil, response.CodeTokenExpired)
 			return
 		}
 		user, err := service.GetUserByClaims(claims)

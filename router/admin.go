@@ -5,6 +5,7 @@ import (
 	"go-speed/api/admin"
 	"go-speed/api/admin/country"
 	"go-speed/api/admin/node"
+	"go-speed/api/admin/official_docs"
 	"go-speed/api/admin/order"
 	"go-speed/api/admin/payment_channel"
 	"go-speed/api/admin/report"
@@ -179,5 +180,14 @@ func AdminRoute(group *gin.RouterGroup) {
 		paymentChannelGroup.POST("list", payment_channel.PaymentChannelList)
 		paymentChannelGroup.POST("edit", payment_channel.PaymentChannelModify)
 		paymentChannelGroup.POST("upload", payment_channel.UploadPaymentQRCode)
+
+		// 官方文档
+		officialDocsGroup := group.Group("official_docs")
+		officialDocsGroup.POST("add", official_docs.OfficialDocsCreate)
+		officialDocsGroup.POST("delete", official_docs.OfficialDocsDelete)
+		officialDocsGroup.POST("edit", official_docs.OfficialDocsModify)
+		officialDocsGroup.POST("list", official_docs.OfficialDocsList)
+		officialDocsGroup.POST("upload", official_docs.UploadOfficialDocsImage)
 	}
+
 }

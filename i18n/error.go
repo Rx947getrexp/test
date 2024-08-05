@@ -55,6 +55,7 @@ const (
 	RetMsgDBErr                     = "查询失败" //"数据库访问失败。"
 	RetMsgDevIdNotExitsErr          = "设备号不存在。"
 	RetMsgParamParseErr             = "参数解析失败。"
+	RetMsgDevIdParseErr             = "DevID解析失败。"
 	RetMsgParamInvalid              = "参数错误。"
 	RetMsgEmailNotReg               = "邮箱地址未注册。"
 	RetMsgVerifyCodeSendFail        = "发送验证码失败,请稍后再试。"
@@ -66,6 +67,7 @@ const (
 	RetMsgReferrerIDIncorrect       = "推荐人ID不正确。"
 	RetMsgRegSuccess                = "注册成功。"
 	RetMsgAccountNotExist           = "账号不存在。"
+	RetMsgPasswordIncorrect         = "密码错误。"
 	RetMsgAccountPasswordEmptyErr   = "账号、密码都不可以为空。"
 	RetMsgAccountPasswordIncorrect  = "用户名或密码不正确。"
 	RetMsgReachedDevicesLimit       = "达到登录设备上限。"
@@ -144,6 +146,10 @@ func Init() {
 		LangEN: "Parameter parsing failed.",
 		LangRU: "Параметрический анализ не работает.",
 	}
+	ReturnMsgMap[RetMsgDevIdParseErr] = map[string]string{
+		LangEN: "DevID parsing failed.",
+		LangRU: "DevID анализ не работает.",
+	}
 	ReturnMsgMap[RetMsgParamInvalid] = map[string]string{
 		LangEN: "Parameter error.",
 		LangRU: "Ошибка параметра.",
@@ -187,6 +193,10 @@ func Init() {
 	ReturnMsgMap[RetMsgAccountNotExist] = map[string]string{
 		LangEN: "Account does not exist.",
 		LangRU: "Учетная запись не существует.",
+	}
+	ReturnMsgMap[RetMsgPasswordIncorrect] = map[string]string{
+		LangEN: "Incorrect Password.",
+		LangRU: "Неверный пароль.",
 	}
 	ReturnMsgMap[RetMsgAccountPasswordEmptyErr] = map[string]string{
 		LangEN: "Both account and password cannot be empty.",
