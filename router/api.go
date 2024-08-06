@@ -1,6 +1,7 @@
 package router
 
 import (
+	"go-speed/api/admin/official_docs"
 	"go-speed/api/api"
 	"go-speed/api/api/config"
 	"go-speed/api/api/country"
@@ -43,6 +44,7 @@ func ApiRoute(group *gin.RouterGroup) {
 		switchStateGroup.POST("machine_states_witching", api.ServerStateSwitching) //踢机器的接口
 	}
 	group.GET("pay_notify", order.PayNotify)
+	group.POST("get_official_docs", official_docs.OfficialDocsList)
 	group.Use(api.JWTAuth())
 	{
 		group.POST("change_passwd", api.ChangePasswd)

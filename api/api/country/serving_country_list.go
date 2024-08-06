@@ -9,6 +9,7 @@ import (
 	"go-speed/model/do"
 	"go-speed/model/entity"
 	"go-speed/model/response"
+	"go-speed/service"
 )
 
 type ServingCountryListReq struct {
@@ -36,15 +37,26 @@ func ServingCountryList(ctx *gin.Context) {
 		req        = new(ServingCountryListReq)
 		items      []entity.TServingCountry
 		userEntity *entity.TUser
+		userId     uint64
 	)
 
 	if err = ctx.ShouldBind(req); err != nil {
-		global.MyLogger(ctx).Err(err).Msgf("绑定参数失败")
-		response.RespFail(ctx, i18n.RetMsgParamParseErr, nil)
-		return
+		claims := ctx.MustGet("claims").(*service.CustomClaims)
+		user, err := service.GetUserByClaims(claims)
+		if err != nil {
+			global.MyLogger(ctx).Err(err).Msgf("用户token鉴权失败")
+			response.RespFail(ctx, i18n.RetMsgAuthFailed, nil, response.CodeTokenExpired)
+			return
+		}
+		userId = uint64(user.Id)
+		//global.MyLogger(ctx).Err(err).Msgf("绑定参数失败")
+		//response.RespFail(ctx, i18n.RetMsgParamParseErr, nil)
+		//return
+	} else {
+		userId = req.UserId
 	}
 
-	userEntity, err = common.CheckUserByUserId(ctx, req.UserId)
+	userEntity, err = common.CheckUserByUserId(ctx, userId)
 	if err != nil {
 		return
 	}

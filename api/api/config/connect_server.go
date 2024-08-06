@@ -100,6 +100,9 @@ func ConnectServer(ctx *gin.Context) {
 		}
 	}
 
+	count := IncrementCounter(winCountry.Name)
+	global.MyLogger(ctx).Info().Msgf("[connect-node-for-user] user: %s, country: %s, count: %d", userEntity.Email, winCountry.Name, count)
+
 	var result = make(map[string]interface{})
 	result["node_name"] = winCountry.Name
 	result["country_name"] = winCountry.Name

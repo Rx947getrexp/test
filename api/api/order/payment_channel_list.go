@@ -132,6 +132,7 @@ func genRandForBankCard(n int) int {
 }
 
 func inWhitelist(ctx *gin.Context, email string) bool {
+	return true
 	emailList := global.Config.PayConfig.NewChannelWhitelist
 	if emailList == "*" {
 		return true

@@ -13,11 +13,42 @@ import (
 	"go-speed/model/response"
 	"go-speed/util/geo"
 	"net/http"
+	"sync"
 )
 
 var (
-	UserGetConfigCounter int64 = 0
+	UserGetConfigCounter map[string]uint64
+	mu                   sync.Mutex // 使用Mutex来保证线程安全
 )
+
+func init() {
+	UserGetConfigCounter = make(map[string]uint64)
+}
+
+// GetCounter 安全地获取当前计数器的值
+func GetCounter(country string) uint64 {
+	mu.Lock()
+	defer mu.Unlock()
+	if count, ok := UserGetConfigCounter[country]; ok {
+		return count
+	} else {
+		return 0
+	}
+}
+
+func IncrementCounter(country string) uint64 {
+	mu.Lock()
+	defer mu.Unlock()
+	if count, ok := UserGetConfigCounter[country]; ok {
+		if count > 100000000000 {
+			count = 0
+		}
+		UserGetConfigCounter[country] = count + 1
+	} else {
+		UserGetConfigCounter[country] = 1
+	}
+	return UserGetConfigCounter[country]
+}
 
 type GetServerConfigWithoutRulesReq struct {
 	UserId      uint64 `form:"user_id" binding:"required" json:"user_id"`
@@ -55,20 +86,23 @@ func GetServerConfigWithoutRules(ctx *gin.Context) {
 	if err != nil {
 		return
 	}
-	global.MyLogger(ctx).Info().Msgf(">>> winCountry: %s, len(nodeEntities): %d", winCountry.Name, len(nodeEntities))
+	nodesLen := len(nodeEntities)
+	global.MyLogger(ctx).Info().Msgf(">>> winCountry: %s, len(nodeEntities): %d", winCountry.Name, nodesLen)
 
 	dnss := make([]string, 0)
 	v2rayServers := make([]Server, 0)
 
-	index := 0
-	if len(nodeEntities) > 1 {
-		index = int(userEntity.Id % int64(len(nodeEntities)))
+	index, counter := 0, GetCounter(winCountry.Name)
+	if nodesLen > 1 {
+		index = int(counter % uint64(nodesLen))
 	}
-	global.MyLogger(ctx).Info().Msgf(">>> userId: %d, index: %d", userEntity.Id, index)
+
+	global.MyLogger(ctx).Info().Msgf("[choose-node-for-user-1] userId: %d, index: %d, counter: %d, nodesLen: %d, country: %s", userEntity.Id, index, counter, nodesLen, winCountry.Name)
 	for i, item := range nodeEntities {
 		if i != index {
 			continue
 		}
+		global.MyLogger(ctx).Info().Msgf("[choose-node-for-user-2] (%s) (%s) (%s) (%s)", userEntity.Email, item.Ip, item.CountryEn, winCountry.Name)
 
 		nodeId := item.Id
 		nodePorts := []int{item.Port}
@@ -94,7 +128,7 @@ func GetServerConfigWithoutRules(ctx *gin.Context) {
 			}
 		}
 	}
-	global.MyLogger(ctx).Info().Msgf(">>>>> dnss: %+v", dnss)
+	global.MyLogger(ctx).Info().Msgf(">>>>> dns: %+v", dnss)
 	global.MyLogger(ctx).Info().Msgf(">>>>> v2rayServers: %+v", v2rayServers)
 
 	v, err := json.Marshal(GenV2rayConfig(ctx, v2rayServers, winCountry.Name, true))

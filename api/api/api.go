@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"go-speed/api"
+	"go-speed/api/api/common"
 	v2rayConfig "go-speed/api/api/config"
 	"go-speed/constant"
 	"go-speed/dao"
@@ -344,6 +345,8 @@ func Login(c *gin.Context) {
 		response.RespFail(c, i18n.RetMsgParamParseErr, nil)
 		return
 	}
+	param.Account = strings.TrimSpace(param.Account)
+	param.Passwd = strings.TrimSpace(param.Passwd)
 	if param.Account == "" || param.Passwd == "" {
 		global.MyLogger(c).Error().Msgf("参数无效, param: %+v", *param)
 		response.RespFail(c, i18n.RetMsgAccountPasswordEmptyErr, nil)
@@ -351,7 +354,8 @@ func Login(c *gin.Context) {
 	}
 
 	// 先看用户是否有注册过
-	userInfo, err := service.GetUserByUserName(param.Account)
+	var userInfo *entity.TUser
+	err := dao.TUser.Ctx(c).Where(do.TUser{Uname: param.Account}).Scan(&userInfo)
 	if err != nil {
 		global.MyLogger(c).Err(err).Msgf("检查是否有注册失败, param: %+v", *param)
 		response.RespFail(c, i18n.RetMsgDBErr, nil)
@@ -373,23 +377,29 @@ func Login(c *gin.Context) {
 		return
 	}
 	if !has {
-		global.MyLogger(c).Error().Msgf("用户名或密码不正确！%s， param: %+v", param.Account, *param)
-		response.RespFail(c, i18n.RetMsgAccountPasswordIncorrect, nil)
+		global.MyLogger(c).Error().Msgf("密码不正确！%s， param: %+v", param.Account, *param)
+		response.RespFail(c, i18n.RetMsgPasswordIncorrect, nil)
 		return
 	}
 	devId := c.Request.Header.Get("Dev-Id")
 	if devId != "" && user.Email != "zzz@qq.com" {
-		dId, err := strconv.Atoi(devId)
+		dId, err := strconv.ParseInt(devId, 10, 64)
 		if err != nil {
-			global.MyLogger(c).Err(err).Msgf("登录出错！%s,%d， param: %+v", param.Account, dId, *param)
-			response.RespFail(c, i18n.RetMsgParamParseErr, nil)
+			global.MyLogger(c).Err(err).Msgf("DevID atoi failed！%s, devId: %s, param: %+v", param.Account, devId, *param)
+			response.RespFail(c, i18n.RetMsgDevIdParseErr, nil)
+			return
+		}
+
+		if !service.HasDev(int64(dId)) {
+			global.MyLogger(c).Err(fmt.Errorf("%s", i18n.RetMsgDevIdNotExitsErr)).Msgf("param: %+v", *param)
+			response.RespFail(c, i18n.RetMsgDevIdNotExitsErr, nil)
 			return
 		}
 
 		limits, err := service.CheckDevNumLimits(int64(dId), user)
 		if err != nil {
 			global.MyLogger(c).Err(err).Msgf("登录出错！%s， param: %+v", param.Account, *param)
-			response.RespFail(c, err.Error(), nil)
+			response.RespFail(c, i18n.RetMsgDBErr, nil)
 			return
 		}
 		if limits {
@@ -432,11 +442,12 @@ func ChangePasswd(c *gin.Context) {
 	user.Passwd = pwdMd5
 	user.UpdatedAt = time.Now()
 	rows, err := global.Db.Cols("passwd", "updated_at").Where("id = ? and passwd = ?", user.Id, oldPwdMd5).Update(user)
-	if err != nil || rows < 1 {
+	if err != nil {
 		global.MyLogger(c).Err(fmt.Errorf("err:%+v", err)).Msgf("修改密码失败, param: %+v", *param)
 		response.RespFail(c, i18n.RetMsgOperateFailed, nil)
 		return
 	}
+	global.MyLogger(c).Info().Msgf("rows: %d", rows)
 	response.ResOk(c, i18n.RetMsgSuccess)
 }
 
@@ -1018,8 +1029,8 @@ func NodeList(c *gin.Context) {
 	if token != "" {
 		claims, err := service.ParseTokenByUser(token, service.CommonUserType)
 		if err != nil {
-			global.MyLogger(c).Err(err).Msgf("token出错, clientId: %s", getClientId(c))
-			response.RespFail(c, i18n.RetMsgParamParseErr, nil)
+			global.MyLogger(c).Err(err).Msgf("ParseTokenByUser failed, clientId: %s", getClientId(c))
+			response.RespFail(c, i18n.RetMsgAuthExpired, nil, response.CodeTokenExpired)
 			return
 		}
 		user, err := service.GetUserByClaims(claims)
@@ -1071,8 +1082,8 @@ func DnsList(c *gin.Context) {
 	if token != "" {
 		claims, err := service.ParseTokenByUser(token, service.CommonUserType)
 		if err != nil {
-			global.MyLogger(c).Err(err).Msgf("token出错, clientId: %s", getClientId(c))
-			response.RespFail(c, i18n.RetMsgParamParseErr, nil)
+			global.MyLogger(c).Err(err).Msgf("ParseTokenByUser failed, clientId: %s", getClientId(c))
+			response.RespFail(c, i18n.RetMsgAuthExpired, nil, response.CodeTokenExpired)
 			return
 		}
 		user, err := service.GetUserByClaims(claims)
@@ -1208,20 +1219,24 @@ func UploadLog(c *gin.Context) {
 		return
 	}
 	devId := c.Request.Header.Get("Dev-Id")
-	dId, err := strconv.Atoi(devId)
-	if err != nil {
-		global.MyLogger(c).Err(err).Msgf("设备鉴权失败, email: %s", user.Email)
-		response.RespFail(c, i18n.RetMsgDeviceAuthFailed, nil)
-		return
+	var dId int64
+	if devId != "" {
+		dId, err = strconv.ParseInt(devId, 10, 64)
+		if err != nil {
+			global.MyLogger(c).Err(err).Msgf("设备鉴权失败, email: %s", user.Email)
+			response.RespFail(c, i18n.RetMsgDeviceAuthFailed, nil)
+			return
+		}
+		if !service.CheckUserDev(dId, user) {
+			global.MyLogger(c).Err(fmt.Errorf("设备鉴权失败 err:%+v", err)).Msgf("设备鉴权失败, email: %s", user.Email)
+			response.RespFail(c, i18n.RetMsgDeviceAuthFailed, nil)
+			return
+		}
 	}
-	if !service.CheckUserDev(int64(dId), user) {
-		global.MyLogger(c).Err(fmt.Errorf("设备鉴权失败 err:%+v", err)).Msgf("设备鉴权失败, email: %s", user.Email)
-		response.RespFail(c, i18n.RetMsgDeviceAuthFailed, nil)
-		return
-	}
+
 	log := &model.TUploadLog{
 		UserId:    user.Id,
-		DevId:     int64(dId),
+		DevId:     dId,
 		Content:   param.Content,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -1535,7 +1550,7 @@ func ChangeNetwork(c *gin.Context) {
 		return
 	}
 	devId := c.Request.Header.Get("Dev-Id")
-	dId, err := strconv.Atoi(devId)
+	dId, err := strconv.ParseInt(devId, 10, 64)
 	if err != nil {
 		global.MyLogger(c).Err(err).Msgf("设备鉴权失败, email: %s", user.Email)
 		response.RespFail(c, i18n.RetMsgDeviceAuthFailed, nil)
@@ -1712,7 +1727,7 @@ func JWTAuth() gin.HandlerFunc {
 			}
 
 		}
-
+		common.SaveDeviceID(c, claims.UserId)
 		c.Set("claims", claims)
 		//uu := c.MustGet("claims").(*service.CustomClaims)
 		//fmt.Println("claims...", uu.UserId)
