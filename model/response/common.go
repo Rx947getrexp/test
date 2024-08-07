@@ -2,7 +2,9 @@ package response
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"go-speed/global"
 	"go-speed/i18n"
 	"net/http"
 	"strings"
@@ -55,6 +57,12 @@ func RespOk(c *gin.Context, msg string, data interface{}) {
 
 func RespFail(c *gin.Context, msg string, data interface{}, code ...int) {
 	dataBytes, _ := json.Marshal(data)
+
+	var _code int
+	_code, ok := i18n.ReturnCodeMap[msg]
+	if !ok {
+		_code = 0
+	}
 	if strings.Contains(msg, "pq") || strings.Contains(msg, "column") {
 		msg = "error"
 	} else {
@@ -63,7 +71,10 @@ func RespFail(c *gin.Context, msg string, data interface{}, code ...int) {
 	retCode := Fail
 	if len(code) > 0 {
 		retCode = code[0]
+	} else if _code != 0 && _code != 200 {
+		retCode = _code
 	}
+	global.MyLogger(c).Err(fmt.Errorf(">>>>>>>>> code: %d, msg: %s", retCode, msg)).Msgf("response fail msg to client")
 	c.JSON(http.StatusOK, Response{
 		Code: retCode,
 		Msg:  msg,
