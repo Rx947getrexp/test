@@ -74,10 +74,12 @@ var whitePath = map[string]bool{
 }
 
 var whitePathForWithoutSelect = map[string]bool{
-	"/official_docs/upload": true,
+	"/official_docs/edit": true,
+	"/official_docs/add":  true,
 }
 
 func FilteredSQLInject(c *gin.Context) {
+	global.MyLogger(c).Info().Msgf("c.Request.URL.Path: %s", c.Request.URL.Path)
 	if whitePath[c.Request.URL.Path] {
 		c.Next()
 		return
@@ -131,7 +133,8 @@ func FilteredSQLInject(c *gin.Context) {
 				}
 
 				if !isLegalParam(param) {
-					global.Logger.Err(err).Msgf("参数%s包含非法字符串", param)
+					global.MyLogger(c).Err(err).Msgf("参数 [%s] 包含非法字符串", param)
+					//global.Logger.Err(err).Msgf("参数%s包含非法字符串", param)
 					response.RespFail(c, "param err", nil)
 					c.Abort()
 					return
@@ -205,6 +208,7 @@ func isLegalParamWithoutSelect(param string) bool {
 	param = strings.ToLower(param)
 	for _, key := range _illegalSliceWithoutSelect {
 		if strings.Contains(param, key) {
+			global.Logger.Info().Msgf("参数 [%s] 包含非法字符串", param)
 			return false
 		}
 	}
