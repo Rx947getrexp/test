@@ -45,6 +45,8 @@ type I18nMsgMap map[string]map[string]string
 
 var ReturnMsgMap I18nMsgMap
 
+var ReturnCodeMap map[string]int
+
 const (
 	LangCN  = "cn"  // 中文
 	LangEN  = "en"  // 英语
@@ -98,6 +100,7 @@ const (
 )
 
 func Init() {
+	initCode()
 	ReturnMsgMap = make(I18nMsgMap)
 
 	ReturnMsgMap[RetMsgOpLimitedCurrentUserLevel] = map[string]string{
@@ -273,6 +276,61 @@ func Init() {
 	ReturnMsgMap[RetMsgAuthorizationTokenInvalid] = map[string]string{
 		LangEN: "Token invalid.",
 		LangRU: "Token недействителен.",
+	}
+}
+
+func initCode() {
+	ReturnCodeMap = make(map[string]int)
+	ReturnCodeMap = map[string]int{
+		RetMsgSuccess:     200, // = "成功"
+		RetMsgSendSuccess: 200, // = "发送成功。"
+		RetMsgRegSuccess:  200, // = "注册成功。"
+
+		RetMsgDBErr:                1000, // = "查询失败" //"数据库访问失败。"
+		RetMsgVerifyCodeSendFail:   1001, // = "发送验证码失败,请稍后再试。"
+		RetMsgRegFailed:            1002, // = "注册失败。"
+		RetMsgLoginError:           1003, // = "登录出错。"
+		RetMsgOperateFailed:        1004, // = "操作失败。"
+		RetMsgUploadLogFailed:      1005, // = "上传日志失败。"
+		RetMsgDealCreateFailed:     1006, // = "创建订单失败。"
+		RetMsgRemoveDevFailed:      1007, // = "踢除设备失败。"
+		RetMsgLogoutFailed:         1008, // = "注销失败。"
+		RetMsgCreatePayOrderFailed: 1009, // = "创建支付订单失败，请稍后重试。如果持续失败，请联系客服处理！"
+
+		RetMsgParamInputInvalid: 3000, // = "请检查输入参数。"
+		RetMsgParamInvalid:      3001, // = "参数错误。"
+		RetMsgParamParseErr:     3002, // = "参数解析失败。"
+		RetMsgDevIdParseErr:     3003, // = "DevID解析失败。"
+		RetMsgDeviceAuthFailed:  3004, // = "设备鉴权失败。"
+		RetMsgDevIdInvalid:      3005, // = "Dev-Id无效"
+		RetMsgUserIdInvalid:     3006, // = "User-Id无效"
+
+		RetMsgTwoPasswordNotMatch:       3100, // = "两次输入的密码不一致。"
+		RetMsgReferrerIDIncorrect:       3101, // = "推荐人ID不正确。"
+		RetMsgPasswordIncorrect:         3102, // = "密码错误。"
+		RetMsgAccountPasswordEmptyErr:   3103, // = "账号、密码都不可以为空。"
+		RetMsgAccountPasswordIncorrect:  3104, // = "用户名或密码不正确。"
+		RetMsgVerificationCodeErr:       3105, // = "验证码错误。"
+		RetMsgAuthorizationTokenInvalid: 301,  // = "Token无效"
+
+		RetMsgDevIdNotExitsErr:   4001, // = "设备号不存在。"
+		RetMsgEmailNotReg:        4002, // = "邮箱地址未注册。"
+		RetMsgAccountNotExist:    4002, // = "账号不存在。"
+		RetMsgQueryResultIsEmpty: 4003, // = "查询结果为空。"
+
+		RetMsgEmailHasRegErr:            5000, // = "该邮箱已注册。"
+		RetMsgReachedDevicesLimit:       5001, // = "达到登录设备上限。"
+		RetMsgAuthFailed:                301,  // = "用户鉴权失败，请重新登陆！"
+		RetMsgActivity3TimesLimits:      5003, // = "每天参与活动限制3次。"
+		RetMsgAccountExpired:            5004, // = "您的帐户已过期。请续订您的订阅或手动选择免费服务器。"
+		RetMsgAuthExpired:               301,  // = "授权已过期，请重新登陆！"
+		RetMsgMemberExpirationReminder:  5006, // = "会员还有三天即将到期，请及时续费！"
+		RetMsgOrderUnpaidLimit:          5007, // = "您还有订单未支付且未支付订单数量超过平台限制，请先支付或者取消后再继续创建新的订单。"
+		RetMsgOrderClosedLimit:          5008, // = "您取消的订单次数超过限制。"
+		RetMsgOrderFailedLimit:          5009, // = "当前订单支付失败的次数太多，请稍后重试。"
+		RetMsgProofUploadLimit:          5010, // = "您已经上传过凭证，请不要重复上传。"
+		RetMsgProofUploadNone:           5011, // = "您当前选择的是银行卡支付方式，请先上传凭证。"
+		RetMsgOpLimitedCurrentUserLevel: 5012, // = "您当前操作被限制，可升级会员等级后重试或者联系客服处理。"
 	}
 
 }
