@@ -68,7 +68,7 @@ func ServingCountryModify(ctx *gin.Context) {
 	if req.PingUrl != "" {
 		updateData.PingUrl = req.PingUrl
 	}
-	if req.IsRecommend != 0 {
+	if req.IsRecommend == 0 || req.IsRecommend == 1 {
 		updateData.IsRecommend = req.IsRecommend
 	}
 	if req.Weight != 0 {
