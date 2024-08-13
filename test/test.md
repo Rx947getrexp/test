@@ -84,6 +84,19 @@ curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:
     "result": "success"
 }'
 
+
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://www.yyy360.xyz/app-api/report_user_op_log -d '{
+    "user_id": 219122692,
+    "device_id": "1770423763070881792",
+    "device_type": "ios",
+    "page_name": "1",
+    "content": "xx",
+    "create_time": "2024-01-01 00:00:01",
+    "result": "success"
+}'
+
+
+
 curl -X GET -H "Lang: cn" http://localhost:13002/get_server_config?user_id=219122623
 
 curl -X GET -H "Lang: cn" http://localhost:13002/get_server_config_without_rules?user_id=219122623
