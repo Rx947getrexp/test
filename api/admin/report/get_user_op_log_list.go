@@ -39,6 +39,7 @@ type UserOpLog struct {
 	DeviceType string `json:"device_type" dc:"设备类型"`
 	PageName   string `json:"page_name"   dc:"page_name"`
 	Result     string `json:"result"      dc:"result"`
+	Version    string `json:"version"     dc:"version"`
 	Content    string `json:"content"     dc:"content"`
 	CreateTime string `json:"create_time" dc:"提交时间"`
 	CreatedAt  string `json:"created_at"  dc:"记录创建时间"`
@@ -116,6 +117,7 @@ func GetUserOpLogList(ctx *gin.Context) {
 			PageName:   i.PageName,
 			Result:     i.Result,
 			Content:    i.Content,
+			Version:    i.Version,
 			CreateTime: i.CreateTime,
 			CreatedAt:  i.CreatedAt.String(),
 		})

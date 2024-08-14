@@ -17,6 +17,7 @@ type TUserOpLog struct {
 	PageName   string      `orm:"page_name"   description:"page_name"`
 	Result     string      `orm:"result"      description:"result"`
 	Content    string      `orm:"content"     description:"content"`
+	Version    string      `orm:"version"     description:"version"`
 	CreateTime string      `orm:"create_time" description:"提交时间"`
 	CreatedAt  *gtime.Time `orm:"created_at"  description:"记录创建时间"`
 }

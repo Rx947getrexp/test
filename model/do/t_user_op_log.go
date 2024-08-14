@@ -19,6 +19,7 @@ type TUserOpLog struct {
 	PageName   interface{} // page_name
 	Result     interface{} // result
 	Content    interface{} // content
+	Version    interface{} // version
 	CreateTime interface{} // 提交时间
 	CreatedAt  *gtime.Time // 记录创建时间
 }

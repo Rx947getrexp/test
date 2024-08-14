@@ -19,6 +19,7 @@ type ReportUserOpLogReq struct {
 	PageName   string `form:"page_name" json:"page_name"`
 	Content    string `form:"content" json:"content"`
 	CreateTime string `form:"create_time" json:"create_time"`
+	Version    string `form:"version" json:"version"`
 	Result     string `form:"result" json:"result"`
 }
 
@@ -57,6 +58,7 @@ func ReportUserOpLog(ctx *gin.Context) {
 		PageName:   req.PageName,
 		Result:     req.Result,
 		Content:    req.Content,
+		Version:    req.Version,
 		CreateTime: req.CreateTime,
 		CreatedAt:  gtime.Now(),
 	}).InsertAndGetId()

@@ -27,6 +27,7 @@ type TUserOpLogColumns struct {
 	PageName   string // page_name
 	Result     string // result
 	Content    string // content
+	Version    string // version
 	CreateTime string // 提交时间
 	CreatedAt  string // 记录创建时间
 }
@@ -40,6 +41,7 @@ var tUserOpLogColumns = TUserOpLogColumns{
 	PageName:   "page_name",
 	Result:     "result",
 	Content:    "content",
+	Version:    "version",
 	CreateTime: "create_time",
 	CreatedAt:  "created_at",
 }
