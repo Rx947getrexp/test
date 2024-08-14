@@ -1,0 +1,1 @@
+ALTER TABLE `t_user_op_log` ADD COLUMN version VARCHAR(64) AFTER content;
