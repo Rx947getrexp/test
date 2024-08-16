@@ -1,34 +1,29 @@
 package main
 
-//import (
-//	"fmt"
-//	"go-speed/constant"
-//	"go-speed/global"
-//	"go-speed/model/response"
-//	"go-speed/util"
-//	"strings"
-//	"time"
-//)
-//
-//func main() {
-//	url := fmt.Sprintf("https://110.42.42.229/site-api/node/add_sub")
-//	if strings.Contains(item.Server, "http") {
-//		url = fmt.Sprintf("http://81.70.92.211:15003/node/add_sub", item.Server)
-//	}
-//	global.MyLogger(ctx).Info().Msgf(">>>>>>>>> url: %s", url)
-//	timestamp := fmt.Sprint(time.Now().Unix())
-//	headerParam := make(map[string]string)
-//	res := new(response.Response)
-//	headerParam["timestamp"] = timestamp
-//	headerParam["accessToken"] = util.MD5(fmt.Sprint(timestamp, constant.AccessTokenSalt))
-//	err = util.HttpClientPostV2(url, headerParam, nodeAddSubRequest, res)
-//	if res != nil {
-//		global.MyLogger(ctx).Info().Msgf(">>>>>>>>> nodeAddSubRequest: %+v, res: %+v", *nodeAddSubRequest, *res)
-//	} else {
-//		global.MyLogger(ctx).Info().Msgf(">>>>>>>>> nodeAddSubRequest: %+v, res: is nil", *nodeAddSubRequest)
-//	}
-//	if err != nil {
-//		global.MyLogger(ctx).Err(err).Msgf("email: %s, add_sub 发送失败", userEntity.Email)
-//		continue
-//	}
-//}
+import (
+	_ "github.com/gogf/gf/contrib/drivers/mysql/v2"
+	"github.com/spf13/cobra"
+	"go-speed/cmd/go-tools/tools"
+)
+
+var rootCmd *cobra.Command
+
+func cmdInit() {
+	// 创建根命令
+	rootCmd = &cobra.Command{
+		Use:   "speedctl",
+		Short: "A command line tool with multiple functions and commands",
+	}
+	// 添加顶级命令
+
+	rootCmd.AddCommand(tools.AddConfigCmd)
+	rootCmd.Execute()
+}
+
+func AddCommand(cmd *cobra.Command) {
+	rootCmd.AddCommand(cmd)
+}
+
+func main() {
+	cmdInit()
+}
