@@ -27,7 +27,7 @@ type TUserOpLogColumns struct {
 	PageName   string // page_name
 	Result     string // result
 	Content    string // content
-	Version    string // version
+	Version    string //
 	CreateTime string // 提交时间
 	CreatedAt  string // 记录创建时间
 }
