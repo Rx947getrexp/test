@@ -32,6 +32,8 @@ func AdminRoute(group *gin.RouterGroup) {
 	group.GET("get_channel_user_recharge_day_list", admin.GetChannelUserRecharge)
 	group.GET("get_user_op_log_list", report.GetUserOpLogList)
 
+	group.GET("reset_cache_test", admin.ResetCache) //刷新缓存
+
 	nodeReportGroup := group.Group("node_report")
 	nodeReportGroup.Use(admin.NodeReportAuth())
 	{

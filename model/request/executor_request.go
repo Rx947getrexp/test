@@ -23,3 +23,6 @@ type GetUserTrafficRequest struct {
 	All    bool     `form:"all" json:"all"`
 	Reset  bool     `form:"reset" json:"reset"`
 }
+
+type Request struct {
+}

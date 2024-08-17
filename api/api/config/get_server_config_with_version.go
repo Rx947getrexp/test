@@ -11,6 +11,7 @@ import (
 	"go-speed/model/do"
 	"go-speed/model/entity"
 	"go-speed/model/response"
+	"go-speed/service"
 	"go-speed/util/geo"
 	"net/http"
 	"sync"
@@ -92,16 +93,24 @@ func GetServerConfigWithoutRules(ctx *gin.Context) {
 	dnss := make([]string, 0)
 	v2rayServers := make([]Server, 0)
 
-	index, counter := 0, GetCounter(winCountry.Name)
+	index, counter, nodeID := 0, GetCounter(winCountry.Name), int64(0)
 	if nodesLen > 1 {
 		index = int(counter % uint64(nodesLen))
+		nodeID, _ = service.GetMinLoadNode(ctx, nodeEntities)
 	}
 
 	global.MyLogger(ctx).Info().Msgf("[choose-node-for-user-1] userId: %d, index: %d, counter: %d, nodesLen: %d, country: %s", userEntity.Id, index, counter, nodesLen, winCountry.Name)
 	for i, item := range nodeEntities {
-		if i != index {
-			continue
+		if nodeID == 0 {
+			if i != index {
+				continue
+			}
+		} else {
+			if item.Id != nodeID {
+				continue
+			}
 		}
+
 		global.MyLogger(ctx).Info().Msgf("[choose-node-for-user-2] (%s) (%s) (%s) (%s)", userEntity.Email, item.Ip, item.CountryEn, winCountry.Name)
 
 		nodeId := item.Id

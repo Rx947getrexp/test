@@ -8,6 +8,7 @@ import (
 	"go-speed/i18n"
 	"go-speed/model/request"
 	"go-speed/model/response"
+	"go-speed/service"
 	"go-speed/util"
 	"io"
 	"net/http"
@@ -303,7 +304,7 @@ func GetUserTraffic(c *gin.Context) {
 			clientEmails = append(clientEmails, client.Email)
 		}
 	}
-	global.Logger.Info().Msgf(">>>>>>>> clientEmails: %+v", clientEmails)
+	global.Logger.Info().Msgf(">>>>>>>> len(clientEmails): %+v", len(clientEmails))
 	resp := response.GetUserTrafficResponse{}
 	if len(clientEmails) == 0 {
 		response.RespOk(c, i18n.RetMsgSuccess, resp)
@@ -364,5 +365,26 @@ func GetUserTraffic(c *gin.Context) {
 
 	resp = response.GetUserTrafficResponse{Items: items}
 	response.RespOk(c, i18n.RetMsgSuccess, resp)
+	return
+}
+
+func GetV2raySysStats(c *gin.Context) {
+	stats, err := service.GetSysStats(c)
+	if err != nil {
+		response.ResFail(c, "GetSysStats failed, "+err.Error())
+		return
+	}
+	response.RespOk(c, i18n.RetMsgSuccess, response.GetV2raySysStatsResponse{
+		NumGoroutine: stats.NumGoroutine,
+		NumGC:        stats.NumGC,
+		Alloc:        stats.Alloc,
+		TotalAlloc:   stats.TotalAlloc,
+		Sys:          stats.Sys,
+		Mallocs:      stats.Mallocs,
+		Frees:        stats.Frees,
+		LiveObjects:  stats.LiveObjects,
+		PauseTotalNs: stats.PauseTotalNs,
+		Uptime:       stats.Uptime,
+	})
 	return
 }

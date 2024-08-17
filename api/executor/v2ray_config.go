@@ -326,8 +326,8 @@ func (c *V2rayConfig) PersistToConfigFile(filePath string) error {
 		global.Logger.Error().Msg("MarshalIndent failed, err: " + err.Error())
 		return err
 	}
-	global.Logger.Info().Msgf(">>>>>> config: \n%s", c.ToString())
-	global.Logger.Info().Msg(">>>>>> MarshalIndent config: \n" + string(jsonBytes))
+	//global.Logger.Info().Msgf(">>>>>> config: \n%s", c.ToString())
+	//global.Logger.Info().Msg(">>>>>> MarshalIndent config: \n" + string(jsonBytes))
 	err = ioutil.WriteFile(filePath, jsonBytes, 0644)
 	if err != nil {
 		global.Logger.Error().Msg("WriteFile failed, err: " + err.Error())
@@ -369,6 +369,7 @@ func ReadV2rayConfig(filePath string) (c V2rayConfig, err error) {
 	if err != nil {
 		return
 	}
-	global.Logger.Info().Msgf(">>>>>>>>> filePath: %s, V2rayConfig: %s", filePath, c.ToString())
+	//global.Logger.Info().Msgf(">>>>>>>>> filePath: %s, V2rayConfig: %s", filePath, c.ToString())
+	global.Logger.Info().Msgf(">>>>>>>>> filePath: %s", filePath)
 	return
 }
