@@ -39,7 +39,7 @@ func IsNeedDisablePaymentFeature(ctx *gin.Context, email string) bool {
 		global.MyLogger(ctx).Info().Msgf("IP(%s) -> Country(%s) is in(%s), disable payment", ctx.ClientIP(), country, countryList)
 		return true
 	}
-	if IsInArray(email, emails) {
+	if IsInArray(email, emails) || emailList == "all" {
 		global.MyLogger(ctx).Info().Msgf("email(%s) is in(%s), disable payment", email, emails)
 		return true
 	}
