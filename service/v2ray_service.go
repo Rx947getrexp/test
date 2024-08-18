@@ -86,28 +86,29 @@ func GetSysStatsByIp(ctx *gin.Context, nodeIP string) (resp *response.GetV2raySy
 		return
 	}
 	res.Print()
+	global.MyLogger(ctx).Info().Msgf("resp: %s", res.Dump())
 	resp = &response.GetV2raySysStatsResponse{}
 	err = json.Unmarshal(res.Data, &resp)
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("%s Unmarshal failed, Data: %s, err: %s", url, string(res.Data), err.Error())
 		return
 	}
-	global.MyLogger(ctx).Info().Msgf("resp: %#v", *resp)
+	global.MyLogger(ctx).Info().Msgf("resp: %+v", *resp)
 	return resp, nil
 }
 
 func GetMinLoadNode(ctx *gin.Context, nodes []entity.TNode) (nodeId int64, err error) {
-	var numsGC uint32 = 200000000
+	var numGoroutine uint32 = 200000000
 	for _, node := range nodes {
 		res, err := GetSysStatsByIp(ctx, node.Ip)
 		if err != nil {
-			global.MyLogger(ctx).Err(err).Msgf(">>>>>>>>>>>>>>>>>>>> %s skip", node.Ip)
+			global.MyLogger(ctx).Err(err).Msgf(">>>>>>>>>>>>>>>>>>>> numGoroutine: %d, %s skip, CountryEn: %s", numGoroutine, node.Ip, node.CountryEn)
 			continue
 		}
-		if res.NumGC < numsGC {
-			numsGC = res.NumGC
+		if res.NumGoroutine < numGoroutine {
+			numGoroutine = res.NumGoroutine
 			nodeId = node.Id
-			global.MyLogger(ctx).Info().Msgf(">>>>>>>>>> numsGC: %d, id: %d, ip: %s", numsGC, node.Id, node.Ip)
+			global.MyLogger(ctx).Info().Msgf(">>>>>>>>>> numGoroutine: %d, id: %d, ip: %s, CountryEn: %s", numGoroutine, node.Id, node.Ip, node.CountryEn)
 		}
 	}
 	return
