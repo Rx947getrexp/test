@@ -86,7 +86,7 @@ func GetSysStatsByIp(ctx *gin.Context, nodeIP string) (resp *response.GetV2raySy
 		return
 	}
 	res.Print()
-	global.MyLogger(ctx).Info().Msgf("resp: %s", res.Dump())
+	global.MyLogger(ctx).Info().Msgf("get_v2ray_sys_stats >>>>> ip: %s, resp: %s", nodeIP, res.Dump())
 	resp = &response.GetV2raySysStatsResponse{}
 	err = json.Unmarshal(res.Data, &resp)
 	if err != nil {
