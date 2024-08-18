@@ -19,6 +19,14 @@ type Response struct {
 	Data json.RawMessage `json:"data"`
 }
 
+func (s Response) Print() {
+	fmt.Println(fmt.Sprintf(`Response: {"code":%d,"message":"%s","data":"%s"}`, s.Code, s.Msg, string(s.Data)))
+}
+
+func (s Response) Dump() string {
+	return fmt.Sprintf(`Response: {"code":%d,"message":"%s","data":"%s"}`, s.Code, s.Msg, string(s.Data))
+}
+
 type PageRes struct {
 	List     interface{} `json:"list"`
 	Summary  float64     `json:"summary"`

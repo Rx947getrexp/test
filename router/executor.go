@@ -14,5 +14,6 @@ func ExecutorRoute(group *gin.RouterGroup) {
 		nodeGroup.POST("add_sub", executor.AddSub)
 		nodeGroup.POST("get_user_list", executor.GetUserList)
 		nodeGroup.POST("get_user_traffic", executor.GetUserTraffic)
+		nodeGroup.POST("get_v2ray_sys_stats", executor.GetV2raySysStats)
 	}
 }
