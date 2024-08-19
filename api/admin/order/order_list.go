@@ -79,7 +79,16 @@ func PayOrderList(ctx *gin.Context) {
 		return
 	}
 
-	err = dao.TPayOrder.Ctx(ctx).Where(where).Order(dao.TPayOrder.Columns().Id, constant.OrderTypeDesc).Scan(&payOrders)
+	size := req.Size
+	if size < 1 || size > 200 {
+		size = 20
+	}
+	offset := 0
+	if req.Page > 1 {
+		offset = (req.Page - 1) * size
+	}
+
+	err = dao.TPayOrder.Ctx(ctx).Where(where).Order(dao.TPayOrder.Columns().Id, constant.OrderTypeDesc).Offset(offset).Limit(size).Scan(&payOrders)
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("query payOrder failed")
 		response.ResFail(ctx, err.Error())
