@@ -165,6 +165,11 @@ curl -X POST -H "Content-Type: application/json" -H "Lang: cn" https://www.baodu
 
 curl -X POST -H "Content-Type: application/json" -H "Lang: cn" https://www.baodu.xyz/app-api/pay_notify -d '{"order_no": "20240505121440989398"}'
 
+curl -X GET -H "Content-Type: application/json" -H "Lang: cn" https://thertee.xyz/app-api/dns_list
+curl -X GET -H "Content-Type: application/json" -H "Lang: cn" https://thertee.xyz/app-api/notice_list
+
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" https://thertee.xyz/app-api/get_official_docs
+
 
 # 支付相关
 ## 管理后台
