@@ -7,7 +7,7 @@ CREATE TABLE `t_user_ping`
     `email` varchar(64) DEFAULT NULL COMMENT '用户邮箱',
     `host` varchar(64) DEFAULT NULL COMMENT '节点host, ip or dns',
     `code` varchar(64) DEFAULT NULL COMMENT 'ping的结果',
-    `cost` varchar(64) DEFAULT NULL COMMENT 'ping耗时',
+    `cost` mediumtext DEFAULT NULL COMMENT 'ping耗时',
     `time` varchar(64) DEFAULT NULL COMMENT '上报时间',
     `created_at` timestamp NULL DEFAULT NULL COMMENT '记录创建时间',
     PRIMARY KEY (`id`) USING BTREE,

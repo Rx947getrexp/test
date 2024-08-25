@@ -106,7 +106,7 @@ func SendEmail(c *gin.Context) {
 		return
 	}
 	clientIp := c.ClientIP()
-	err = service.SendTelSms(param.Email, clientIp)
+	err = service.SendTelSms(c, param.Email, clientIp)
 	if err != nil {
 		global.MyLogger(c).Err(err).Msgf("发送短信失败！email:%s", param.Email)
 		response.RespFail(c, i18n.RetMsgVerifyCodeSendFail, nil)
@@ -458,14 +458,20 @@ func ForgetPasswd(c *gin.Context) {
 		response.RespFail(c, i18n.RetMsgParamParseErr, nil)
 		return
 	}
-	err := service.VerifyMsg(param.Account, param.VerifyCode)
+	if param.Passwd != param.EnterPasswd {
+		global.MyLogger(c).Err(fmt.Errorf("密码输入不一致")).Msgf("两次密码不一致, param: %+v", *param)
+		response.RespFail(c, i18n.RetMsgTwoPasswordNotMatch, nil)
+		return
+	}
+	err := service.VerifyMsg(c, param.Account, param.VerifyCode)
 	if err != nil {
 		global.MyLogger(c).Err(err).Msgf("验证码错误, param: %+v", *param)
 		response.RespFail(c, i18n.RetMsgVerificationCodeErr, nil)
 		return
 	}
-	if param.Passwd != param.EnterPasswd {
-		response.RespFail(c, i18n.RetMsgTwoPasswordNotMatch, nil)
+
+	_, err = common.GetUserByEmail(c, param.Account)
+	if err != nil {
 		return
 	}
 	pwdDecode := util.AesDecrypt(param.Passwd)
@@ -473,8 +479,8 @@ func ForgetPasswd(c *gin.Context) {
 	user := new(model.TUser)
 	user.Passwd = pwdMd5
 	user.UpdatedAt = time.Now()
-	rows, err := global.Db.Cols("passwd", "updated_at").Where("uname = ? ", param.Account).Update(user)
-	if err != nil || rows < 1 {
+	_, err = global.Db.Cols("passwd", "updated_at").Where("uname = ? ", param.Account).Update(user)
+	if err != nil {
 		global.MyLogger(c).Err(err).Msgf("修改密码失败, param: %+v", *param)
 		response.RespFail(c, i18n.RetMsgOperateFailed, nil)
 		return

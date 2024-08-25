@@ -7,9 +7,12 @@ import (
 var (
 	//env = getEnv()
 
-	myEmailAddr               = "ispeedbar@outlook.com"
-	myEmailPwrd               = "ispeed@bar"
-	myEmailNickname           = "一十九"
+	//myEmailAddr               = "ispeedbar@outlook.com"
+	//myEmailPwrd               = "ispeed@bar"
+	//myEmailNickname           = "一十九"
+	myEmailAddr               = "VPNHERO@outlook.com"
+	myEmailPwrd               = "pingguoqm23"
+	myEmailNickname           = "HERO VPN"
 	recipientEmailAddr string = "aaa@qq.com"
 
 	sender = Sender{

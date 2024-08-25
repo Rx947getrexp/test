@@ -81,11 +81,17 @@ def tar_app_dir():
     timestamp = subprocess.run(["date", "+%Y%m%d%H%M%S"], capture_output=True, text=True).stdout.strip()
     tar_file_name = f"./hs-app-backup-{timestamp}.tar.gz"
     os.system("tar -czf %s /hs-app-backup/" % tar_file_name)
+    return tar_file_name
+
+def execute_cmd(command):
+    result = subprocess.run(command, shell=True, check=True)
+    print(result)
 
 def run():
     create_app_dir()
     cp_app_files()
-    tar_app_dir()
+    tar_file_name = tar_app_dir()
+    execute_cmd("scp %s root@185.22.152.47:/root/workdir/" % tar_file_name)
 
 
 if __name__ == '__main__':

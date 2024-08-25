@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/mssola/user_agent"
-	"go-speed/constant"
 	"go-speed/service"
 	"go-speed/service/email"
 	"go-speed/util"
 	"math/rand"
+	"net/http/httptest"
 	"testing"
 	"time"
 )
@@ -47,15 +48,25 @@ func TestUserAgent(t *testing.T) {
 }
 
 func TestEmail(t *testing.T) {
-	address := []string{"angelicbecwarqhk88@gmail.com", "aaa@163.com"}
+	address := []string{"xiaomingchuan1990@gmail.com", "446117327@qq.com", "xiaomingchuan1990@gmail.com", "hthff96@mail.ru", "pikabuke@yandex.ru", "23344@internet.ru", "togxucuse@gmail.com"}
 	//subject := "Speed密码找回"
 	//body :=
 	//	`<br>hello!</br>
 	//<br>this is a test email, pls ignore it.</br>` + fmt.Sprintf(constant.SmsMsg, util.EncodeToString(6))
 	////email.SendMail(address, subject, body)
-	subject := constant.ForgetSubject
-	body := fmt.Sprintf(constant.ForgetBody, util.EncodeToString(6))
-	email.SendEmail(subject, body, address)
+	//subject := constant.ForgetSubject
+	//body := fmt.Sprintf(constant.ForgetBody, util.EncodeToString(6))
+	c, _ := gin.CreateTestContext(httptest.NewRecorder())
+	defer c.Done()
+
+	var (
+		emailSubject = `VPN Короля сброс пароля`
+		emailContent = "<br>【VPN Короля】</br>Код подтверждения: <font color='red'>%s</font>, действителен в течение 5 минут. Для обеспечения безопасности вашего аккаунта, пожалуйста, не раскрывайте эту информацию другим людям."
+	)
+	err := email.SendEmail(c, emailSubject, fmt.Sprintf(emailContent, util.EncodeToString(6)), address)
+
+	//err := email.SendEmail(c, subject, body, address)
+	fmt.Println(err)
 }
 
 func TestRand(t *testing.T) {
