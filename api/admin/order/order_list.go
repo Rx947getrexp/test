@@ -18,6 +18,8 @@ type PayOrderListReq struct {
 	OrderNo   string `form:"order_no" json:"order_no"`
 	Page      int    `form:"page" binding:"required" json:"page"`
 	Size      int    `form:"size" binding:"required" json:"size"`
+	StartTime string `form:"start_time" json:"start_time"`
+	EndTime   string `form:"end_time" json:"end_time"`
 }
 
 type PayOrderListRes struct {
@@ -72,14 +74,31 @@ func PayOrderList(ctx *gin.Context) {
 		where.OrderNo = req.OrderNo
 	}
 
-	totalNum, err = dao.TPayOrder.Ctx(ctx).Where(where).Count()
+	orm := dao.TPayOrder.Ctx(ctx).Where(where)
+	if req.StartTime != "" {
+		orm = orm.WhereGTE(dao.TPayOrder.Columns().CreatedAt, req.StartTime+" 00:00:00")
+	}
+	if req.EndTime != "" {
+		orm = orm.WhereLTE(dao.TPayOrder.Columns().CreatedAt, req.EndTime+" 23:59:59")
+	}
+
+	totalNum, err = orm.Count()
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("query payOrder failed")
 		response.ResFail(ctx, err.Error())
 		return
 	}
 
-	err = dao.TPayOrder.Ctx(ctx).Where(where).Order(dao.TPayOrder.Columns().Id, constant.OrderTypeDesc).Scan(&payOrders)
+	size := req.Size
+	if size < 1 || size > 200 {
+		size = 20
+	}
+	offset := 0
+	if req.Page > 1 {
+		offset = (req.Page - 1) * size
+	}
+
+	err = orm.Order(dao.TPayOrder.Columns().Id, constant.OrderTypeDesc).Offset(offset).Limit(size).Scan(&payOrders)
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("query payOrder failed")
 		response.ResFail(ctx, err.Error())

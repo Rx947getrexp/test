@@ -42,6 +42,22 @@ func CheckUserByUserId(ctx *gin.Context, userId uint64) (userEntity *entity.TUse
 	return userEntity, nil
 }
 
+func GetUserByEmail(ctx *gin.Context, email string) (userEntity *entity.TUser, err error) {
+	err = dao.TUser.Ctx(ctx).Where(do.TUser{Email: email}).Scan(&userEntity)
+	if err != nil {
+		global.MyLogger(ctx).Err(err).Msgf("email %s 查询db失败", email)
+		response.RespFail(ctx, i18n.RetMsgDBErr, nil)
+		return
+	}
+	if userEntity == nil {
+		err = fmt.Errorf("email %s 无效", email)
+		global.MyLogger(ctx).Err(err).Msgf("email not exist")
+		response.RespFail(ctx, i18n.RetMsgAccountNotExist, nil)
+		return
+	}
+	return userEntity, nil
+}
+
 func CheckDevId(ctx *gin.Context, devId string) (devEntity *entity.TDev, err error) {
 	err = dao.TDev.Ctx(ctx).Where(do.TDev{
 		Id: devId,
