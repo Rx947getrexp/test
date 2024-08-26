@@ -53,7 +53,7 @@ func sendSms(ctx *gin.Context, mobile string) error {
 		return err
 	}
 	if telCount >= 10 {
-		err = fmt.Errorf(`account 频率限制：Count[%d] > 20`, telCount)
+		err = fmt.Errorf(`account 频率限制：Count[%d] > 10`, telCount)
 		global.MyLogger(ctx).Err(err).Msgf(`key[%s]`, telDayKey)
 		return err
 	}
@@ -73,7 +73,23 @@ func sendSms(ctx *gin.Context, mobile string) error {
 		emailSubject = `VPN Короля сброс пароля`
 		emailContent = "<br>【VPN Короля】</br>Код подтверждения: <font color='red'>%s</font>, действителен в течение 5 минут. Для обеспечения безопасности вашего аккаунта, пожалуйста, не раскрывайте эту информацию другим людям."
 	)
-	return email.SendEmail(ctx, emailSubject, fmt.Sprintf(emailContent, msgCode), []string{mobile})
+	// nc -vz smtp-mail.outlook.com 587
+	// nc -vz smtp-mail.outlook.com 587
+	account := map[string]map[string]string{
+		//"heroesvpn@yandex.com":   {"pw": "gcdgcvwulvzftvan", "host": "smtp.yandex.com:587"}, // heroesvpn gcdgcvwulvzftvan
+		"vpnheroes@outlook.com":  {"pw": "pingguoqm23", "host": "smtp-mail.outlook.com:587"},
+		"heroesvpnn@outlook.com": {"pw": "pingguoqm23", "host": "smtp-mail.outlook.com:587"},
+		"VPNHERO@outlook.com":    {"pw": "pingguoqm23", "host": "smtp-mail.outlook.com:587"},
+	}
+	accounts := []string{"heroesvpn@yandex.com"} //, "vpnheroes@outlook.com", "heroesvpnn@outlook.com", "VPNHERO@outlook.com"}
+	for _, userName := range accounts {
+		email.SetSendAccount(userName, account[userName]["pw"], account[userName]["host"])
+		err = email.SendEmail(ctx, emailSubject, fmt.Sprintf(emailContent, msgCode), []string{mobile})
+		if err == nil {
+			return nil
+		}
+	}
+	return err
 	//return email.SendEmail(constant.ForgetSubject, fmt.Sprintf(constant.ForgetBody, msgCode), []string{mobile})
 	//return nil
 	//return email.SendEmail(constant.ForgetSubject, fmt.Sprintf(constant.ForgetBody, msgCode), []string{mobile})
