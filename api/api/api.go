@@ -93,6 +93,12 @@ func SendEmail(c *gin.Context) {
 		response.RespFail(c, i18n.RetMsgParamParseErr, nil)
 		return
 	}
+
+	if service.CheckEmailSendFlag(c, param.Email) {
+		global.MyLogger(c).Err(fmt.Errorf("发送限制")).Msgf("邮件发送频率限制！email:%s", param.Email)
+		response.RespFail(c, i18n.RetMesEmailSendLimit, nil)
+		return
+	}
 	user := new(model.TUser)
 	has, err := global.Db.Where("uname = ?", param.Email).Get(user)
 	if err != nil {
@@ -108,7 +114,7 @@ func SendEmail(c *gin.Context) {
 	clientIp := c.ClientIP()
 	err = service.SendTelSms(c, param.Email, clientIp)
 	if err != nil {
-		global.MyLogger(c).Err(err).Msgf("发送短信失败！email:%s", param.Email)
+		global.MyLogger(c).Err(err).Msgf("邮件发送失败！email:%s", param.Email)
 		response.RespFail(c, i18n.RetMsgVerifyCodeSendFail, nil)
 		return
 	}

@@ -62,6 +62,19 @@ func JobRouters() *gin.Engine {
 	return routers
 }
 
+func CollectorRouters() *gin.Engine {
+	gin.SetMode(global.Config.System.Env)
+	routers := gin.Default()
+	routers.Use(Cors()) //解决跨域
+	//routers.Use(api.PrintRequest)
+	//routers.Use(api.FilteredSQLInject)
+	routers.Use(global.TraceIdMiddleware())
+	routers.Use(api.RateMiddleware(api.NewLimiterV2()))
+	publicGroup := routers.Group("")
+	router.CollectorRoute(publicGroup)
+	return routers
+}
+
 func Cors() gin.HandlerFunc {
 	return func(context *gin.Context) {
 		method := context.Request.Method
