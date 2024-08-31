@@ -140,8 +140,18 @@ curl -X POST -H "Content-Type: application/json" -H "Lang: cn" https://www.hongk
 curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13002/send_email -d '{"email": "VPNHERO@outlook.com"}'
 
 
+curl -X GET -H "Content-Type: application/json" -H "Lang: cn" http://localhost:23001/get_user_op_log_list
+curl -X GET -H "Content-Type: application/json" -H "Lang: cn" http://localhost:23001/list_node_for_report
 
-
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:23001/report_user_op_log -d '{
+    "user_id": 219122692,
+    "device_id": "1770423763070881792",
+    "device_type": "ios",
+    "page_name": "1",
+    "content": "xx",
+    "create_time": "2024-01-01 00:00:01",
+    "result": "success"
+}'
 
 curl -X POST -H "Content-Type: application/json" http://api.pnsafepay.com/gateway.aspx -d '{
     "currency": "RUB",

@@ -1,17 +1,20 @@
 package task
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/gin-gonic/gin"
+	"go-speed/api/types/api"
 	"go-speed/constant"
 	"go-speed/global"
-	"go-speed/model"
 	"go-speed/model/request"
 	"go-speed/model/response"
 	"go-speed/service"
+	"go-speed/service/api/speed_api"
 	"go-speed/util"
+	"net/http/httptest"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 )
@@ -47,20 +50,22 @@ func CollectUserTraffic() {
 
 func DoCollectUserTraffic() {
 	// 查询v2ray数据节点
-	nodes, err := service.GetAllNodes()
+	ctx, _ := gin.CreateTestContext(httptest.NewRecorder())
+	defer ctx.Done()
+	resp, err := speed_api.DescribeNodeList(ctx)
 	if err != nil {
 		global.Logger.Err(err).Msg("get node ip list failed")
 		return
 	}
 	wg := &sync.WaitGroup{}
-	for i, _ := range nodes {
+	for i, _ := range resp.Items {
 		wg.Add(1)
-		go CollectNodeTraffic(wg, nodes[i])
+		go CollectNodeTraffic(ctx, wg, resp.Items[i])
 	}
 	wg.Wait()
 }
 
-func CollectNodeTraffic(wg *sync.WaitGroup, node *model.TNode) {
+func CollectNodeTraffic(ctx context.Context, wg *sync.WaitGroup, node api.NodeItem) {
 	defer wg.Done()
 
 	nodeIp := node.Ip
@@ -68,7 +73,7 @@ func CollectNodeTraffic(wg *sync.WaitGroup, node *model.TNode) {
 	dataTime := time.Now().Format(constant.TimeFormat)
 
 	// 从节点获取流量数据
-	items, err := GetUserTrafficByNodeDns(node.Server)
+	items, err := GetUserTrafficForOneNode(node.Ip)
 	if err != nil {
 		return
 	}
@@ -76,35 +81,35 @@ func CollectNodeTraffic(wg *sync.WaitGroup, node *model.TNode) {
 	// 更新用户统计数据
 	for _, item := range items {
 		if item.UpLink == 0 && item.DownLink == 0 {
-			global.Logger.Info().Msgf("======== user(%s) traffic is zero (UpLink: %d, DownLink: %d) at collectTime(%s), ip: %s",
-				item.Email, item.UpLink, item.DownLink, dataTime, nodeIp)
+			global.Logger.Info().Msgf("======== user(%s) traffic is zero at collectTime(%s), ip: %s", item.Email, dataTime, nodeIp)
 			continue
 		}
 
-		if e := service.CreateUserTrafficLog(item.Email, nodeIp, dataTime, item.UpLink, item.DownLink); e != nil {
+		if e := service.CreateUserTrafficLog(ctx, item.Email, nodeIp, dataTime, item.UpLink, item.DownLink); e != nil {
 			global.Logger.Err(e).Msgf("========xxxxxxxx user(%s) CreateUserTrafficLog failed (UpLink: %d, DownLink: %d) at collectTime(%s), ip: %s",
 				item.Email, item.UpLink, item.DownLink, dataTime, nodeIp)
 			// 插入流水失败，忽略错误，继续更新用户用量统计信息
 		}
 
-		userTraffic, err := service.GetUserTrafficByEmail(item.Email, nodeIp, date)
+		userTraffic, err := service.GetUserTrafficByEmail(ctx, item.Email, nodeIp, date)
 		if err != nil {
 			continue
 		}
 
 		if userTraffic == nil {
-			service.CreateUserTraffic(item.Email, nodeIp, date, item.UpLink, item.DownLink)
+			_ = service.CreateUserTraffic(ctx, item.Email, nodeIp, date, item.UpLink, item.DownLink)
 		} else {
-			service.UpdateUserTraffic(userTraffic, item.UpLink, item.DownLink)
+			_ = service.UpdateUserTraffic(ctx, userTraffic, item.UpLink, item.DownLink)
 		}
 	}
 }
 
-func GetUserTrafficByNodeDns(server string) (items []response.UserTrafficItem, err error) {
-	url := fmt.Sprintf("https://%s/site-api/node/get_user_traffic", server)
-	if strings.Contains(server, "http") {
-		url = fmt.Sprintf("%s/node/get_user_traffic", server)
-	}
+func GetUserTrafficForOneNode(ip string) (items []response.UserTrafficItem, err error) {
+	//url := fmt.Sprintf("https://%s/site-api/node/get_user_traffic", server)
+	//if strings.Contains(server, "http") {
+	//
+	//}
+	url := fmt.Sprintf("http://%s:15003/node/get_user_traffic", ip)
 	req := &request.GetUserTrafficRequest{
 		All:   true,
 		Reset: true,

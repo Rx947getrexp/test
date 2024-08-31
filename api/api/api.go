@@ -2036,3 +2036,30 @@ func ServerStateSwitching(c *gin.Context) {
 		response.RespFail(c, i18n.RetMsgParamInvalid, nil)
 	}
 }
+
+func InternalAuth() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		//if global.Config.TestEnv == "mac-local-test-env-KJHKJhkiuyqwe(*&12" {
+		//	claims := &service.CustomClaims{UserId: 10123}
+		//	c.Set("claims", claims)
+		//	global.MyLogger(c).Info().Msgf("local-test skip auth")
+		//	return
+		//}
+		token := c.Request.Header.Get("Authorization-Token")
+		if token != "J7RtY3DvV2pK0fM5rW4aU1cL8yB9eQ6sI8gH2kZ5xT7uF1oP6vN8jA4lR9mG3bE0wH7nY6tS5zC8iQ1fX9rV6hO5lJ4dU3pV8aB2e(*&12" {
+			global.MyLogger(c).Err(fmt.Errorf("token is invalid")).Msgf("token is: %s", token)
+			//c.JSON(http.StatusOK, gin.H{
+			//	"code":    301,
+			//	"message": i18n.I18nTrans(c, i18n.RetMsgAuthorizationTokenInvalid),
+			//})
+			c.Abort()
+			return
+		}
+
+		if !util.IsInArrayIgnoreCase(c.ClientIP(), []string{"127.0.0.1", "31.128.41.86", "45.251.243.140", "185.22.152.47", "185.22.154.21"}) {
+			global.MyLogger(c).Err(fmt.Errorf("cleint IP is not allow")).Msgf(c.ClientIP())
+			c.Abort()
+			return
+		}
+	}
+}

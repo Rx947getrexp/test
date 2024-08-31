@@ -9,7 +9,7 @@ import (
 
 func CollectorRoute(group *gin.RouterGroup) {
 	group.GET("get_user_op_log_list", administrator.GetUserOpLogList)
-	group.GET("list_node_for_report", node.ListNodeForReport)        //获取节点ip列表，上报ping结果
-	group.POST("report_node_ping_result", node.ReportNodePingResult) //上报ping结果
-	group.POST("report_user_op_log", report.ReportUserOpLog)         // 连接代理
+	group.GET("list_node_for_report", node.ListNodeForReport)          //获取节点ip列表，上报ping结果
+	group.POST("report_node_ping_result", report.ReportNodePingResult) //上报ping结果
+	group.POST("report_user_op_log", report.ReportUserOpLog)           // 连接代理
 }

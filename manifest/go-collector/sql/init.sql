@@ -1,0 +1,16 @@
+CREATE USER 'speed_report'@'127.0.0.1' IDENTIFIED BY 'IUY*&^*^!2HGJHG886!32';
+
+GRANT ALL PRIVILEGES ON *.* TO 'speed_report'@'127.0.0.1';
+
+FLUSH PRIVILEGES;
+
+
+CREATE USER 'speed_report'@'localhost' IDENTIFIED BY 'IUY*&^*^!2HGJHG886!32';
+GRANT ALL PRIVILEGES ON *.* TO 'speed_report'@'localhost';
+
+
+CREATE USER 'user_001'@'127.0.0.1' IDENTIFIED BY 'IUY*&^*^!2HGJHG886!32';
+
+GRANT ALL PRIVILEGES ON *.* TO 'user_001'@'127.0.0.1';
+
+FLUSH PRIVILEGES;
