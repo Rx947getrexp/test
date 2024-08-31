@@ -81,7 +81,7 @@ func CollectNodeTraffic(ctx context.Context, wg *sync.WaitGroup, node api.NodeIt
 	// 更新用户统计数据
 	for _, item := range items {
 		if item.UpLink == 0 && item.DownLink == 0 {
-			global.Logger.Info().Msgf("======== user(%s) traffic is zero at collectTime(%s), ip: %s", item.Email, dataTime, nodeIp)
+			//global.Logger.Info().Msgf("======== user(%s) traffic is zero, ip: %s", item.Email, nodeIp)
 			continue
 		}
 
