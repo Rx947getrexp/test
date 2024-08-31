@@ -17,6 +17,7 @@ import glob
 backup_dir = '/shell/database_backup'
 max_files = 6
 
+# mysqldump -u root -p --no-data --databases speed go_fly2 speed_report > all_databases_structure.sql
 
 def cleanup_old_files():
     # 获取目录下所有文件
@@ -58,16 +59,20 @@ export_host = '127.0.0.1'
 export_user = 'root'
 export_password = 'IUY*&^*^!12312HGJHG886!32'
 
-import_host = '43.131.37.240'
+import_host = '185.22.154.21'
 import_user = 'speed_backup'
-import_password = 'bakIUY*&^*^!12H6!326'
+import_password = 'bakIUY*&^*^!12H6!326oihjh*(78712YH129-,IUTCJGFZA6761HGqw[ooooPPPP'
 
-# databases_to_export = ['speed', 'go_fly2'] #, 'speed_report']
-databases_to_export = ['speed', 'go_fly2', 'speed_report']
+databases_to_export = ['speed', 'go_fly2'] #, 'speed_report']
+
+ignore_tables = ["--ignore-table=speed.t_user_traffic_log",
+                "--ignore-table=speed.user_logs",
+                 "--ignore-table=speed.t_user_traffic",
+                 ]
 
 def export_databases(export_file_path):
     # 导出数据库
-    command = f'mysqldump --user={export_user} --databases {" ".join(databases_to_export)} > {export_file_path}'
+    command = f'mysqldump --user={export_user} --databases {" ".join(databases_to_export)} {" ".join(ignore_tables)} > {export_file_path}'
     logging.info(command)
     result = subprocess.run(command, shell=True, check=True)
     logging.info(result)
@@ -122,10 +127,10 @@ if __name__ == '__main__':
         if ret:
             execute_cmd("scp %s root@185.22.152.47:/shell/sql_backup/" % file_name)
             execute_cmd("scp %s root@185.22.154.21:/shell/sql_backup/" % file_name)
-            # import_databases(file_name)
+            import_databases(file_name)
             logging.info("-" * 20 + "备份成功")
 
-        logging.info("begin to sleep 10min")
+        logging.info("begin to sleep 1h")
         # 间隔10分钟
-        time.sleep(10*60)
+        time.sleep(60*60)
         logging.info("\n\n\n")

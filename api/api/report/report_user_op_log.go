@@ -1,14 +1,14 @@
 package report
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gogf/gf/v2/os/gtime"
-	"go-speed/api/api/common"
+	"go-speed/api/api/common/remote"
 	"go-speed/dao"
 	"go-speed/global"
 	"go-speed/i18n"
 	"go-speed/model/do"
-	"go-speed/model/entity"
 	"go-speed/model/response"
 )
 
@@ -37,18 +37,10 @@ func ReportUserOpLog(ctx *gin.Context) {
 		return
 	}
 	if req.UserId > 0 {
-		var userEntity *entity.TUser
-		userEntity, err = common.CheckUserByUserId(ctx, req.UserId)
-		if err != nil {
-			return
-		}
-		email = userEntity.Email
+		email, err = remote.GetUserEmailByUserId(ctx, req.UserId)
 	}
-	if req.DeviceId != "" {
-		_, err = common.CheckDevId(ctx, req.DeviceId)
-		if err != nil {
-			return
-		}
+	if email == "" {
+		email = fmt.Sprintf("%d", req.UserId)
 	}
 
 	lastInsertId, err = dao.TUserOpLog.Ctx(ctx).Data(do.TUserOpLog{

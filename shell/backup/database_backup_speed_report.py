@@ -99,7 +99,7 @@ def gen_backup_filename():
 
 
 if __name__ == '__main__':
-    task_name = "database_backup_speed"
+    task_name = "database_backup_speed_report"
     lock_file = "/tmp/%s.lock" % task_name
     fp = open(lock_file, "w")
     try:
@@ -129,3 +129,4 @@ if __name__ == '__main__':
         # 间隔10分钟
         time.sleep(10*60)
         logging.info("\n\n\n")
+        break

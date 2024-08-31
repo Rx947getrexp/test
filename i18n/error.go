@@ -97,11 +97,17 @@ const (
 	RetMsgProofUploadLimit          = "您已经上传过凭证，请不要重复上传。"
 	RetMsgProofUploadNone           = "您当前选择的是银行卡支付方式，请先上传凭证。"
 	RetMsgOpLimitedCurrentUserLevel = "您当前操作被限制，可升级会员等级后重试或者联系客服处理。"
+	RetMesEmailSendLimit            = "邮件已发送，请5分钟后再试，若未找到邮件，可能被误标记为垃圾邮件，请检查邮箱内的垃圾邮件。"
 )
 
 func Init() {
 	initCode()
 	ReturnMsgMap = make(I18nMsgMap)
+
+	ReturnMsgMap[RetMesEmailSendLimit] = map[string]string{
+		LangEN: "The email has been sent. Please try again in 5 minutes. If you can't find the email, it might have been mistakenly marked as spam. Please check your spam folder.",
+		LangRU: "Письмо отправлено. Пожалуйста, повторите попытку через 5 минут. Если вы не можете найти письмо, возможно, оно было случайно помечено как спам. Пожалуйста, проверьте папку со спамом.",
+	}
 
 	ReturnMsgMap[RetMsgOpLimitedCurrentUserLevel] = map[string]string{
 		LangEN: "Your current operation is restricted. You can try again after upgrading your membership level or contact customer service for assistance.",
@@ -331,6 +337,7 @@ func initCode() {
 		RetMsgProofUploadLimit:          5010, // = "您已经上传过凭证，请不要重复上传。"
 		RetMsgProofUploadNone:           5011, // = "您当前选择的是银行卡支付方式，请先上传凭证。"
 		RetMsgOpLimitedCurrentUserLevel: 5012, // = "您当前操作被限制，可升级会员等级后重试或者联系客服处理。"
+		RetMesEmailSendLimit:            5013, // = "邮件已发送，请5分钟后再试，若未找到邮件，可能被误标记为垃圾邮件，请检查邮箱内的垃圾邮件。
 	}
 
 }

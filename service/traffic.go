@@ -1,10 +1,15 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/gogf/gf/v2/os/gtime"
+	"go-speed/dao"
 	"go-speed/global"
 	"go-speed/model"
+	"go-speed/model/do"
+	"go-speed/model/entity"
 	"time"
 )
 
@@ -24,79 +29,77 @@ func GetUserTrafficCurrentMonth(email string) ([]model.TUserTraffic, error) {
 	return userTraffic, nil
 }
 
-func GetUserTrafficByEmail(email, ip string, date int) (*model.TUserTraffic, error) {
-	userTraffic := new(model.TUserTraffic)
-	ok, err := global.Db.Where("email = ? and date = ? and ip = ?", email, date, ip).Get(userTraffic)
+func GetUserTrafficByEmail(ctx context.Context, email, ip string, date int) (userTraffic *entity.TV2RayUserTraffic, err error) {
+	err = dao.TV2RayUserTraffic.Ctx(ctx).Where(do.TV2RayUserTraffic{
+		Email: email,
+		Date:  date,
+		Ip:    ip,
+	}).Scan(&userTraffic)
 	if err != nil {
 		global.Logger.Err(err).Msgf("get user traffic failed. email: %s, ip: %s, date: %s", email, ip, date)
 		return nil, err
-	}
-	if !ok {
-		return nil, nil
 	}
 	return userTraffic, nil
 }
 
 // CreateUserTraffic 插入新的用量统计记录
-func CreateUserTraffic(email, ip string, date int, uplink, downlink uint64) error {
-	traffic := &model.TUserTraffic{
+func CreateUserTraffic(ctx context.Context, email, ip string, date int, uplink, downlink uint64) error {
+	lastId, err := dao.TV2RayUserTraffic.Ctx(ctx).Data(do.TV2RayUserTraffic{
 		Email:     email,
-		Ip:        ip,
 		Date:      date,
+		Ip:        ip,
 		Uplink:    uplink,
 		Downlink:  downlink,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-	rows, err := global.Db.Insert(traffic)
+		CreatedAt: gtime.Now(),
+		UpdatedAt: gtime.Now(),
+	}).InsertAndGetId()
 	if err != nil {
-		global.Logger.Err(err).Msgf("insert TUserTraffic failed, traffic: %+v", *traffic)
+		global.Logger.Err(err).Msgf("insert TV2RayUserTraffic failed, email: %+v, date: %s", email, date)
 		return err
 	}
-	if rows != 1 {
-		return fmt.Errorf("insert TUserTraffic failed，rows:%d is not eq 1, traffic: %+v", rows, *traffic)
-	}
+	global.Logger.Info().Msgf("insert TV2RayUserTraffic success, email: %+v, date: %s, lastId: %d", email, date, lastId)
 	return nil
 }
 
 // CreateUserTrafficLog 插入新的用量流水
-func CreateUserTrafficLog(email, ip, dataTime string, uplink, downlink uint64) error {
-	trafficLog := &model.TUserTrafficLog{
+func CreateUserTrafficLog(ctx context.Context, email, ip, dataTime string, uplink, downlink uint64) error {
+	lastId, err := dao.TV2RayUserTrafficLog.Ctx(ctx).Data(do.TV2RayUserTrafficLog{
 		Email:     email,
 		Ip:        ip,
 		DateTime:  dataTime,
 		Uplink:    uplink,
 		Downlink:  downlink,
-		CreatedAt: time.Now(),
-	}
-	rows, err := global.Db.Insert(trafficLog)
+		CreatedAt: gtime.Now(),
+	}).InsertAndGetId()
 	if err != nil {
-		global.Logger.Err(err).Msgf(">>>>>>>>>>> insert TUserTrafficLog failed, trafficLog: %+v", *trafficLog)
+		global.Logger.Err(err).Msgf("insert TV2RayUserTrafficLog failed, email: %+v, dataTime: %s", email, dataTime)
 		return err
 	}
-	if rows != 1 {
-		return fmt.Errorf(">>>>>>>>>>> insert TUserTrafficLog failed，rows:%d is not eq 1, trafficLog: %+v", rows, *trafficLog)
-	}
+	global.Logger.Info().Msgf("insert TV2RayUserTrafficLog success, email: %+v, dataTime: %s, lastId: %d", email, dataTime, lastId)
 	return nil
 }
 
 // UpdateUserTraffic 更新统计记录
-func UpdateUserTraffic(item *model.TUserTraffic, uplink, downlink uint64) error {
-	traffic := &model.TUserTraffic{
-		Uplink:    item.Uplink + uplink,
-		Downlink:  item.Downlink + downlink,
-		UpdatedAt: time.Now(),
-	}
-	rows, err := global.Db.Where("id = ?", item.Id).Update(traffic)
+func UpdateUserTraffic(ctx context.Context, item *entity.TV2RayUserTraffic, uplink, downlink uint64) error {
+	affected, err := dao.TV2RayUserTraffic.Ctx(ctx).
+		Where(do.TV2RayUserTraffic{
+			Id: item.Id,
+		}).
+		UpdateAndGetAffected(do.TV2RayUserTraffic{
+			Uplink:    item.Uplink + uplink,
+			Downlink:  item.Downlink + downlink,
+			UpdatedAt: gtime.Now(),
+		})
 	if err != nil {
-		global.Logger.Err(err).Msgf("Update User traffic failed, Email: %s, Traffic[%d, %d]",
+		global.Logger.Err(err).Msgf("Update TV2RayUserTraffic failed, Email: %s, Traffic[%d, %d]",
 			item.Email, uplink, downlink)
 		return err
 	}
-	if rows != 1 {
-		global.Logger.Error().Msgf("Update User traffic failed, rows: %d, Email: %s, Traffic[%d, %d]",
-			rows, item.Email, uplink, downlink)
-		return fmt.Errorf("update TUserTraffic failed，rows:%d is not eq 1, traffic: %+v", rows, *traffic)
+	if affected != 1 {
+		err = fmt.Errorf("update TV2RayUserTraffic failed, affected: %d, Email: %s, Traffic[%d, %d]",
+			affected, item.Email, uplink, downlink)
+		global.Logger.Error().Msgf(err.Error())
+		return err
 	}
 	return nil
 }

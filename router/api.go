@@ -17,6 +17,13 @@ import (
 func ApiRoute(group *gin.RouterGroup) {
 	//group.Use(api.PrintParam())
 	//{}
+	internalGroup := group.Group("internal")
+	internalGroup.Use(api.InternalAuth())
+	{
+		internalGroup.POST("describe_user_info", user.DescribeUserInfo) // call
+		internalGroup.POST("describe_node_list", node.DescribeNodeList) // call
+	}
+
 	group.POST("generate_dev_id", api.GenerateDevId) // call
 	group.POST("send_email", api.SendEmail)
 	group.POST("reg", api.Reg)     // call
@@ -85,4 +92,5 @@ func ApiRoute(group *gin.RouterGroup) {
 		group.POST("order_list", order.GetOrderList)
 		group.POST("query_order", order.QueryOrder)
 	}
+
 }

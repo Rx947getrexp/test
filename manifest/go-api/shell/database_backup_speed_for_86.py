@@ -15,7 +15,7 @@ import glob
 
 # 配置信息
 backup_dir = '/shell/database_backup'
-max_files = 6
+max_files = 20
 
 
 def cleanup_old_files():
@@ -58,11 +58,10 @@ export_host = '127.0.0.1'
 export_user = 'root'
 export_password = 'IUY*&^*^!12312HGJHG886!32'
 
-import_host = '43.131.37.240'
-import_user = 'speed_backup'
+import_host = ''
+import_user = 'speed_bup'
 import_password = 'bakIUY*&^*^!12H6!326'
 
-# databases_to_export = ['speed', 'go_fly2'] #, 'speed_report']
 databases_to_export = ['speed', 'go_fly2', 'speed_report']
 
 def export_databases(export_file_path):
@@ -99,7 +98,7 @@ def gen_backup_filename():
 
 
 if __name__ == '__main__':
-    task_name = "database_backup_speed"
+    task_name = "database_backup_speed_86"
     lock_file = "/tmp/%s.lock" % task_name
     fp = open(lock_file, "w")
     try:
@@ -114,16 +113,15 @@ if __name__ == '__main__':
     logging.info("start backup")
     while True:
         logging.info("-"*20+"开始备份")
-        cleanup_old_files()
         file_name = gen_backup_filename()
 
         ret = export_databases(file_name)
         # rsync -avz -e "ssh -i /root/.ssh/id_rsa" /shell/database_backup/speed-2024-08-12_02-37-48.sql user@remote_host:/path/to/remote/backup
         if ret:
-            execute_cmd("scp %s root@185.22.152.47:/shell/sql_backup/" % file_name)
-            execute_cmd("scp %s root@185.22.154.21:/shell/sql_backup/" % file_name)
-            # import_databases(file_name)
+            import_databases(file_name)
             logging.info("-" * 20 + "备份成功")
+            #cleanup_old_files()
+            break
 
         logging.info("begin to sleep 10min")
         # 间隔10分钟

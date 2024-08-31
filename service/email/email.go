@@ -28,10 +28,17 @@ func loginAuth() smtp.Auth {
 	return &LoginAuth{username, password}
 }
 
+func SetSendAccount(userName, passwd, hostName string) {
+	auth.username = userName
+	auth.password = passwd
+	auth.hostname = hostName
+}
+
 func SendEmail(ctx *gin.Context, subject, body string, address []string) error {
 	hostname := auth.hostname
 	authentication := loginAuth()
-	from := sender.addr
+	//from := sender.addr
+	from := auth.username
 	//to := recipients.addr
 	//msg := message.msg
 	nickname := myEmailNickname
@@ -42,7 +49,7 @@ func SendEmail(ctx *gin.Context, subject, body string, address []string) error {
 	resultCh := make(chan error)
 	go func() {
 		for _, to := range address {
-			global.MyLogger(ctx).Info().Msgf("email send to: %s", to)
+			global.MyLogger(ctx).Info().Msgf("email from %s send to: %s", from, to)
 			s := fmt.Sprintf("To:%s\r\nFrom:%s<%s>\r\nSubject:%s\r\n%s\r\n\r\n%s", to, nickname, from, subject, contentType, body)
 			msg := []byte(s)
 			err := smtp.SendMail(
@@ -55,12 +62,12 @@ func SendEmail(ctx *gin.Context, subject, body string, address []string) error {
 			)
 			if err != nil {
 				fmt.Println("email send to failed", err, to)
-				global.MyLogger(ctx).Err(err).Msgf("email send to: %s failed", to)
+				global.MyLogger(ctx).Err(err).Msgf("email from %s send to: %s failed", from, to)
 				resultCh <- err
 				return
 			} else {
 				fmt.Println("email send to success", to)
-				global.MyLogger(ctx).Info().Msgf("email send to: %s success", to)
+				global.MyLogger(ctx).Info().Msgf("email from %s send to: %s success", from, to)
 			}
 		}
 		resultCh <- nil
