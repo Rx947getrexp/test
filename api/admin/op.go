@@ -322,6 +322,7 @@ func GetChannelUserRechargeByMonth(c *gin.Context) {
 			TotalRecharge:      item.TotalRecharge,
 			TotalRechargeMoney: item.TotalRechargeMoney,
 			MonthTotalRecharge: item.MonthTotalRecharge,
+			MonthRechargeMoney: item.MonthRechargeMoney,
 			CreatedAt:          item.CreatedAt.String(),
 		})
 	}
