@@ -34,5 +34,6 @@ type TGoods struct {
 	PriceRub         float64     `orm:"price_rub"          description:"卢布价格(RUB)"`
 	PriceWmz         float64     `orm:"price_wmz"          description:"WMZ价格(WMZ)"`
 	PriceUsd         float64     `orm:"price_usd"          description:"USD价格(USD)"`
+	PriceBtc         float64     `orm:"price_btc"          description:"USD价格(BTC)"`
 	PriceUah         float64     `orm:"price_uah"          description:"UAH价格(UAH)"`
 }

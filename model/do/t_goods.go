@@ -36,5 +36,6 @@ type TGoods struct {
 	PriceRub         interface{} // 卢布价格(RUB)
 	PriceWmz         interface{} // WMZ价格(WMZ)
 	PriceUsd         interface{} // USD价格(USD)
+	PriceBtc         interface{} // BTC价格(BTC)
 	PriceUah         interface{} // UAH价格(UAH)
 }

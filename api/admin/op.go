@@ -297,6 +297,38 @@ func GetChannelUserRecharge(c *gin.Context) {
 	response.RespOk(c, i18n.RetMsgSuccess, resp)
 	return
 }
+func GetChannelUserRechargeByMonth(c *gin.Context) {
+	param := new(request.GetChannelUserRechargeByMonthRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+	total, list, err := service.QueryUserChannelMonth(c, param.Date, param.Channel, param.OrderType, param.Page, param.Size)
+	if err != nil {
+		global.Logger.Err(err).Msg("查询出错！")
+		response.ResFail(c, "查询出错！")
+		return
+	}
+	items := make([]response.TUserChannelMonth, 0)
+	for _, item := range list {
+		items = append(items, response.TUserChannelMonth{
+			Id:                 item.Id,
+			Date:               item.Date,
+			Channel:            item.Channel,
+			Total:              item.Total,
+			MonthTotal:         item.MonthTotal,
+			MonthNew:           item.MonthNew,
+			TotalRecharge:      item.TotalRecharge,
+			TotalRechargeMoney: item.TotalRechargeMoney,
+			MonthTotalRecharge: item.MonthTotalRecharge,
+			CreatedAt:          item.CreatedAt.String(),
+		})
+	}
+	resp := response.GetTUserChannelMonthListResponse{Total: total, Items: items}
+	response.RespOk(c, i18n.RetMsgSuccess, resp)
+	return
+}
 func GetOnlineUserDayList(c *gin.Context) {
 	param := new(request.GetOnlineUserDayListRequest)
 	if err := c.ShouldBind(param); err != nil {

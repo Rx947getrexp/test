@@ -2,7 +2,6 @@ package goods
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"go-speed/api/api/common"
 	"go-speed/api/api/order"
 	"go-speed/dao"
@@ -11,6 +10,8 @@ import (
 	"go-speed/model/entity"
 	"go-speed/model/response"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
 type GoodsListReq struct {
@@ -42,6 +43,7 @@ type Goods struct {
 	PriceRUB         float64 `json:"price_rub" dc:"卢布价格"`
 	PriceWMZ         float64 `json:"price_wmz" dc:"WMZ价格"`
 	PriceUSD         float64 `json:"price_usd" dc:"USD价格"`
+	PriceBTC         float64 `json:"price_btc" dc:"BTC价格"`
 	PriceUAH         float64 `json:"price_uah" dc:"UAH价格"`
 }
 
@@ -88,6 +90,7 @@ func GoodsList(ctx *gin.Context) {
 			PriceRUB:         item.PriceRub,
 			PriceWMZ:         item.PriceWmz,
 			PriceUSD:         item.PriceUsd,
+			PriceBTC:         item.PriceBtc,
 			PriceUAH:         item.PriceUah,
 		})
 	}

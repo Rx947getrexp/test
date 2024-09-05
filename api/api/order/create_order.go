@@ -26,6 +26,7 @@ import (
 const (
 	CurrencyRUB              = "RUB"   // 俄罗斯卢布
 	CurrencyU                = "USD"   // U支付
+	CurrencyBTC              = "BTC"   //bitcoin支付
 	CurrencyWMZ              = "WMZ"   // webmoney
 	CurrencyUAH              = "UAH"   // UAH
 	RussianOnlineBankingCode = "29001" // 俄罗斯网银
@@ -171,7 +172,12 @@ func CreateOrder(ctx *gin.Context) {
 		res.Status = constant.ReturnStatusSuccess
 		payOrderUpdate.ReturnStatus = constant.ReturnStatusSuccess
 		payOrderUpdate.StatusMes = "U-Pay directly returns the payment code"
-
+	case constant.PayChannelBTCPay:
+		// 用户选择的是 btc pay 支付渠道
+		// BTC支付只需要返回支付连接给前端
+		res.Status = constant.ReturnStatusSuccess
+		payOrderUpdate.ReturnStatus = constant.ReturnStatusSuccess
+		payOrderUpdate.StatusMes = "BTC-Pay directly returns the payment code"
 	case constant.PayChannelBankCardPay:
 		// 用户选择银行卡支付
 		// 银行卡支付只需要返回银行卡给前端
@@ -345,8 +351,8 @@ func GiftDurationForPaymentChannelClosed(ctx *gin.Context, orderNo string,
 	}
 
 	for _, payChannel := range paymentChannels {
-		// U支付、银行卡支付不参与赠送逻辑
-		if payChannel.ChannelId == constant.PayChannelUPay || payChannel.ChannelId == constant.PayChannelBankCardPay {
+		// U支付、BTC支付、银行卡支付不参与赠送逻辑
+		if payChannel.ChannelId == constant.PayChannelUPay || payChannel.ChannelId == constant.PayChannelBTCPay || payChannel.ChannelId == constant.PayChannelBankCardPay {
 			continue
 		}
 
@@ -473,6 +479,11 @@ func genUPayAmountDecimalPartValue() int {
 	randomNumber := rand.Intn(9999) // 生成一个0到9999之间的随机数
 	return randomNumber % 10000
 }
+func genBTCAmountDecimalPartValue(exchangeRateBtc float64) float64 {
+	rand.Seed(time.Now().UnixNano())
+	randomNumber := rand.Float64() * exchangeRateBtc // 随机取0~最大值的随机数
+	return randomNumber
+}
 
 func genUPayAmount2DecimalPartValue() int {
 	rand.Seed(time.Now().UnixNano())
@@ -521,7 +532,17 @@ func genPayAmount(goodsEntity *entity.TGoods, paymentEntity *entity.TPaymentChan
 		amountString = fmt.Sprintf("%d.%d", amountInt/10000, amountInt%10000)
 		amount, _ = strconv.ParseFloat(amountString, 64)
 		return amount, paymentEntity.Commission, amountString, CurrencyU, nil
-
+	case constant.PayChannelBTCPay:
+		const exchangeRateBtc = 0.00001688
+		priceBTC := goodsEntity.PriceBtc
+		if priceBTC > exchangeRateBtc {
+			priceBTC = priceBTC - exchangeRateBtc
+		}
+		finalAmount := priceBTC + genBTCAmountDecimalPartValue(exchangeRateBtc)
+		amountInt := int(finalAmount * 100000000)
+		amountString = fmt.Sprintf("%d.%08d", amountInt/100000000, amountInt%100000000)
+		amount, _ = strconv.ParseFloat(amountString, 64)
+		return amount, paymentEntity.Commission, amountString, CurrencyBTC, nil
 	case constant.PayChannelBankCardPay:
 		priceRUB := goodsEntity.PriceRub
 		if priceRUB > 1.0 {

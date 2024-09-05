@@ -6,6 +6,7 @@ const (
 
 	PayChannelPnSafePay    = "pnsafepay"
 	PayChannelUPay         = "usd"
+	PayChannelBTCPay       = "btc"
 	PayChannelBankCardPay  = "bankcard"
 	PayChannelWebMoneyPay  = "webmoney"
 	PayChannelFreekassa_7  = "freekassa-7"

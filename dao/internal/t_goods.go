@@ -44,6 +44,7 @@ type TGoodsColumns struct {
 	PriceRub         string // 卢布价格(RUB)
 	PriceWmz         string // WMZ价格(WMZ)
 	PriceUsd         string // USD价格(USD)
+	PriceBtc         string // BTC价格(BTC)
 	PriceUah         string // UAH价格(UAH)
 }
 
@@ -73,6 +74,7 @@ var tGoodsColumns = TGoodsColumns{
 	PriceRub:         "price_rub",
 	PriceWmz:         "price_wmz",
 	PriceUsd:         "price_usd",
+	PriceBtc:         "price_btc",
 	PriceUah:         "price_uah",
 }
 

@@ -95,7 +95,7 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string, notifyData interface{}) (
 			return
 		}
 		resultStatus, orderRealityAmount = payResponse.ResultStatus, payResponse.OrderRealityAmount
-	case constant.PayChannelUPay:
+	case constant.PayChannelUPay, constant.PayChannelBTCPay:
 		var match bool
 		match, err = upay.CheckBinanceOrder(ctx, time.Minute*30, payOrder.OrderAmount)
 		if err != nil {

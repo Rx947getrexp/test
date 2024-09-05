@@ -44,6 +44,7 @@ func ApiRoute(group *gin.RouterGroup) {
 	group.POST("report_user_op_log", report.ReportUserOpLog)         // 连接代理
 	group.GET("get_rules", config.GetRules)                          // 获取ip和域名列表
 	group.POST("pay_notify", order.PayNotify)
+
 	//签名验证
 	switchStateGroup := group.Group("switch")
 	switchStateGroup.Use(api.Verify)
@@ -92,5 +93,4 @@ func ApiRoute(group *gin.RouterGroup) {
 		group.POST("order_list", order.GetOrderList)
 		group.POST("query_order", order.QueryOrder)
 	}
-
 }

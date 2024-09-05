@@ -2,10 +2,11 @@ package geo
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"go-speed/global"
 	"go-speed/util/geo/geolite"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
 func IsNeedDisablePaymentFeature(ctx *gin.Context, email string) bool {
@@ -39,7 +40,7 @@ func IsNeedDisablePaymentFeature(ctx *gin.Context, email string) bool {
 		global.MyLogger(ctx).Info().Msgf("IP(%s) -> Country(%s) is in(%s), disable payment", ctx.ClientIP(), country, countryList)
 		return true
 	}
-	if IsInArray(email, emails) || emailList == "all" {
+	if IsInArray(email, emails) {
 		global.MyLogger(ctx).Info().Msgf("email(%s) is in(%s), disable payment", email, emails)
 		return true
 	}

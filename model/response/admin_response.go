@@ -235,3 +235,20 @@ type GetTUserDeviceDayListResponse struct {
 	Total int64            `json:"total" dc:"数据总条数"`
 	Items []TUserDeviceDay `json:"items" dc:"数据明细"`
 }
+type TUserChannelMonth struct {
+	Id                 int64   `json:"id" dc:"自增主键ID"`
+	Date               int     `json:"date" dc:"报表日期，eg:20240101"`
+	Channel            string  `json:"channel" dc:"渠道ID"`
+	Total              int     `json:"total" dc:"截止到Date，通过渠道ID注册的用户总量"`
+	MonthTotal         int     `json:"month_total" dc:"截止到Date，通过渠道ID注册的月用户总量"`
+	MonthNew           int     `json:"month_new" dc:"截止到Date，通过渠道ID注册的这个月的用户并且使用过的用户"`
+	TotalRecharge      int     `json:"total_recharge" dc:"截止到Date，通过渠道ID注册的用户充值总量"`
+	TotalRechargeMoney float64 `json:"total_recharge_money" dc:"截止到Date，通过渠道ID注册的充值总金额"`
+	MonthTotalRecharge int     `json:"month_total_recharge" dc:"截止到Date，通过渠道ID注册的这个月的用户充值人数"`
+	MonthRechargeMoney float64 `json:"month_recharge_money" dc:"截止到Date，通过渠道ID注册的这个月的用户充值总金额"`
+	CreatedAt          string  `json:"created_at" dc:"记录创建时间"`
+}
+type GetTUserChannelMonthListResponse struct {
+	Total int64               `json:"total" dc:"数据总条数"`
+	Items []TUserChannelMonth `json:"items" dc:"数据明细"`
+}
