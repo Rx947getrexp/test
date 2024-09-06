@@ -1,0 +1,103 @@
+# -*- coding: utf-8 -*-
+import os
+import subprocess
+import sys
+import time
+import fcntl
+from datetime import datetime, timedelta
+import geoip2.database
+# -*- coding: utf-8 -*-
+import os
+import subprocess
+import sys
+import time
+import fcntl
+from datetime import datetime, timedelta
+import geoip2.database
+def get_month_date():
+    # 获取今天的日期
+    today = datetime.now()
+    # 判断今天是否是1号
+    if today.day == 1:
+        # 获取上个月的第一天
+        first_day_last_month = (today.replace(day=1) - timedelta(days=1)).replace(day=1)
+        return first_day_last_month.strftime("%Y-%m-%d")
+    else:
+        # 如果不是1号，获取当月的第一天
+        first_day_this_month = today.replace(day=1)
+        return first_day_this_month.strftime("%Y-%m-%d")
+def get_yesterday_date():
+    # 获取今天的日期
+    today = datetime.now()
+    # 计算昨天的日期
+    yesterday = today - timedelta(days=1)
+
+    # 将昨天的日期格式化为 "2024-01-01" 格式
+    return yesterday.strftime('%Y-%m-%d')
+
+
+def time_format(s):
+    return datetime.strptime(s, "%Y-%m-%d %H:%M:%S")
+
+
+class Time:
+    def __init__(self, date):
+        self.class_name = "util.Time"
+        self.date = date
+
+    def get_start_time(self):
+        return self.date + " 00:00:00"
+
+    def get_end_time(self):
+        return self.date + " 23:59:59"
+
+
+
+class IpSearch:
+    def __init__(self):
+        self.reader = geoip2.database.Reader('/shell/report/GeoLite2-City.mmdb')
+
+    def get_location(self, ip_address):
+        response = self.reader.city(ip_address)
+        Country_IsoCode = response.country.iso_code
+        if (Country_IsoCode == None):
+            Country_IsoCode = "None"
+        return Country_IsoCode
+
+def get_yesterday_date():
+    # 获取今天的日期
+    today = datetime.now()
+    # 计算昨天的日期
+    yesterday = today - timedelta(days=1)
+
+    # 将昨天的日期格式化为 "2024-01-01" 格式
+    return yesterday.strftime('%Y-%m-%d')
+
+
+def time_format(s):
+    return datetime.strptime(s, "%Y-%m-%d %H:%M:%S")
+
+
+class Time:
+    def __init__(self, date):
+        self.class_name = "util.Time"
+        self.date = date
+
+    def get_start_time(self):
+        return self.date + " 00:00:00"
+
+    def get_end_time(self):
+        return self.date + " 23:59:59"
+
+
+
+class IpSearch:
+    def __init__(self):
+        self.reader = geoip2.database.Reader('/shell/report/GeoLite2-City.mmdb')
+
+    def get_location(self, ip_address):
+        response = self.reader.city(ip_address)
+        Country_IsoCode = response.country.iso_code
+        if (Country_IsoCode == None):
+            Country_IsoCode = "None"
+        return Country_IsoCode
