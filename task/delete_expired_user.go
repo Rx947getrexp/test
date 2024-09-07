@@ -14,7 +14,6 @@ import (
 	"go-speed/model/response"
 	"go-speed/util"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -94,22 +93,22 @@ func DeleteUser(user *model.TUser) error {
 	// TODO：白名单逻辑
 	ctx := gctx.New()
 	var (
-		countryEntities  []entity.TServingCountry
-		nodeEntities  []entity.TNode
-		countryNames []string
+		countryEntities []entity.TServingCountry
+		nodeEntities    []entity.TNode
+		countryNames    []string
 	)
 	err := dao.TServingCountry.Ctx(ctx).Where(do.TServingCountry{Status: 1}).Scan(&countryEntities)
 	if err != nil {
 		global.Logger.Err(err).Msg("get TServingCountry failed.")
 		return err
 	}
-	for _, s := range countryEntities{
+	for _, s := range countryEntities {
 		if s.IsFree == constant.IsFreeSiteNo {
 			countryNames = append(countryNames)
 		}
 	}
 	err = dao.TNode.Ctx(ctx).
-		Where(do.TNode{Status:    1}).
+		Where(do.TNode{Status: 1}).
 		WhereIn(dao.TNode.Columns().CountryEn, countryNames).
 		Scan(&nodeEntities)
 	if err != nil {
@@ -119,10 +118,11 @@ func DeleteUser(user *model.TUser) error {
 
 	//nodeList, _ := service.FindNodes(user.Level + 1)
 	for _, node := range nodeEntities {
-		url := fmt.Sprintf("https://%s/site-api/node/add_sub", node.Server)
-		if strings.Contains(node.Server, "http") {
-			url = fmt.Sprintf("%s/node/add_sub", node.Server)
-		}
+		//url := fmt.Sprintf("https://%s/site-api/node/add_sub", node.Server)
+		//if strings.Contains(node.Server, "http") {
+		//	url = fmt.Sprintf("%s/node/add_sub", node.Server)
+		//}
+		url := fmt.Sprintf("http://%s:15003/node/add_sub", node.Ip)
 
 		timestamp := fmt.Sprint(time.Now().Unix())
 		headerParam := make(map[string]string)

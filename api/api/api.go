@@ -1477,10 +1477,11 @@ func Connect(c *gin.Context) {
 		//	continue
 		//}
 
-		url := fmt.Sprintf("https://%s/site-api/node/add_sub", item.Server)
-		if strings.Contains(item.Server, "http") {
-			url = fmt.Sprintf("%s/node/add_sub", item.Server)
-		}
+		//url := fmt.Sprintf("https://%s/site-api/node/add_sub", item.Server)
+		//if strings.Contains(item.Server, "http") {
+		//	url = fmt.Sprintf("%s/node/add_sub", item.Server)
+		//}
+		url := fmt.Sprintf("http://%s:15003/node/add_sub", item.Ip)
 		timestamp := fmt.Sprint(time.Now().Unix())
 		headerParam := make(map[string]string)
 		res := new(response.Response)

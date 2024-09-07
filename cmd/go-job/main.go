@@ -11,7 +11,7 @@ import (
 func main() {
 	initialize.InitComponents()
 	go task.DeleteExpiredUser()
-	go task.CollectUserTraffic()
+	//go task.CollectUserTraffic()
 	go task.SyncPayOrderStatus()
 	engine := initialize.JobRouters()
 	if err := engine.Run(":" + global.Config.System.Addr); err != nil {

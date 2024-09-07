@@ -127,6 +127,7 @@ if __name__ == '__main__':
         if ret:
             execute_cmd("scp %s root@185.22.152.47:/shell/sql_backup/" % file_name)
             execute_cmd("scp %s root@185.22.154.21:/shell/sql_backup/" % file_name)
+            execute_cmd("scp %s root@45.251.243.140:/shell/sql_backup/" % file_name)
             import_databases(file_name)
             logging.info("-" * 20 + "备份成功")
 
