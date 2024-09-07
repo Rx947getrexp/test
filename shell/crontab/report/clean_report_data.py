@@ -29,8 +29,8 @@ def run():
     speed_report.clean_data("t_user_node_online_day", 60)
 
     speed = db_util_speed.Speed()
-    speed.clean_data("t_user_traffic_log", 60)
-    speed.clean_data("t_user_traffic", 60)
+    speed.clean_data("speed_collector.t_v2ray_user_traffic_log", 60)
+    speed.clean_data("speed_collector.t_v2ray_user_traffic", 60)
 
 
 if __name__ == '__main__':
