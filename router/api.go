@@ -1,6 +1,7 @@
 package router
 
 import (
+	apiPath "go-speed/api"
 	"go-speed/api/admin/official_docs"
 	"go-speed/api/api"
 	"go-speed/api/api/config"
@@ -8,7 +9,6 @@ import (
 	"go-speed/api/api/goods"
 	"go-speed/api/api/node"
 	"go-speed/api/api/order"
-	"go-speed/api/api/report"
 	"go-speed/api/api/user"
 
 	"github.com/gin-gonic/gin"
@@ -36,13 +36,13 @@ func ApiRoute(group *gin.RouterGroup) {
 	group.GET("combo_list", api.ComboList)
 	group.GET("ad_list", api.AdList)
 	group.GET("expire_user", api.ExpireUserList)
-	group.GET("app_info", api.AppInfo)                               // call
-	group.GET("pc_app_info", api.PCAppInfo)                          // call
-	group.GET("app_filter", api.AppFilter)                           //策略审核
-	group.GET("list_node_for_report", node.ListNodeForReport)        //获取节点ip列表，上报ping结果
-	group.POST("report_node_ping_result", node.ReportNodePingResult) //上报ping结果
-	group.POST("report_user_op_log", report.ReportUserOpLog)         // 连接代理
-	group.GET("get_rules", config.GetRules)                          // 获取ip和域名列表
+	group.GET("app_info", api.AppInfo)                           // call
+	group.GET("pc_app_info", api.PCAppInfo)                      // call
+	group.GET("app_filter", api.AppFilter)                       //策略审核
+	group.GET("list_node_for_report", node.ListNodeForReport)    //获取节点ip列表，上报ping结果
+	group.POST("report_node_ping_result", apiPath.APIDeprecated) // 前端上报日志，已经迁移到 collector服务
+	group.POST("report_user_op_log", apiPath.APIDeprecated)      // 前端上报日志, 已经迁移到 collector服务
+	group.GET("get_rules", config.GetRules)                      // 获取ip和域名列表
 	group.POST("pay_notify", order.PayNotify)
 
 	//签名验证
