@@ -9,6 +9,7 @@ import util
 
 class ReportUser:
     def __init__(self, date, start_time, end_time,month_start_time):
+        logging.info("---> (%s) (%s) (%s) (%s)" % (date, start_time, end_time, month_start_time))
         self.date = date
         self.start_time = start_time
         self.end_time = end_time
@@ -16,9 +17,10 @@ class ReportUser:
         self.db_speed_conn = db_util.Speed()
         self.db_report_conn = db_util.SpeedReport()
 
+
     def run(self):
         self.report_daily_user()
-        self.report_online_user()
+        # self.report_online_user() // TODO 计算IP归属地太耗时了，先屏蔽
         self.report_daily_user_recharge()
         self.report_daily_user_recharge_times()
         self.report_daily_channel_user_recharge_times()
@@ -26,7 +28,7 @@ class ReportUser:
         self.report_daily_node()
         self.report_online_node_user()
         self.device_recharge_behavior()
-        self.device_recharges()
+        # self.device_recharges() // TODO 计算有问题，会产生负数 insert into speed_report.t_user_device_day set date='20240906', device='null_device', total=-22659, new=-225, retained=-1212, created_at=now(), total_recharge=479, total_recharge_money=333143.364956, new_recharge_money=15008.872274000001;
         self.report_daily_channel_recharge_by_month()
         self.db_speed_conn.close_connection()
         self.db_report_conn.close_connection()
@@ -118,22 +120,23 @@ class ReportUser:
         logging.info("*" * 20 + sys._getframe().f_code.co_name + "*" * 20)
 
         """ 获取channel_id列表 """
-        rows = self.db_speed_conn.query_channel_id_list(self.end_time)
+        rows = self.db_speed_conn.query_channel_list(self.end_time)
         data = {}
         for row in rows:
-            channel_id = row["channel_id"]
-            data[channel_id] = {}
+            channel = row["channel"]
+            if channel == "":
+                channel = "无渠道"
+            data[channel] = {}
             """ 用户总量 """
-            data[channel_id]["total_cnt"] = self.db_speed_conn.count_total_user(channel_id, self.end_time)
+            data[channel]["total_cnt"] = self.db_speed_conn.count_total_user(channel, self.end_time)
 
             """ 新增用户数量 """
-            data[channel_id]["new_cnt"] = self.db_speed_conn.count_user_by_create_time(channel_id, self.start_time,
-                                                                                       self.end_time)
+            data[channel]["new_cnt"] = self.db_speed_conn.count_user_by_create_time(channel, self.start_time, self.end_time)
 
             """ 留存用户数量 """
-            data[channel_id]["retained_cnt"] = self.db_speed_conn.count_user_online(channel_id, self.date,self.end_time)
+            data[channel]["retained_cnt"] = self.db_speed_conn.count_user_online(channel, self.date, self.end_time)
             """ 月留存用户数量 """
-            data[channel_id]["month_retained_cnt"] = self.db_speed_conn.count_user_month_online(channel_id,self.month_start_time,self.end_time)
+            data[channel]["month_retained_cnt"] = self.db_speed_conn.count_user_month_online(channel, self.month_start_time, self.end_time)
 
         self.db_report_conn.insert_daily_user(self.date, data)
 
@@ -175,7 +178,7 @@ class ReportUser:
     def report_online_user(self):
         logging.info("*" * 20 + sys._getframe().f_code.co_name + "*" * 20)
         user_info = self.db_speed_conn.get_users()
-        user_ip_info = self.db_speed_conn.get_user_ip_list()
+        # user_ip_info = self.db_speed_conn.get_user_ip_list()
         rows = self.db_speed_conn.query_user_traffic_list(self.date)
         user_online_data = []
         for row in rows:
@@ -219,16 +222,16 @@ class ReportUser:
                 # "register_date": user_info.get("register_date"),
                 "channel": user_email.get("channel", None)
             }
-            if email in user_ip_info.keys():
-                user_ip = user_ip_info[email]["ip"]
-                get_country = f"https://ipinfo.io/{user_ip}/country"
+            last_login_ip = user_info[email]["last_login_ip"]
+            if last_login_ip and last_login_ip != "":
+                get_country = f"https://ipinfo.io/{last_login_ip}/country"
                 try:
                     country = requests.get(get_country).text.strip()
                 except:
                     country="None"
                 if country == "None" or len(country) > 5:
                     reader = util.IpSearch()
-                    country = reader.get_location(user_ip)
+                    country = reader.get_location(last_login_ip)
                 user_online_info["country"] = country
             user_online_data.append(user_online_info)
         logging.info(user_online_data)
