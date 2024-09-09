@@ -27,7 +27,7 @@ def create_app_dir():
 
     subprocess.run(["mkdir", "-p", "/hs-app-backup/wwwroot/go/go-upload/backup"])
     subprocess.run(["mkdir", "-p", "/hs-app-backup/wwwroot/go/go-upload/logs"])
-    subprocess.run(["mkdir", "-p", "/hs-app-backup/wwwroot/go/go-upload/public"])
+    subprocess.run(["mkdir", "-p", "/hs-app-backup/wwwroot/go/go-upload/public/upload"])
 
     subprocess.run(["mkdir", "-p", "/hs-app-backup/wwwroot/h5"])
 
@@ -65,7 +65,9 @@ def cp_app_files():
     # upload
     os.system("cp /wwwroot/go/go-upload/*.yaml /hs-app-backup/wwwroot/go/go-upload/")
     os.system("cp /wwwroot/go/go-upload/go-upload /hs-app-backup/wwwroot/go/go-upload/")
-    os.system("cp -rf /wwwroot/go/go-upload/public/* /hs-app-backup/wwwroot/go/go-upload/public/")
+    os.system("cp -rf /wwwroot/go/go-upload/public/upload/img /hs-app-backup/wwwroot/go/go-upload/public/upload/")
+    os.system("cp -rf /wwwroot/go/go-upload/public/upload/official_docs /hs-app-backup/wwwroot/go/go-upload/public/upload/")
+    os.system("cp -rf /wwwroot/go/go-upload/public/upload/payment /hs-app-backup/wwwroot/go/go-upload/public/upload/")
     os.system("cp /wwwroot/go/go-upload/*.sh /hs-app-backup/wwwroot/go/go-upload/")
 
     # h5
@@ -74,8 +76,10 @@ def cp_app_files():
     # shell
     os.system("cp /shell/*.sh /hs-app-backup/shell/")
     os.system("cp /shell/*.py /hs-app-backup/shell/")
-    os.system("cp -rf /shell/node_check/* /hs-app-backup/shell/node_check/")
-    os.system("cp -rf /shell/report/* /hs-app-backup/shell/report/")
+    os.system("cp -rf /shell/node_check/*.py /hs-app-backup/shell/node_check/")
+    os.system("cp -rf /shell/report/*.py /hs-app-backup/shell/report/")
+    os.system("cp -rf /shell/report/*.yaml /hs-app-backup/shell/report/")
+    os.system("cp -rf /shell/report/*.mmdb /hs-app-backup/shell/report/")
 
 def tar_app_dir():
     timestamp = subprocess.run(["date", "+%Y%m%d%H%M%S"], capture_output=True, text=True).stdout.strip()
@@ -92,6 +96,8 @@ def run():
     cp_app_files()
     tar_file_name = tar_app_dir()
     execute_cmd("scp %s root@185.22.152.47:/root/workdir/" % tar_file_name)
+    execute_cmd("scp %s root@185.22.154.21:/root/workdir/" % tar_file_name)
+    execute_cmd("scp %s root@45.251.243.140:/root/workdir/" % tar_file_name)
 
 
 if __name__ == '__main__':

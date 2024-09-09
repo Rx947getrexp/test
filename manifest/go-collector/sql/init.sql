@@ -20,6 +20,7 @@ FLUSH PRIVILEGES;
 CREATE USER 'speed_backup'@'%' IDENTIFIED BY 'bakIUY*&^*^!12H6!326oihjh*(78712YH129-,IUTCJGFZA6761HGqw[ooooPPPP';
 
 GRANT ALL PRIVILEGES ON speed.* TO 'speed_backup'@'%';
+GRANT ALL PRIVILEGES ON speed_report.* TO 'speed_backup'@'%';
 GRANT ALL PRIVILEGES ON go_fly2.* TO 'speed_backup'@'%';
 
 FLUSH PRIVILEGES;

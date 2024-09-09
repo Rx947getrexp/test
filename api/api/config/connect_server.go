@@ -11,7 +11,6 @@ import (
 	"go-speed/model/request"
 	"go-speed/model/response"
 	"go-speed/util"
-	"strings"
 	"time"
 )
 
@@ -78,10 +77,11 @@ func ConnectServer(ctx *gin.Context) {
 
 	global.MyLogger(ctx).Info().Msgf(">>>>>>>>> nodeEntities: %+v", nodeEntities)
 	for _, item := range nodeEntities {
-		url := fmt.Sprintf("https://%s/site-api/node/add_sub", item.Server)
-		if strings.Contains(item.Server, "http") {
-			url = fmt.Sprintf("%s/node/add_sub", item.Server)
-		}
+		//url := fmt.Sprintf("https://%s/site-api/node/add_sub", item.Server)
+		//if strings.Contains(item.Server, "http") {
+		//	url = fmt.Sprintf("%s/node/add_sub", item.Server)
+		//}
+		url := fmt.Sprintf("http://%s:15003/node/add_sub", item.Ip)
 		global.MyLogger(ctx).Info().Msgf(">>>>>>>>> url: %s", url)
 		timestamp := fmt.Sprint(time.Now().Unix())
 		headerParam := make(map[string]string)
