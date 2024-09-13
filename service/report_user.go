@@ -243,7 +243,7 @@ func QueryNodeDay(ctx context.Context, date int, Ip string, orderType string, pa
 	if page > 1 {
 		offset = (page - 1) * size
 	}
-	count, err := sessCount.Table(model.TUserOnlineDay{}).Count()
+	count, err := sessCount.Table(model.TUserNodeDay{}).Count()
 	if err != nil {
 		return 0, nil, err
 	}
