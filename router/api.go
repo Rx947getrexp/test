@@ -44,6 +44,8 @@ func ApiRoute(group *gin.RouterGroup) {
 	group.POST("report_user_op_log", apiPath.APIDeprecated)      // 前端上报日志, 已经迁移到 collector服务
 	group.GET("get_rules", config.GetRules)                      // 获取ip和域名列表
 	group.POST("pay_notify", order.PayNotify)
+	group.POST("goods_list", goods.GoodsList)
+	group.POST("payment_channel_list", order.PaymentChannelList)
 
 	//签名验证
 	switchStateGroup := group.Group("switch")
@@ -84,8 +86,7 @@ func ApiRoute(group *gin.RouterGroup) {
 		group.GET("get_server_config_without_rules", config.GetServerConfigWithoutRules) // 获取配置不带ip和域名池
 
 		// 支付相关
-		group.POST("payment_channel_list", order.PaymentChannelList)
-		group.POST("goods_list", goods.GoodsList)
+
 		group.POST("create_order", order.CreateOrder)
 		group.POST("upload_payment_proof", order.UploadPaymentProof)
 		group.POST("confirm_order", order.ConfirmOrder)

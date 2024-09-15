@@ -2,7 +2,6 @@ package goods
 
 import (
 	"fmt"
-	"go-speed/api/api/common"
 	"go-speed/api/api/order"
 	"go-speed/dao"
 	"go-speed/global"
@@ -51,13 +50,13 @@ func GoodsList(ctx *gin.Context) {
 	var (
 		err           error
 		goodsEntities []entity.TGoods
-		user          *entity.TUser
+		//user          *entity.TUser
 	)
-	user, err = common.ValidateClaims(ctx)
-	if err != nil {
-		return
-	}
-	global.MyLogger(ctx).Info().Msgf("user: %s", user.Email)
+	//user, err = common.ValidateClaims(ctx)
+	//if err != nil {
+	//	return
+	//}
+	//global.MyLogger(ctx).Info().Msgf("user: %s", user.Email)
 
 	err = dao.TGoods.Ctx(ctx).Scan(&goodsEntities)
 	if err != nil {

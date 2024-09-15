@@ -2,7 +2,6 @@ package order
 
 import (
 	"encoding/json"
-	"go-speed/api/api/common"
 	"go-speed/constant"
 	"go-speed/dao"
 	"go-speed/global"
@@ -60,10 +59,10 @@ func PaymentChannelList(ctx *gin.Context) {
 		err         error
 		entityItems []entity.TPaymentChannel
 	)
-	user, err := common.ValidateClaims(ctx)
-	if err != nil {
-		return
-	}
+	//user, err := common.ValidateClaims(ctx)
+	//if err != nil {
+	//	return
+	//}
 	err = dao.TPaymentChannel.Ctx(ctx).
 		Where(do.TPaymentChannel{IsActive: constant.PaymentChannelIsActiveYes}).
 		Order(dao.TPaymentChannel.Columns().Weight, constant.OrderTypeDesc).
@@ -76,15 +75,15 @@ func PaymentChannelList(ctx *gin.Context) {
 
 	items := make([]PaymentChannel, 0)
 	for _, item := range entityItems {
-		if !inWhitelist(ctx, user.Email) &&
-			(item.ChannelId == constant.PayChannelFreekassa_7 ||
-				item.ChannelId == constant.PayChannelFreekassa_12 ||
-				item.ChannelId == constant.PayChannelFreekassa_36 ||
-				item.ChannelId == constant.PayChannelFreekassa_43 ||
-				item.ChannelId == constant.PayChannelFreekassa_44) {
-			global.MyLogger(ctx).Info().Msg("not in whitelist")
-			continue
-		}
+		//if !inWhitelist(ctx, user.Email) &&
+		//	(item.ChannelId == constant.PayChannelFreekassa_7 ||
+		//		item.ChannelId == constant.PayChannelFreekassa_12 ||
+		//		item.ChannelId == constant.PayChannelFreekassa_36 ||
+		//		item.ChannelId == constant.PayChannelFreekassa_43 ||
+		//		item.ChannelId == constant.PayChannelFreekassa_44) {
+		//	global.MyLogger(ctx).Info().Msg("not in whitelist")
+		//	continue
+		//}
 		bankCardInfo := make([]BankCardInfo, 0)
 		customerServiceInfo := CustomerServiceInfo{}
 		_ = json.Unmarshal([]byte(item.BankCardInfo), &bankCardInfo)
