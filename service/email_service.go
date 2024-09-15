@@ -72,6 +72,14 @@ func sendSms(ctx *gin.Context, mobile string) error {
 		emailSubject = `VPN Короля сброс пароля`
 		emailContent = "<br>【VPN Короля】</br>Код подтверждения: <font color='red'>%s</font>, действителен в течение 5 минут. Для обеспечения безопасности вашего аккаунта, пожалуйста, не раскрывайте эту информацию другим людям."
 	)
+	email.SetSendAccount("heronetwork@herovpn.live", "pingguoqm23", "smtpout.secureserver.net:465")
+	err = email.SendEmailTLS(ctx, emailSubject, fmt.Sprintf(emailContent, msgCode), []string{mobile})
+	if err == nil {
+		// 发送成功，记录
+		markEmailSend(ctx, mobile)
+		return nil
+	}
+
 	// nc -vz smtp-mail.outlook.com 587
 	// nc -vz smtp-mail.outlook.com 587
 	account := map[string]map[string]string{
@@ -80,6 +88,7 @@ func sendSms(ctx *gin.Context, mobile string) error {
 		"heroesvpnn@outlook.com": {"pw": "pingguoqm23", "host": "smtp-mail.outlook.com:587"},
 		"VPNHERO@outlook.com":    {"pw": "pingguoqm23", "host": "smtp-mail.outlook.com:587"},
 	}
+
 	accounts := []string{"vpnheroes@outlook.com", "heroesvpnn@outlook.com", "VPNHERO@outlook.com"}
 	for _, userName := range accounts {
 		email.SetSendAccount(userName, account[userName]["pw"], account[userName]["host"])

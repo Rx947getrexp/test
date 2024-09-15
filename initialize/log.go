@@ -7,7 +7,7 @@ import (
 	"go-speed/util"
 )
 
-func initLog() zerolog.Logger {
+func InitLog() zerolog.Logger {
 	writer := util.GetLogWriter(global.Config.Log)
 	level, err := zerolog.ParseLevel(global.Config.Log.Level)
 	if err != nil {

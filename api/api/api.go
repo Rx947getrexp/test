@@ -19,6 +19,7 @@ import (
 	"go-speed/model/request"
 	"go-speed/model/response"
 	"go-speed/service"
+	"go-speed/task"
 	"go-speed/util"
 	"go-speed/util/geo"
 	"math/rand"
@@ -1781,6 +1782,14 @@ func CancelAccount(c *gin.Context) {
 	if err != nil {
 		global.MyLogger(c).Err(err).Msgf("用户token鉴权失败, claims: %+v, clientId: %s", *claims, getClientId(c))
 		response.RespFail(c, i18n.RetMsgAuthFailed, nil, response.CodeTokenExpired)
+		return
+	}
+
+	// 删除所有节点上的配置
+	err = task.DeleteUserV2rayConfig(c, user)
+	if err != nil {
+		global.MyLogger(c).Err(err).Msgf("DeleteUser failed, email: %s", user.Email)
+		response.RespFail(c, i18n.RetMsgLogoutFailed, nil)
 		return
 	}
 

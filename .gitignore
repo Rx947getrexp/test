@@ -23,3 +23,5 @@ cmd/go-api/go-api-mac
 cmd/go-job/go-job
 cmd/go-job/go-job-mac
 cmd/go-upload/go-upload
+cmd/go-monitor/go-monitor
+cmd/go-monitor/go-mac-monitor

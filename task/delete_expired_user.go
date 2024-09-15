@@ -3,7 +3,8 @@ package task
 import (
 	"context"
 	"fmt"
-	"github.com/gogf/gf/os/gctx"
+	"github.com/gin-gonic/gin"
+	"github.com/gogf/gf/v2/encoding/gjson"
 	"go-speed/constant"
 	"go-speed/dao"
 	"go-speed/global"
@@ -13,6 +14,7 @@ import (
 	"go-speed/model/request"
 	"go-speed/model/response"
 	"go-speed/util"
+	"net/http/httptest"
 	"os"
 	"time"
 )
@@ -51,29 +53,31 @@ func DoDeleteExpiredUser() {
 		err  error
 		list []*model.TUser
 	)
+	ctx, _ := gin.CreateTestContext(httptest.NewRecorder())
+	defer ctx.Done()
 
 	//whiteList := []string{"zzz@qq.com"}
 	// TODO：后续要注意时区
 	nowTime := time.Now().Unix() // 过期30分钟后才执行踢人
 	err = global.Db.Where("email != 'zzz@qq.com' and status = 0 and expired_time <= ? and expired_time > ?", nowTime, nowTime-3*24*60*60).OrderBy("expired_time asc").Find(&list)
 	if err != nil {
-		global.Logger.Err(err).Msg("get expired users failed")
+		global.MyLogger(ctx).Err(err).Msg("get expired users failed")
 		time.Sleep(time.Second * 10)
 		return
 	}
 
 	if len(list) == 0 {
-		global.Logger.Info().Msg("no expired user")
+		global.MyLogger(ctx).Info().Msg("no expired user")
 		time.Sleep(time.Minute)
 		return
 	}
 
 	for _, user := range list {
-		if err = DeleteUser(user); err != nil {
-			global.Logger.Err(err).Msg("delete expired users from v2ray failed")
+		if err = DeleteUser(ctx, user); err != nil {
+			global.MyLogger(ctx).Err(err).Msg("delete expired users from v2ray failed")
 			continue
 		}
-		global.Logger.Err(err).Msgf("delete expired(%d) user(%s) from v2ray success", user.ExpiredTime, user.Email)
+		global.MyLogger(ctx).Err(err).Msgf("delete expired(%d) user(%s) from v2ray success", user.ExpiredTime, user.Email)
 
 		//if err = UpdateUserStatus(user); err != nil {
 		//	global.Logger.Err(err).Msg("update user status failed")
@@ -82,7 +86,7 @@ func DoDeleteExpiredUser() {
 	}
 }
 
-func DeleteUser(user *model.TUser) error {
+func DeleteUser(ctx *gin.Context, user *model.TUser) error {
 	req := &request.NodeAddSubRequest{
 		Email: user.Email,
 		Uuid:  user.V2rayUuid,
@@ -91,7 +95,6 @@ func DeleteUser(user *model.TUser) error {
 	}
 
 	// TODO：白名单逻辑
-	ctx := gctx.New()
 	var (
 		countryEntities []entity.TServingCountry
 		nodeEntities    []entity.TNode
@@ -99,7 +102,7 @@ func DeleteUser(user *model.TUser) error {
 	)
 	err := dao.TServingCountry.Ctx(ctx).Where(do.TServingCountry{Status: 1}).Scan(&countryEntities)
 	if err != nil {
-		global.Logger.Err(err).Msg("get TServingCountry failed.")
+		global.MyLogger(ctx).Err(err).Msg("get TServingCountry failed.")
 		return err
 	}
 	for _, s := range countryEntities {
@@ -112,7 +115,7 @@ func DeleteUser(user *model.TUser) error {
 		WhereIn(dao.TNode.Columns().CountryEn, countryNames).
 		Scan(&nodeEntities)
 	if err != nil {
-		global.Logger.Err(err).Msg("get TNode failed.")
+		global.MyLogger(ctx).Err(err).Msg("get TNode failed.")
 		return err
 	}
 
@@ -130,13 +133,52 @@ func DeleteUser(user *model.TUser) error {
 		headerParam["timestamp"] = timestamp
 		headerParam["accessToken"] = util.MD5(fmt.Sprint(timestamp, constant.AccessTokenSalt))
 
-		global.Logger.Info().Msgf("level:%d,req.Tag:%s,udid:%s,email:%s,url:%s,level:%s",
-			user.Level, req.Tag, req.Uuid, req.Email, url, req.Level)
-		err := util.HttpClientPostV2(url, headerParam, req, res)
+		global.Logger.Info().Msgf("delete-user-req, url: %s, req: %s", url, gjson.MustEncode(req))
+		err = util.HttpClientPostV2(url, headerParam, req, res)
 		if err != nil {
-			global.Logger.Err(err).Msg("delete expired user failed.")
+			global.MyLogger(ctx).Err(err).Msgf("delete-user-failed. email: %s, uuid: %s, ip: %s", req.Email, req.Uuid, node.Ip)
 			return err
 		}
+		global.MyLogger(ctx).Info().Msgf("delete-user-success. email: %s, uuid: %s, ip: %s", req.Email, req.Uuid, node.Ip)
+	}
+	return nil
+}
+
+func DeleteUserV2rayConfig(ctx *gin.Context, user *model.TUser) error {
+	req := &request.NodeAddSubRequest{
+		Email: user.Email,
+		Uuid:  user.V2rayUuid,
+		Level: fmt.Sprintf("%d", user.Level),
+		Tag:   "2", // TODO：删除用户
+	}
+	global.Logger.Info().Msgf("delete-user-req, req: %s", gjson.MustEncode(req))
+
+	// TODO：白名单逻辑
+	var nodeEntities []entity.TNode
+	err := dao.TNode.Ctx(ctx).
+		Where(do.TNode{Status: 1}).
+		Scan(&nodeEntities)
+	if err != nil {
+		global.MyLogger(ctx).Err(err).Msg("get TNode failed.")
+		return err
+	}
+
+	for _, node := range nodeEntities {
+		url := fmt.Sprintf("http://%s:15003/node/add_sub", node.Ip)
+
+		timestamp := fmt.Sprint(time.Now().Unix())
+		headerParam := make(map[string]string)
+		res := new(response.Response)
+		headerParam["timestamp"] = timestamp
+		headerParam["accessToken"] = util.MD5(fmt.Sprint(timestamp, constant.AccessTokenSalt))
+
+		global.Logger.Info().Msgf("delete-user-req, url: %s", url)
+		err = util.HttpClientPostV2(url, headerParam, req, res)
+		if err != nil {
+			global.MyLogger(ctx).Err(err).Msgf("delete-user-failed. email: %s, uuid: %s, ip: %s", req.Email, req.Uuid, node.Ip)
+			return err
+		}
+		global.MyLogger(ctx).Info().Msgf("delete-user-success. email: %s, uuid: %s, ip: %s", req.Email, req.Uuid, node.Ip)
 	}
 	return nil
 }
