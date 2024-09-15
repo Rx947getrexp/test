@@ -44,7 +44,7 @@ func SendEmail(ctx *gin.Context, subject, body string, address []string) error {
 	nickname := myEmailNickname
 	contentType := "Content-Type: text/html; charset=UTF-8"
 	// 设置超时时间
-	ctxTimeout, cancel := context.WithTimeout(ctx, 10*time.Second)
+	ctxTimeout, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 	resultCh := make(chan error)
 	go func() {
@@ -54,6 +54,61 @@ func SendEmail(ctx *gin.Context, subject, body string, address []string) error {
 			msg := []byte(s)
 			err := smtp.SendMail(
 				//err := SendMailTLS(
+				hostname,
+				authentication,
+				from,
+				[]string{to},
+				msg,
+			)
+			if err != nil {
+				fmt.Println("email send to failed", err, to)
+				global.MyLogger(ctx).Err(err).Msgf("email from %s send to: %s failed", from, to)
+				resultCh <- err
+				return
+			} else {
+				fmt.Println("email send to success", to)
+				global.MyLogger(ctx).Info().Msgf("email from %s send to: %s success", from, to)
+			}
+		}
+		resultCh <- nil
+	}()
+	// 等待 smtp.SendMail 完成或超时
+	select {
+	case <-ctxTimeout.Done():
+		// 超时处理
+		err := fmt.Errorf("smtp.SendMail timeout")
+		fmt.Println(err.Error())
+		global.MyLogger(ctx).Err(err).Msgf("email send timeout")
+		return err
+	case err := <-resultCh:
+		// smtp.SendMail 完成
+		if err != nil {
+			fmt.Println("Error sending mail:", err)
+			global.MyLogger(ctx).Err(err).Msgf("resultCh return failed")
+		} else {
+			fmt.Println("Mail sent successfully")
+			global.MyLogger(ctx).Info().Msgf("Mail sent successfully")
+		}
+		return err
+	}
+}
+
+func SendEmailTLS(ctx *gin.Context, subject, body string, address []string) error {
+	hostname := auth.hostname
+	authentication := loginAuth()
+	from := auth.username
+	nickname := myEmailNickname
+	contentType := "Content-Type: text/html; charset=UTF-8"
+	// 设置超时时间
+	ctxTimeout, cancel := context.WithTimeout(ctx, 60*time.Second)
+	defer cancel()
+	resultCh := make(chan error)
+	go func() {
+		for _, to := range address {
+			global.MyLogger(ctx).Info().Msgf("email from %s send to: %s", from, to)
+			s := fmt.Sprintf("To:%s\r\nFrom:%s<%s>\r\nSubject:%s\r\n%s\r\n\r\n%s", to, nickname, from, subject, contentType, body)
+			msg := []byte(s)
+			err := SendMailTLS(
 				hostname,
 				authentication,
 				from,
