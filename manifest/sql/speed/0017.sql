@@ -1,0 +1,1 @@
+ALTER TABLE speed.t_pay_order ADD COLUMN `device_type` varchar(128) comment '客户端设备系统os' AFTER commission;
