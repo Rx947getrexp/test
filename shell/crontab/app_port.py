@@ -4,7 +4,7 @@ import subprocess
 import datetime
 
 # 定义要检测的端口和协议
-PORTS = [22, 9100, 80, 443, 3306, 6379]
+PORTS = [22, 9100, 80, 443, 3306, 6379,13002,13005,8081]
 PROTOCOL = "tcp"
 
 # 定义日志文件路径
