@@ -35,7 +35,7 @@ const (
 type CreateOrderReq struct {
 	ChannelId  string `form:"channel_id" json:"channel_id" binding:"required" dc:"支付渠道ID"`
 	GoodsId    int64  `form:"goods_id" json:"goods_id" binding:"required" dc:"套餐ID"`
-	DeviceType string `form:"device_type" json:"device_type" binding:"required" dc:"客户端设备系统os"`
+	DeviceType string `form:"device_type" json:"device_type" dc:"客户端设备系统os"`
 }
 
 type CreateOrderRes struct {
