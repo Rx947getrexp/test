@@ -12,18 +12,18 @@ import (
 )
 
 type GetUserOpLogListReq struct {
-	Email     string `form:"email" json:"email" dc:"用户email"`
-	DeviceId  string `form:"dev_id" json:"dev_id" dc:"dev_id"`
-	Result    string `form:"result" json:"result" dc:"result"`
-	StartTime string `form:"start_time" json:"start_time" dc:"数据创建的开始时间"`
-	EndTime   string `form:"end_time" json:"end_time" dc:"数据创建的结束时间"`
-	OrderBy   string `form:"order_by" json:"order_by" dc:"排序字段，eg: id|created_time"`
-	OrderType string `form:"order_type" json:"order_type" dc:"排序类型，eg: asc|desc"`
-	Page      int    `form:"page" json:"page" dc:"分页查询page, 从1开始"`
-	Size      int    `form:"size" json:"size" dc:"分页查询size, 最大1000"`
+	Email      string `form:"email" json:"email" dc:"用户email"`
+	DeviceId   string `form:"dev_id" json:"dev_id" dc:"dev_id"`
+	DeviceType string `form:"device_type" json:"device_type" dc:"DeviceType"`
+	Result     string `form:"result" json:"result" dc:"result"`
+	StartTime  string `form:"start_time" json:"start_time" dc:"数据创建的开始时间"`
+	EndTime    string `form:"end_time" json:"end_time" dc:"数据创建的结束时间"`
+	OrderBy    string `form:"order_by" json:"order_by" dc:"排序字段，eg: id|created_time"`
+	OrderType  string `form:"order_type" json:"order_type" dc:"排序类型，eg: asc|desc"`
+	Page       int    `form:"page" json:"page" dc:"分页查询page, 从1开始"`
+	Size       int    `form:"size" json:"size" dc:"分页查询size, 最大1000"`
 }
 
-//DeviceType string `form:"device_type" json:"device_type" dc:"DeviceType"`
 //PageName   string `form:"page_name" json:"page_name" dc:"PageName"`
 //Result     string `form:"result" json:"result" dc:"Result"`
 
@@ -65,10 +65,9 @@ func GetUserOpLogList(ctx *gin.Context) {
 	if req.DeviceId != "" {
 		doWhere.DeviceId = req.DeviceId
 	}
-	//
-	//if req.DeviceType != "" {
-	//	doWhere.DeviceType = req.DeviceType
-	//}
+	if req.DeviceType != "" {
+		doWhere.DeviceType = req.DeviceType
+	}
 	//if req.PageName != "" {
 	//	doWhere.PageName = req.PageName
 	//}

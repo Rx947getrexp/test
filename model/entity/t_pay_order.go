@@ -31,4 +31,5 @@ type TPayOrder struct {
 	UpdatedAt          *gtime.Time `orm:"updated_at"           description:"更新时间"`
 	Version            int         `orm:"version"              description:"数据版本号"`
 	Commission         float64     `orm:"commission"           description:"手续费"`
+	DeviceType         string      `orm:"device_type"           description:"客户端设备系统os"`
 }

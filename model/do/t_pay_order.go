@@ -33,4 +33,5 @@ type TPayOrder struct {
 	UpdatedAt          *gtime.Time // 更新时间
 	Version            interface{} // 数据版本号
 	Commission         interface{} // 手续费
+	DeviceType         interface{} // 客户端设备系统os
 }

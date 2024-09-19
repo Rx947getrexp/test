@@ -362,21 +362,17 @@ class Speed:
             sys.exit(1)
         return rows[0]["cnt"]
 
-    def count_total_number_of_device_recharges(self, device, et):
-        sql = """select count(*) as cnt FROM speed.t_pay_order t1 JOIN speed.t_user t2 on t1.email=t2.email  WHERE t2.email in (SELECT DISTINCT u.email FROM speed.t_user u JOIN speed.t_user_device d ON u.id = d.user_id WHERE d.os= '%s') and ((t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') OR (t1.currency IN ('USD', 'WMZ','RUB') AND t1.status = 'paid')) and t1.created_at <= '%s';""" % (
-            device, et)
+    def count_total_number_of_device_recharges(self, et):
+        sql = """SELECT COALESCE(t1.device_type, 'unknown') AS device_type,COUNT(t1.user_id) AS cnt FROM speed.t_pay_order t1 JOIN speed.t_user t2 ON t1.user_id = t2.id WHERE ((t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') OR (t1.currency IN ('USD', 'WMZ', 'RUB') AND t1.status = 'paid')) and t1.created_at <= '%s' GROUP BY t1.device_type;""" % (et)
         rows = mysql_query_db(self.conn, sql)
-        if len(rows) != 1:
-            logging.error("sql: %s, rows: %d != 1" % (sql, len(rows)))
-            sys.exit(1)
-        return rows[0]["cnt"]
+        return {row["device_type"]: row["cnt"] for row in rows}
 
-    def count_total_device_recharge_amount(self, device, et):
-        sql = """select t1.currency, t1.order_reality_amount,t1.status FROM speed.t_pay_order t1 JOIN speed.t_user t2 on t1.email=t2.email  WHERE t2.email IN (SELECT DISTINCT u.email FROM speed.t_user u JOIN speed.t_user_device d ON u.id = d.user_id WHERE d.os= '%s') and ((t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') OR (t1.currency IN ('USD', 'WMZ','RUB') AND t1.status = 'paid')) and t1.created_at <= '%s';""" % (
-            device, et)
+    def count_total_device_recharge_amount(self, et):
+        sql = """SELECT COALESCE(t1.device_type, 'unknown') AS device_type,t1.currency, t1.order_reality_amount,t1.status FROM speed.t_pay_order t1 JOIN speed.t_user t2 ON t1.user_id = t2.id WHERE ((t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') OR (t1.currency IN ('USD', 'WMZ', 'RUB') AND t1.status = 'paid')) and t1.created_at <= '%s';""" % (et)
         rows = mysql_query_db(self.conn, sql)
-        total_recharge = 0
+        device_recharge_totals = {}
         for row in rows:
+            device_type = row['device_type']
             status = row['status']
             currency = row['currency']
             amount = row['order_reality_amount']
@@ -386,72 +382,32 @@ class Speed:
                 amount_in_rub = float(amount)
             else:
                 continue
-            total_recharge += amount_in_rub
-        return total_recharge
+            if device_type not in device_recharge_totals:
+                device_recharge_totals[device_type] = 0
+            device_recharge_totals[device_type] += amount_in_rub
+        # 返回各个设备类型的总金额
+        return device_recharge_totals
 
-    def count_total_device_recharge_amount_by_create_time(self, device, st, et):
-        sql = """select t1.currency, t1.order_reality_amount,t1.status  FROM speed.t_pay_order t1 JOIN speed.t_user t2 on t1.email = t2.email  WHERE t2.email in (SELECT u.email FROM speed.t_user u JOIN speed.t_user_device d ON u.id = d.user_id WHERE d.os= '%s') and ((t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') OR (t1.currency IN ('USD', 'WMZ','RUB') AND t1.status = 'paid')) and t1.created_at >= '%s' and t1.created_at <= '%s';""" % (
-            device, st, et)
+    def count_total_device_recharge_amount_by_create_time(self, st, et):
+        sql = """SELECT COALESCE(t1.device_type, 'unknown') AS device_type,t1.currency, t1.order_reality_amount,t1.status FROM speed.t_pay_order t1 JOIN speed.t_user t2 ON t1.user_id = t2.id WHERE ((t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') OR (t1.currency IN ('USD', 'WMZ', 'RUB') AND t1.status = 'paid')) and t1.created_at >= '%s' and t1.created_at <= '%s';""" % (st, et)
         rows = mysql_query_db(self.conn, sql)
-        total_recharge = 0
+        device_recharge_totals = {}
         for row in rows:
+            device_type = row['device_type']
             status = row['status']
             currency = row['currency']
             amount = row['order_reality_amount']
             if status == "paid":
                 amount_in_rub = self.convert_to_rub(amount, currency)
             elif status == "admin-confirm-passed":
-                amount_in_rub = amount
+                amount_in_rub = float(amount)
             else:
                 continue
-            total_recharge += float(amount_in_rub)
-        return total_recharge
-
-    def all_device_total_recharge_amount(self, et):
-        sql = """select t2.email,t1.currency, t1.order_reality_amount,t1.status FROM speed.t_pay_order t1 JOIN speed.t_user t2 on t1.email=t2.email  WHERE ((t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') OR (t1.currency IN ('USD', 'WMZ','RUB') AND t1.status = 'paid')) and t1.created_at <= '%s';""" % (
-            et)
-        rows = mysql_query_db(self.conn, sql)
-        total_recharge = 0
-        for row in rows:
-            status = row['status']
-            currency = row['currency']
-            amount = row['order_reality_amount']
-            if status == "paid":
-                amount_in_rub = self.convert_to_rub(amount, currency)
-            elif status == "admin-confirm-passed":
-                amount_in_rub = amount
-            else:
-                continue
-            total_recharge += float(amount_in_rub)
-        return total_recharge
-
-    def all_device_total_recharge_amount_by_create_time(self, st, et):
-        sql = """select t2.email,t1.currency, t1.order_reality_amount,t1.status FROM speed.t_pay_order t1 JOIN speed.t_user t2 on t1.email=t2.email  WHERE ((t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') OR (t1.currency IN ('USD', 'WMZ','RUB') AND t1.status = 'paid')) AND t1.created_at >= '%s' and t1.created_at <= '%s';""" % (
-            st, et)
-        rows = mysql_query_db(self.conn, sql)
-        total_recharge = 0
-        for row in rows:
-            status = row['status']
-            currency = row['currency']
-            amount = row['order_reality_amount']
-            if status == "paid":
-                amount_in_rub = self.convert_to_rub(amount, currency)
-            elif status == "admin-confirm-passed":
-                amount_in_rub = amount
-            else:
-                continue
-            total_recharge += float(amount_in_rub)
-        return total_recharge
-
-    def all_device_recharge(self, et):
-        sql = """select count(*) as cnt FROM speed.t_pay_order t1 JOIN speed.t_user t2 on t1.email=t2.email  WHERE ((t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') OR (t1.currency IN ('USD', 'WMZ','RUB') AND t1.status = 'paid')) AND t1.created_at <= '%s';""" % (
-            et)
-        rows = mysql_query_db(self.conn, sql)
-        if len(rows) != 1:
-            logging.error("sql: %s, rows: %d != 1" % (sql, len(rows)))
-            sys.exit(1)
-        return rows[0]["cnt"]
-
+            if device_type not in device_recharge_totals:
+                device_recharge_totals[device_type] = 0
+            device_recharge_totals[device_type] += amount_in_rub
+        # 返回各个设备类型的总金额
+        return device_recharge_totals
 
 class SpeedReport:
     def __init__(self):
@@ -546,6 +502,7 @@ class SpeedReport:
             mysql_execute(self.conn, sql)
 
     def insert_online_user_day(self, date, items):
+        mysql_execute(self.conn, "delete from speed_report.t_user_online_day where date=%s" % date.replace("-", ""))
         for item in items:
             sql = """insert into speed_report.t_user_online_day set date='{}',email='{}',channel='{}',online_duration={},uplink={},downlink={},last_login_country='{}',created_at=now();""".format(
                 date.replace("-", ""), item["email"], item["channel"], item["online_duration"], item["uplink"],
@@ -553,6 +510,7 @@ class SpeedReport:
             mysql_execute(self.conn, sql)
 
     def insert_daily_channel_user(self, date, data):
+        mysql_execute(self.conn, "delete from speed_report.t_user_channel_day where date=%s" % date.replace("-", ""))
         for channel in data.keys():
             user = data[channel]
             channel = channel if channel else '官网'
@@ -562,6 +520,7 @@ class SpeedReport:
             mysql_execute(self.conn, sql)
 
     def insert_daily_node(self, date, data):
+        mysql_execute(self.conn, "delete from speed_report.t_user_node_day where date=%s" % date.replace("-", ""))
         for ip in data.keys():
             user = data[ip]
             name = self.data_name.get(ip)
@@ -571,6 +530,7 @@ class SpeedReport:
                 mysql_execute(self.conn, sql)
 
     def insert_online_user_node_day(self, date, items):
+        mysql_execute(self.conn, "delete from speed_report.t_user_node_online_day where date=%s" % date.replace("-", ""))
         for item in items:
             ip_name = self.data_name.get(item["node"])
             sql = """insert into speed_report.t_user_node_online_day set date='{}',email='{}',channel='{}',online_duration={},uplink={},downlink={},node='{}',register_date='{}',created_at=now();""".format(
@@ -580,6 +540,7 @@ class SpeedReport:
 
     def insert_daily_user_recharge(self, date, data):
         logging.info(data)
+        mysql_execute(self.conn, "delete from speed_report.t_user_recharge_report_day where date=%s" % date.replace("-", ""))
         for goods_id in data.keys():
             user = data[goods_id]
             sql = """insert into speed_report.t_user_recharge_report_day set date=%s, goods_id=%d, total=%d, new=%d,created_at=now();""" % (
@@ -588,6 +549,7 @@ class SpeedReport:
 
     def insert_daily_user_recharge_times(self, date, data):
         logging.info(data)
+        mysql_execute(self.conn, "delete from speed_report.t_user_recharge_times_report_day where date=%s" % date.replace("-", ""))
         for goods_id in data.keys():
             user = data[goods_id]
             sql = """insert into speed_report.t_user_recharge_times_report_day set date=%s, goods_id=%d, total=%d, new=%d,created_at=now();""" % (
@@ -605,6 +567,7 @@ class SpeedReport:
             7: "铂金会员180天",
             8: "铂金会员365天"
         }
+        mysql_execute(self.conn, "delete from speed_report.t_user_channel_recharge_day where date=%s" % date.replace("-", ""))
         for channel, user_data in data.items():
             for goods_id, recharge_data in user_data.items():
                 goods_name = goods_name_dic.get(goods_id, "未知套餐")
@@ -618,6 +581,7 @@ class SpeedReport:
                 mysql_execute(self.conn, sql)
 
     def insert_daily_device_action(self, date, data):
+        mysql_execute(self.conn, "delete from speed_report.t_user_device_action_day where date=%s" % date.replace("-", ""))
         for device_type in data.keys():
             device = data[device_type]
             sql = """insert into speed_report.t_user_device_action_day set date='%s', device='%s', total_clicks=%d, yesterday_day_clicks=%d, weekly_clicks=%d,total_users_clicked=%d,yesterday_day_users_clicked=%d,weekly_users_clicked=%d,created_at=now();""" % (
@@ -627,61 +591,49 @@ class SpeedReport:
             mysql_execute(self.conn, sql)
 
     def insert_daily_device_user(self, date, data):
-        device_totals = {'android': {'total_cnt': 0, 'new_cnt': 0, 'retained_cnt': 0, 'total_recharge': 0,
-                                     'total_recharge_amount': 0, 'new_recharge_amount': 0},
-                         'ios': {'total_cnt': 0, 'new_cnt': 0, 'retained_cnt': 0, 'total_recharge': 0,
-                                 'total_recharge_amount': 0, 'new_recharge_amount': 0},
-                         'mac': {'total_cnt': 0, 'new_cnt': 0, 'retained_cnt': 0, 'total_recharge': 0,
-                                 'total_recharge_amount': 0, 'new_recharge_amount': 0},
-                         'win': {'total_cnt': 0, 'new_cnt': 0, 'retained_cnt': 0, 'total_recharge': 0,
-                                 'total_recharge_amount': 0, 'new_recharge_amount': 0},
-                         # 'null_device': {'total_cnt': 0, 'new_cnt': 0, 'retained_cnt': 0, 'total_recharge': 0,
-                         #                 'total_recharge_amount': 0, 'new_recharge_amount': 0}
-                         }
+        # 设备类型映射表
+        device_map = {'android': ['android'],'ios': ['iphone'],'mac': ['mac'],'win': ['win']}
+        device_totals = {key: {'total_cnt': 0, 'new_cnt': 0, 'retained_cnt': 0, 'total_recharge': 0, 'total_recharge_amount': 0,'new_recharge_amount': 0} for key in device_map.keys()}
+        device_totals['other_device'] = {'total_cnt': 0, 'new_cnt': 0, 'retained_cnt': 0, 'total_recharge': 0,'total_recharge_amount': 0, 'new_recharge_amount': 0}
+        def update_device_totals(device_type, user_data):
+            device_totals[device_type]['total_cnt'] += user_data.get("total_cnt", 0)
+            device_totals[device_type]['new_cnt'] += user_data.get("new_cnt", 0)
+            device_totals[device_type]['retained_cnt'] += user_data.get("retained_cnt", 0)
+            device_totals[device_type]['total_recharge'] += user_data.get("total_recharge", 0)
+            device_totals[device_type]['total_recharge_amount'] += user_data.get("total_recharge_amount", 0)
+            device_totals[device_type]['new_recharge_amount'] += user_data.get("new_recharge_amount", 0)
+        # 遍历数据，统计每种设备类型的数据
         for device, user in data.items():
-            if 'android' in device.lower():
-                device_totals['android']['total_cnt'] += user.get("total_cnt", 0)
-                device_totals['android']['new_cnt'] += user.get("new_cnt", 0)
-                device_totals['android']['retained_cnt'] += user.get("retained_cnt", 0)
-                device_totals['android']['total_recharge'] += user.get("total_recharge", 0)
-                device_totals['android']['total_recharge_amount'] += user.get("total_recharge_amount", 0)
-                device_totals['android']['new_recharge_amount'] += user.get("new_recharge_amount", 0)
-            elif 'iphone' in device.lower():
-                device_totals['ios']['total_cnt'] += user.get("total_cnt", 0)
-                device_totals['ios']['new_cnt'] += user.get("new_cnt", 0)
-                device_totals['ios']['retained_cnt'] += user.get("retained_cnt", 0)
-                device_totals['ios']['total_recharge'] += user.get("total_recharge", 0)
-                device_totals['ios']['total_recharge_amount'] += user.get("total_recharge_amount", 0)
-                device_totals['ios']['new_recharge_amount'] += user.get("new_recharge_amount", 0)
-            elif 'mac' in device.lower():
-                device_totals['mac']['total_cnt'] += user.get("total_cnt", 0)
-                device_totals['mac']['new_cnt'] += user.get("new_cnt", 0)
-                device_totals['mac']['retained_cnt'] += user.get("retained_cnt", 0)
-                device_totals['mac']['total_recharge'] += user.get("total_recharge", 0)
-                device_totals['mac']['total_recharge_amount'] += user.get("total_recharge_amount", 0)
-                device_totals['mac']['new_recharge_amount'] += user.get("new_recharge_amount", 0)
-            elif 'win' in device.lower():
-                device_totals['win']['total_cnt'] += user.get("total_cnt", 0)
-                device_totals['win']['new_cnt'] += user.get("new_cnt", 0)
-                device_totals['win']['retained_cnt'] += user.get("retained_cnt", 0)
-                device_totals['win']['total_recharge'] += user.get("total_recharge", 0)
-                device_totals['win']['total_recharge_amount'] += user.get("total_recharge_amount", 0)
-                device_totals['win']['new_recharge_amount'] += user.get("new_recharge_amount", 0)
-            # else:
-            #     device_totals['null_device']['total_cnt'] += user.get("total_cnt", 0)
-            #     device_totals['null_device']['new_cnt'] += user.get("new_cnt", 0)
-            #     device_totals['null_device']['retained_cnt'] += user.get("retained_cnt", 0)
-            #     device_totals['null_device']['total_recharge'] += user.get("total_recharge", 0)
-            #     device_totals['null_device']['total_recharge_amount'] += user.get("total_recharge_amount", 0)
-            #     device_totals['null_device']['new_recharge_amount'] += user.get("new_recharge_amount", 0)
-        mysql_execute(self.conn, "delete from speed_report.t_user_device_day where date=%s" % date.replace("-", ""))
+            device_lower = device.lower()
+            # 查找设备类型
+            matched = False
+            for device_type, patterns in device_map.items():
+                if any(pattern in device_lower for pattern in patterns):
+                    update_device_totals(device_type, user)
+                    matched = True
+                    break
+            if not matched:
+                update_device_totals('other_device', user)
+        delete_sql = "DELETE FROM speed_report.t_user_device_day WHERE date=%s"
+        mysql_execute(self.conn, delete_sql % date.replace("-", ""))
+        insert_queries = []
         for system, values in device_totals.items():
-            sql = """insert into speed_report.t_user_device_day set date='{}', device='{}', total={}, new={}, retained={}, created_at=now(), total_recharge={}, total_recharge_money={}, new_recharge_money={};""".format(
-                date.replace("-", ""), system, values['total_cnt'], values['new_cnt'], values['retained_cnt'],
-                values['total_recharge'], values['total_recharge_amount'], values['new_recharge_amount'])
-            mysql_execute(self.conn, sql)
+            insert_sql = """INSERT INTO speed_report.t_user_device_day SET date='{date}', device='{device}', total={total}, new={new}, retained={retained}, created_at=NOW(), total_recharge={total_recharge}, total_recharge_money={total_recharge_money}, new_recharge_money={new_recharge_money};""".format(
+                date=date.replace("-", ""),
+                device=system,
+                total=values['total_cnt'],
+                new=values['new_cnt'],
+                retained=values['retained_cnt'],
+                total_recharge=values['total_recharge'],
+                total_recharge_money=values['total_recharge_amount'],
+                new_recharge_money=values['new_recharge_amount']
+            )
+            insert_queries.append(insert_sql)
+        for query in insert_queries:
+            mysql_execute(self.conn, query)
 
     def insert_daily_channel_recharge_by_month(self, date, data):
+        mysql_execute(self.conn, "delete from speed_report.t_user_channel_month where date=%s" % date.replace("-", ""))
         for channel in data.keys():
             user = data[channel]
             channel = channel if channel else '官网'
