@@ -54,13 +54,15 @@ func main() {
 			}
 			global.Logger.Info().Msgf("dns: %s, errCounter: %d", dns, errCounter[dns])
 			if errCounter[dns] > 5 {
-				sendAlarm(dns, err)
+				if e := sendAlarm(dns, err); e == nil {
+					errCounter[dns] = 3
+				}
 			}
 		}
 		if !failedFlag {
 			successTimes++
 		}
-		if successTimes%60 == 0 {
+		if successTimes%(60) == 0 {
 			sendSuccessNotify()
 		}
 		global.Logger.Info().Msgf("-------- finished-once-dial -------- [times: %d, successTimes: %d]", times, successTimes)
@@ -70,17 +72,13 @@ func main() {
 	}
 }
 
-func sendAlarm(dns string, err error) {
+func sendAlarm(dns string, err error) error {
 	var builder strings.Builder
-	// 添加邮件内容
-	builder.WriteString(fmt.Sprintf("<h1>拨测对象：%s (%s)</h1>\n", dns, time.Now().Format(time.DateTime)))
-	builder.WriteString(fmt.Sprintf("<h1>报错信息：%s</h1>\n", err.Error()))
-	builder.WriteString("\n")
-	builder.WriteString("<h1>请赶紧处理！</h1>\n")
-
-	emailSubject := "应用服务器拨测失败告警通知"
-	fmt.Println(builder.String())
-	_ = sendEmail(emailSubject, builder.String())
+	builder.WriteString(fmt.Sprintf("拨测对象：%s (%s)<br/>", dns, time.Now().Format(time.DateTime)))
+	builder.WriteString(fmt.Sprintf("异常原因：%s<br/>", err.Error()))
+	builder.WriteString("<br/>")
+	builder.WriteString("赶紧处理!!!<br/>\n")
+	return sendEmail("【拨测失败告警】应用服务器异常！！！", builder.String())
 }
 
 func sendEmail(emailSubject, emailBody string) (err error) {
@@ -91,7 +89,8 @@ func sendEmail(emailSubject, emailBody string) (err error) {
 		fromPasswd    = "pingguoqm23"
 		fromHost      = "smtpout.secureserver.net:465"
 		alarmReceiver = []string{
-			"xiaomingchuan1990@gmail.com",
+			"pmm73219@gmail.com",
+			"hs.alarm@outlook.com",
 		}
 	)
 	email.SetSendAccount(fromAccount, fromPasswd, fromHost)
@@ -106,8 +105,8 @@ func sendEmail(emailSubject, emailBody string) (err error) {
 }
 
 func sendSuccessNotify() {
-	emailSubject := "应用服务器拨测成功定时通知"
-	emailBody := fmt.Sprintf("<h1>应用服务器和nginx服务器拨测成功 (%s)</h1>", time.Now().Format(time.DateTime))
+	emailSubject := "<拨测成功> 应用服务器拨测定时通知"
+	emailBody := fmt.Sprintf("应用服务器和nginx服务器拨测成功 (%s)", time.Now().Format(time.DateTime))
 	_ = sendEmail(emailSubject, emailBody)
 }
 
