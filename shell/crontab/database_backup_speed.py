@@ -86,6 +86,12 @@ def export_databases(export_file_path):
 
 def import_databases(export_file_path):
     # 导入数据库
+    if is_between_2_and_4():
+        logging.info("当前时间在凌晨2点到临晨4点之间，不更新DB，避免影响报表")
+        return
+    else:
+        logging.info("当前时间不在凌晨2点到临晨4点之间，同步 speed 库的数据")
+
     command = f'mysql --host={import_host} --user={import_user} --password=\'{import_password}\' < {export_file_path}'
     logging.info(command)
     result = subprocess.run(command, shell=True, check=True)
@@ -101,6 +107,11 @@ def gen_backup_filename():
     now = datetime.now()
     timestamp = now.strftime("%Y-%m-%d_%H-%M-%S")
     return f'/shell/database_backup/speed-{timestamp}.sql'
+
+def is_between_2_and_4():
+    now = datetime.now()
+    current_hour = now.hour
+    return 2 <= current_hour < 4
 
 
 if __name__ == '__main__':
