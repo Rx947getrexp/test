@@ -195,5 +195,4 @@ func AdminRoute(group *gin.RouterGroup) {
 		officialDocsGroup.POST("list", official_docs.OfficialDocsList)
 		officialDocsGroup.POST("upload", official_docs.UploadOfficialDocsImage)
 	}
-
 }

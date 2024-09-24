@@ -95,9 +95,9 @@ class Speed:
             sys.exit(1)
         return rows[0]["cnt"]
 
-    def count_user_online(self, channel_id, date, et):
-        sql = """select count(distinct email) as cnt from speed_collector.t_v2ray_user_traffic where date = '%s' and email in (select email from speed.t_user where channel_id='%d' and created_at <= '%s');""" % (
-            date.replace("-", ""), channel_id, et)
+    def count_user_online(self, channel_id, date,st, et):
+        # sql = """select count(distinct email) as cnt from speed_collector.t_v2ray_user_traffic where date = '%s' and email in (select email from speed.t_user where channel_id='%d' and created_at <= '%s');""" % (date.replace("-", ""), channel_id, et)
+        sql = """SELECT COUNT(DISTINCT email) as cnt FROM (SELECT email FROM (SELECT email FROM speed_report.t_user_op_log WHERE (content LIKE '%点击连接%' OR content LIKE '%开始连接%') AND created_at >= '%s' AND result = 'success' AND created_at <= '%s' AND email IN (SELECT email FROM speed.t_user) UNION SELECT email FROM speed_collector.t_v2ray_user_traffic WHERE date = '%s' AND email IN (SELECT email FROM speed.t_user WHERE channel_id = '%d' AND created_at <= '%s')) AS combined_results) AS distinct_emails;""" % (st,et,date.replace("-", ""), channel_id, et)
         rows = mysql_query_db(self.conn, sql)
         if len(rows) != 1:
             logging.error("sql: %s, rows: %d != 1" % (sql, len(rows)))
@@ -105,7 +105,8 @@ class Speed:
         return rows[0]["cnt"]
 
     def count_user_month_online(self, channel_id, st, et):
-        sql = """select count(distinct email) as cnt from speed_collector.t_v2ray_user_traffic where email in (select email from speed.t_user where channel_id='%d' and created_at <= '%s') and created_at >= '%s' and created_at <= '%s';""" % (channel_id,et, st, et)
+        # sql = """select count(distinct email) as cnt from speed_collector.t_v2ray_user_traffic where email in (select email from speed.t_user where channel_id='%d' and created_at <= '%s') and created_at >= '%s' and created_at <= '%s';""" % (channel_id,et, st, et)
+        sql = """SELECT COUNT(DISTINCT email) as cnt FROM (SELECT email FROM (SELECT email FROM speed_report.t_user_op_log WHERE (content LIKE '%点击连接%' OR content LIKE '%开始连接%') AND created_at >= '%s' AND result = 'success' AND created_at <= '%s' AND email IN (SELECT email FROM speed.t_user) UNION SELECT email FROM speed_collector.t_v2ray_user_traffic WHERE date = '%s' AND email IN (SELECT email FROM speed.t_user WHERE channel_id = '%d' AND created_at <= '%s')) AS combined_results) AS distinct_emails;""" % (st, et, channel_id, et)
         rows = mysql_query_db(self.conn, sql)
         if len(rows) != 1:
             logging.error("sql: %s, rows: %d != 1" % (sql, len(rows)))
@@ -207,9 +208,9 @@ class Speed:
             sys.exit(1)
         return rows[0]["cnt"]
 
-    def count_channel_user_online(self, channel, date, et):
-        sql = """select count(distinct email) as cnt from speed_collector.t_v2ray_user_traffic where date = '%s' and email in (select email from speed.t_user where channel='%s' and created_at <= '%s');""" % (
-            date.replace("-", ""), channel, et)
+    def count_channel_user_online(self, channel, date, st,et):
+        # sql = """select count(distinct email) as cnt from speed_collector.t_v2ray_user_traffic where date = '%s' and email in (select email from speed.t_user where channel='%s' and created_at <= '%s');""" % (date.replace("-", ""), channel, et)
+        sql = """SELECT COUNT(DISTINCT email) as cnt FROM (SELECT email FROM (SELECT distinct email FROM speed_report.t_user_op_log WHERE (content LIKE '%点击连接%' OR content LIKE '%开始连接%') AND created_at >= '%s' AND result = 'success' AND created_at <= '%s' AND email IN (SELECT email FROM speed.t_user where channel='%s') UNION SELECT email FROM speed_collector.t_v2ray_user_traffic WHERE date = '%s' AND email IN (SELECT email FROM speed.t_user WHERE channel = '%s' AND created_at <= '%s')) AS combined_results) AS distinct_emails;""" % (st,et,channel,date.replace("-", ""), channel, et)
         rows = mysql_query_db(self.conn, sql)
         if len(rows) != 1:
             logging.error("sql: %s, rows: %d != 1" % (sql, len(rows)))
@@ -408,7 +409,6 @@ class Speed:
             device_recharge_totals[device_type] += amount_in_rub
         # 返回各个设备类型的总金额
         return device_recharge_totals
-
 class SpeedReport:
     def __init__(self):
         self.config = load_config("/shell/report/config.yaml")

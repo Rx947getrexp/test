@@ -31,7 +31,6 @@ class ReportUser:
         self.report_online_user()
         self.db_speed_conn.close_connection()
         self.db_report_conn.close_connection()
-
     def report_daily_user_recharge(self):
         logging.info("*" * 20 + sys._getframe().f_code.co_name + "*" * 20)
         """获取商品id列表"""
@@ -117,7 +116,7 @@ class ReportUser:
             """ 新增用户数量 """
             data[channel_id]["new_cnt"] = self.db_speed_conn.count_user_by_create_time(channel_id, self.start_time,self.end_time)
             """ 留存用户数量 """
-            data[channel_id]["retained_cnt"] = self.db_speed_conn.count_user_online(channel_id, self.date,self.end_time)
+            data[channel_id]["retained_cnt"] = self.db_speed_conn.count_user_online(channel_id, self.date,self.start_time,self.end_time)
             """月留存用户数量 """
             data[channel_id]["month_retained_cnt"] = self.db_speed_conn.count_user_month_online(channel_id,self.month_start_time,self.end_time)
         self.db_report_conn.insert_daily_user(self.date, data)
@@ -134,11 +133,11 @@ class ReportUser:
             """ 推广渠道用户总量 """
             data[channel]["total_cnt"] = self.db_speed_conn.count_total_channel_user(channel, self.end_time)
 
-            """ 新增推广渠道用户数量 """
+            """新增推广渠道用户数量"""
             data[channel]["new_cnt"] = self.db_speed_conn.count_channel_user_by_create_time(channel, self.start_time,self.end_time)
 
-            """ 新增推广渠道用户数量 """
-            data[channel]["retained_cnt"] = self.db_speed_conn.count_channel_user_online(channel, self.date,self.end_time)
+            """推广渠道用户留存"""
+            data[channel]["retained_cnt"] = self.db_speed_conn.count_channel_user_online(channel, self.date,self.start_time,self.end_time)
 
             """ 充值总人数 """
             data[channel]["total_recharge"] = self.db_speed_conn.count_total_number_of_recharges(channel, self.end_time)
