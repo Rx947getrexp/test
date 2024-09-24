@@ -12,5 +12,6 @@ type Server struct {
 	PayConfig       PayConfig       `mapstructure:"payconfig"`
 	WebMoneyConfig  WebMoneyConfig  `mapstructure:"webmoneyconfig"`
 	FreekassaConfig FreekassaConfig `mapstructure:"freekassaconfig"`
+	ApplePayConfig  ApplePayConfig  `mapstructure:"applepayconfig"`
 	TestEnv         string          `mapstructure:"test_env"`
 }

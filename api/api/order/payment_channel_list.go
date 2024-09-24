@@ -84,6 +84,10 @@ func PaymentChannelList(ctx *gin.Context) {
 		//	global.MyLogger(ctx).Info().Msg("not in whitelist")
 		//	continue
 		//}
+		if item.ChannelId == constant.PayChannelApplePay {
+			continue
+		}
+
 		bankCardInfo := make([]BankCardInfo, 0)
 		customerServiceInfo := CustomerServiceInfo{}
 		_ = json.Unmarshal([]byte(item.BankCardInfo), &bankCardInfo)

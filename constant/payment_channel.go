@@ -14,4 +14,5 @@ const (
 	PayChannelFreekassa_36 = "freekassa-36"
 	PayChannelFreekassa_43 = "freekassa-43"
 	PayChannelFreekassa_44 = "freekassa-44"
+	PayChannelApplePay     = "applepay"
 )
