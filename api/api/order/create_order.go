@@ -214,6 +214,11 @@ func CreateOrder(ctx *gin.Context) {
 		payOrderUpdate.StatusMes = resp.Location
 		payOrderUpdate.OrderData = resp.OrderId
 
+	case constant.PayChannelApplePay:
+		res.Status = constant.ReturnStatusSuccess
+		payOrderUpdate.ReturnStatus = constant.ReturnStatusSuccess
+		payOrderUpdate.StatusMes = "apple-pay"
+
 	default:
 		err = fmt.Errorf("ChannelId %s 无效", req.ChannelId)
 		global.MyLogger(ctx).Err(err).Msgf("ChannelId not exist")
@@ -557,7 +562,8 @@ func genPayAmount(goodsEntity *entity.TGoods, paymentEntity *entity.TPaymentChan
 
 	case constant.PayChannelPnSafePay,
 		constant.PayChannelFreekassa_12, constant.PayChannelFreekassa_36,
-		constant.PayChannelFreekassa_43, constant.PayChannelFreekassa_44:
+		constant.PayChannelFreekassa_43, constant.PayChannelFreekassa_44,
+		constant.PayChannelApplePay:
 		return goodsEntity.PriceRub, paymentEntity.Commission, fmt.Sprintf("%.2f", goodsEntity.PriceRub), CurrencyRUB, nil
 
 	case constant.PayChannelWebMoneyPay:

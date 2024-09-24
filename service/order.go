@@ -11,6 +11,7 @@ import (
 	"go-speed/global"
 	"go-speed/model/do"
 	"go-speed/model/entity"
+	"go-speed/util/pay/applepay"
 	"go-speed/util/pay/freekassa"
 	"go-speed/util/pay/pnsafepay"
 	"go-speed/util/pay/upay"
@@ -33,6 +34,11 @@ type PayNotifyReq struct {
 	Sign       string `form:"SIGN" json:"SIGN"`
 }
 
+type ApplePayNotifyReq struct {
+	TransactionId string `form:"transaction_id" json:"transaction_id" dc:"苹果支付平台订单号"`
+	ReceiptData   string `form:"receipt_data" json:"receipt_data" dc:"苹果支付平台凭证"`
+}
+
 func SyncOrderStatus(ctx *gin.Context, orderNo string, notifyData interface{}) (status string, err error) {
 	var (
 		affected             int64
@@ -45,6 +51,7 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string, notifyData interface{}) (
 		directUserEntity     *entity.TUser
 		directNewExpiredTime int64
 		directAddExpiredTime int64
+		paymentProof         string
 	)
 	global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ orderNo: %s", orderNo)
 	defer func() {
@@ -137,7 +144,7 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string, notifyData interface{}) (
 			}
 
 			if !pass {
-				global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ OrderAmount: %s, waiting to pay", orderNo)
+				global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ OrderNo: %s, waiting to pay", orderNo)
 				return constant.ReturnStatusWaiting, nil
 			}
 			resultStatus, orderRealityAmount = constant.ReturnStatusSuccess, resp.Amount
@@ -169,7 +176,7 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string, notifyData interface{}) (
 		if notifyData == nil {
 			order, err := freekassa.QueryOrder(ctx, orderNo)
 			if order == nil {
-				global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ OrderAmount: %s, waiting to pay", orderNo)
+				global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ OrderNo: %s, waiting to pay", orderNo)
 				return constant.ReturnStatusWaiting, nil
 			}
 
@@ -189,9 +196,26 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string, notifyData interface{}) (
 			orderRealityAmount = notifyReq.Amount
 		}
 		if !pass {
-			global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ OrderAmount: %s, waiting to pay", orderNo)
+			global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ OrderNo: %s, waiting to pay", orderNo)
 			return constant.ReturnStatusWaiting, nil
 		}
+		resultStatus = constant.ReturnStatusSuccess
+	case constant.PayChannelApplePay:
+		var (
+			applePayReq    = notifyData.(*ApplePayNotifyReq)
+			applePayStatus int
+		)
+		applePayStatus, err = applepay.AppleVerify(ctx, applePayReq.TransactionId, applePayReq.ReceiptData)
+		if err != nil {
+			global.MyLogger(ctx).Err(err).Msgf("AppleVerify failed")
+			return constant.ReturnStatusWaiting, err
+		}
+		orderRealityAmount = payOrder.OrderAmount
+		if applePayStatus != 0 {
+			global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ OrderNo: %s, waiting to pay", orderNo)
+			return constant.ReturnStatusWaiting, nil
+		}
+		paymentProof = applePayReq.TransactionId
 		resultStatus = constant.ReturnStatusSuccess
 	}
 
@@ -229,6 +253,9 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string, notifyData interface{}) (
 			OrderRealityAmount: orderRealityAmount,
 			Version:            payOrder.Version + 1,
 			UpdatedAt:          gtime.Now(),
+		}
+		if payOrder.PaymentChannelId == constant.PayChannelApplePay {
+			updateDo.PaymentProof = paymentProof
 		}
 
 		// 订单支付成功时，需要执行相关操作

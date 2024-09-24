@@ -17,7 +17,9 @@ import (
 )
 
 type ConfirmOrderReq struct {
-	OrderNo string `form:"order_no" binding:"required" json:"order_no" dc:"订单号"`
+	OrderNo       string `form:"order_no" binding:"required" json:"order_no" dc:"订单号"`
+	TransactionId string `form:"transaction_id" json:"transaction_id" dc:"苹果支付平台订单号"`
+	ReceiptData   string `form:"receipt_data" json:"receipt_data" dc:"苹果支付平台凭证"`
 }
 
 type ConfirmOrderRes struct {
@@ -56,6 +58,12 @@ func ConfirmOrder(ctx *gin.Context) {
 	// validate order
 	payOrder, err = validateOrder(ctx, user.Email, req.OrderNo)
 	if err != nil {
+		return
+	}
+
+	if payOrder.PaymentChannelId == constant.PayChannelApplePay && (req.ReceiptData == "" || req.TransactionId == "") {
+		global.MyLogger(ctx).Err(err).Msgf("apple-pay req params invalid")
+		response.RespFail(ctx, i18n.RetMsgParamInvalid, nil)
 		return
 	}
 

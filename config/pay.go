@@ -31,3 +31,8 @@ type WebMoneyConfig struct {
 type FreekassaConfig struct {
 	NotifyClientIp string `mapstructure:"notify_client_ip"`
 }
+
+type ApplePayConfig struct {
+	Environment string `mapstructure:"environment"`
+	BundleId    string `mapstructure:"bundle_id"`
+}
