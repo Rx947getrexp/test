@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"go-speed/constant"
 	"go-speed/global"
 	"go-speed/model"
@@ -177,7 +178,7 @@ func UpdateUserDev(devId int64, user *model.TUser) error {
 }
 
 // 检查登录设备是否到达上限
-func CheckDevNumLimits(devId int64, user *model.TUser) (bool, error) {
+func CheckDevNumLimits(ctx *gin.Context, devId int64, user *model.TUser) (bool, error) {
 	// 登录设备数量上限，根据用户等级来定义
 	// TODO：先简单处理，目前还没有产品形态定义
 	limits := 6
@@ -205,7 +206,7 @@ func CheckDevNumLimits(devId int64, user *model.TUser) (bool, error) {
 		OrderBy("id asc").
 		Find(&list)
 	if err != nil {
-		global.Logger.Err(err).Msg("数据库链接出错")
+		global.MyLogger(ctx).Err(err).Msg("数据库链接出错")
 		return false, err
 	}
 	devCount := 0
@@ -217,7 +218,7 @@ func CheckDevNumLimits(devId int64, user *model.TUser) (bool, error) {
 	}
 	global.Logger.Info().Msgf("account: %s, level: %d, devCount: %d, limits: %d", user.Email, user.Level, devCount, limits)
 	if devCount >= limits {
-		global.Logger.Err(err).Msgf("dev limits error, account: %s, level: %d, devCount: %d, limits: %d",
+		global.MyLogger(ctx).Info().Msgf("dev limits error, account: %s, level: %d, devCount: %d, limits: %d",
 			user.Email, user.Level, devCount, limits)
 		return true, nil
 	}
@@ -226,7 +227,7 @@ func CheckDevNumLimits(devId int64, user *model.TUser) (bool, error) {
 	userDev := new(model.TUserDev)
 	has, err := global.Db.Where("user_id = ? and dev_id = ?", user.Id, devId).Get(userDev)
 	if err != nil {
-		global.Logger.Err(err).Msg("数据库链接出错")
+		global.MyLogger(ctx).Err(err).Msg("数据库链接出错")
 		return false, errors.New("查询设备出错")
 	}
 
@@ -245,12 +246,13 @@ func CheckDevNumLimits(devId int64, user *model.TUser) (bool, error) {
 		rows, err = global.Db.Insert(userDev)
 	}
 	if err != nil {
-		global.Logger.Err(err).Msg("数据库链接出错")
-		return false, errors.New("数据库链接出错")
+		global.MyLogger(ctx).Err(err).Msg("数据库链接出错")
+		return false, err
 	}
 	if rows < 1 {
-		global.Logger.Err(err).Msg("数据库操作出错")
-		return false, errors.New("数据库操作出错")
+		err = fmt.Errorf("数据库操作出错, rows %d", rows)
+		global.MyLogger(ctx).Err(err).Msg("rows < 1")
+		return false, err
 	}
 	return false, nil
 

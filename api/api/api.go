@@ -403,7 +403,7 @@ func Login(c *gin.Context) {
 			return
 		}
 
-		limits, err := service.CheckDevNumLimits(int64(dId), user)
+		limits, err := service.CheckDevNumLimits(c, dId, user)
 		if err != nil {
 			global.MyLogger(c).Err(err).Msgf("登录出错！%s， param: %+v", param.Account, *param)
 			response.RespFail(c, i18n.RetMsgDBErr, nil)
