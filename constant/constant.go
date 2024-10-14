@@ -60,3 +60,7 @@ const (
 	MaxChannel = 210000 //合作渠道最大查询范围
 	MinChannel = 110000 //合作渠道最小查询范围
 )
+const (
+	ExchangeRateUSD = 90.23 // 1 USD = 90.23 RUB
+	ExchangeRateWMZ = 65.0  // 1 WMZ = 65 RUB
+)

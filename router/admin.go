@@ -8,6 +8,7 @@ import (
 	"go-speed/api/admin/official_docs"
 	"go-speed/api/admin/order"
 	"go-speed/api/admin/payment_channel"
+	"go-speed/api/admin/promotion"
 	"go-speed/api/admin/report"
 	"go-speed/api/admin/vip"
 
@@ -194,5 +195,11 @@ func AdminRoute(group *gin.RouterGroup) {
 		officialDocsGroup.POST("edit", official_docs.OfficialDocsModify)
 		officialDocsGroup.POST("list", official_docs.OfficialDocsList)
 		officialDocsGroup.POST("upload", official_docs.UploadOfficialDocsImage)
+		//推广渠道管理
+		promotionGroup := group.Group("promotion")
+		promotionGroup.GET("promotion_list", promotion.PromotionList)
+		promotionGroup.POST("add_promotion", promotion.AddPromotion)
+		promotionGroup.POST("edit_promotion", promotion.EditPromotion)
+		promotionGroup.POST("delete_promotion", promotion.DeletePromotion)
 	}
 }

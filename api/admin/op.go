@@ -153,7 +153,6 @@ func GetReportUserDayList(c *gin.Context) {
 		response.ResFail(c, "参数错误")
 		return
 	}
-
 	total, list, err := service.QueryUserReportDay(c, param.Date, param.ChannelId, param.OrderType, param.Page, param.Size)
 	if err != nil {
 		global.Logger.Err(err).Msg("查询出错！")

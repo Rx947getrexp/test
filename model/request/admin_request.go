@@ -598,3 +598,17 @@ type GetChannelUserRechargeByMonthRequest struct {
 	Page      int    `form:"page" json:"page" dc:"分页查询page, 从1开始"`
 	Size      int    `form:"size" json:"size" dc:"分页查询size, 最大1000"`
 }
+type DeletePromotionIdRequest struct {
+	Id int64 `form:"id" binding:"required" json:"id"`
+}
+type AddPromotionRequest struct {
+	PromoterName    string `form:"promoter_name" json:"promoter_name" dc:"推广人姓名" binding:"required"`
+	PromotionDomain string `form:"promotion_domain" json:"promotion_domain" dc:"推广域名" binding:"required"`
+	Channel         string `form:"channel" json:"channel" dc:"推广域名对应渠道"`
+}
+type EditPromotionRequest struct {
+	Id              int64  `form:"id" binding:"required" json:"id"`
+	PromoterName    string `form:"promoter_name" json:"promoter_name" dc:"推广人姓名"`
+	PromotionDomain string `form:"promotion_domain" json:"promotion_domain" dc:"推广域名"`
+	Channel         string `form:"channel" json:"channel" dc:"推广域名对应渠道"`
+}
