@@ -47,7 +47,7 @@ func ConfirmOrder(ctx *gin.Context) {
 		response.RespFail(ctx, i18n.RetMsgParamParseErr, nil)
 		return
 	}
-	global.MyLogger(ctx).Info().Msgf("OrderNo: %s", req.OrderNo)
+	global.MyLogger(ctx).Info().Msgf("req: %+v", *req)
 
 	// validate user
 	user, err = common.ValidateClaims(ctx)
@@ -82,10 +82,21 @@ func ConfirmOrder(ctx *gin.Context) {
 	global.MyLogger(ctx).Info().Msgf("OrderNo: %s, ResultStatus: %s", payOrder.OrderNo, payOrder.ResultStatus)
 
 	// sync order status
-	orderStatus, err = service.SyncOrderStatus(ctx, req.OrderNo, nil)
-	if err != nil {
-		response.ResFail(ctx, err.Error())
-		return
+	if payOrder.PaymentChannelId == constant.PayChannelApplePay {
+		orderStatus, err = service.SyncOrderStatus(ctx, req.OrderNo, &service.ApplePayNotifyReq{
+			TransactionId: req.TransactionId,
+			ReceiptData: req.ReceiptData,
+		})
+		if err != nil {
+			response.ResFail(ctx, err.Error())
+			return
+		}
+	} else {
+		orderStatus, err = service.SyncOrderStatus(ctx, req.OrderNo, nil)
+		if err != nil {
+			response.ResFail(ctx, err.Error())
+			return
+		}
 	}
 
 	response.RespOk(ctx, i18n.RetMsgSuccess, ConfirmOrderRes{Status: orderStatus})
