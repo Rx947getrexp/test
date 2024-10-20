@@ -98,11 +98,16 @@ const (
 	RetMsgProofUploadNone           = "您当前选择的是银行卡支付方式，请先上传凭证。"
 	RetMsgOpLimitedCurrentUserLevel = "您当前操作被限制，可升级会员等级后重试或者联系客服处理。"
 	RetMesEmailSendLimit            = "邮件已发送，请5分钟后再试，若未找到邮件，可能被误标记为垃圾邮件，请检查邮箱内的垃圾邮件。"
+	RetMsgGetV2rayConfigFailed      = "获取配置失败，请稍后重试或者联系客服人员处理。"
 )
 
 func Init() {
 	initCode()
 	ReturnMsgMap = make(I18nMsgMap)
+	ReturnMsgMap[RetMsgGetV2rayConfigFailed] = map[string]string{
+		LangEN: "Failed to get configuration, please try again later or contact customer service personnel for assistance.",
+		LangRU: "Не удалось получить конфигурацию, пожалуйста, попробуйте позже или обратитесь к сотруднику службы поддержки.",
+	}
 
 	ReturnMsgMap[RetMesEmailSendLimit] = map[string]string{
 		LangEN: "The email has been sent. Please try again in 5 minutes. If you can't find the email, it might have been mistakenly marked as spam. Please check your spam folder.",

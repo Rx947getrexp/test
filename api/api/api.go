@@ -320,8 +320,14 @@ func Reg(c *gin.Context) {
 	if param.InviteCode != "" {
 		directTeam := new(model.TUserTeam)
 		has, err := global.Db.Where("user_id = ?", param.InviteCode).Get(directTeam)
-		if err != nil || !has {
-			global.MyLogger(c).Err(fmt.Errorf("err:%+v", err)).Msgf("查询上线用户出错, clientId: %s, param: %+v", clientId, *param)
+		if err != nil {
+			global.MyLogger(c).Err(err).Msgf("查询推荐人信息失败, clientId: %s, param: %+v", clientId, *param)
+			sess.Rollback()
+			response.RespFail(c, i18n.RetMsgDBErr, nil)
+			return
+		}
+		if !has {
+			global.MyLogger(c).Err(fmt.Errorf("推荐人Code无效")).Msgf("查询推荐人信息失败, clientId: %s, param: %+v", clientId, *param)
 			sess.Rollback()
 			response.RespFail(c, i18n.RetMsgReferrerIDIncorrect, nil)
 			return
@@ -388,33 +394,41 @@ func Login(c *gin.Context) {
 		response.RespFail(c, i18n.RetMsgPasswordIncorrect, nil)
 		return
 	}
-	devId := c.Request.Header.Get("Dev-Id")
-	if devId != "" && user.Email != "zzz@qq.com" {
-		dId, err := strconv.ParseInt(devId, 10, 64)
-		if err != nil {
-			global.MyLogger(c).Err(err).Msgf("DevID atoi failed！%s, devId: %s, param: %+v", param.Account, devId, *param)
-			response.RespFail(c, i18n.RetMsgDevIdParseErr, nil)
-			return
-		}
 
-		if !service.HasDev(int64(dId)) {
-			global.MyLogger(c).Err(fmt.Errorf("%s", i18n.RetMsgDevIdNotExitsErr)).Msgf("param: %+v", *param)
-			response.RespFail(c, i18n.RetMsgDevIdNotExitsErr, nil)
-			return
-		}
+	devId, e := service.GetDevIdByClientId(c)
+	if e != nil {
+		global.MyLogger(c).Err(e).Msgf("GetDevIdByClientId failed")
+	}
 
-		limits, err := service.CheckDevNumLimits(int64(dId), user)
+	if devId > 0 && user.Email != "zzz@qq.com" {
+		limits, err := service.CheckDevNumLimits(c, devId, user)
 		if err != nil {
 			global.MyLogger(c).Err(err).Msgf("登录出错！%s， param: %+v", param.Account, *param)
 			response.RespFail(c, i18n.RetMsgDBErr, nil)
 			return
 		}
 		if limits {
-			global.MyLogger(c).Error().Msgf("登录出错，设备数量超过限制！%s， param: %+v", param.Account, *param)
+			global.MyLogger(c).Warn().Msgf("登录出错，设备数量超过限制！%s， param: %+v", param.Account, *param)
 			response.RespFail(c, i18n.RetMsgReachedDevicesLimit, nil)
 			return
 		}
 	}
+
+	//devId := c.Request.Header.Get("Dev-Id")
+	//if devId != "" && user.Email != "zzz@qq.com" {
+	//	dId, err := strconv.ParseInt(devId, 10, 64)
+	//	if err != nil {
+	//		global.MyLogger(c).Err(err).Msgf("DevID atoi failed！%s, devId: %s, param: %+v", param.Account, devId, *param)
+	//		response.RespFail(c, i18n.RetMsgDevIdParseErr, nil)
+	//		return
+	//	}
+	//
+	//	if !service.HasDev(int64(dId)) {
+	//		global.MyLogger(c).Err(fmt.Errorf("%s", i18n.RetMsgDevIdNotExitsErr)).Msgf("param: %+v", *param)
+	//		response.RespFail(c, i18n.RetMsgDevIdNotExitsErr, nil)
+	//		return
+	//	}
+	//}
 	dataParam := response.LoginClientParam{
 		UserId: user.Id,
 		Token:  service.GenerateTokenByUser(user.Id, service.CommonUserType),
@@ -855,7 +869,7 @@ func PCAppInfo(c *gin.Context) {
 		//Or("key_id = ?", "app_version").
 		Find(&list)
 	if err != nil {
-		global.MyLogger(c).Err(err).Msgf("key不存在！clientId: %s", getClientId(c))
+		global.MyLogger(c).Err(err).Msg("查询app_link失败")
 		response.RespFail(c, i18n.RetMsgOperateFailed, nil)
 		return
 	}
@@ -937,7 +951,7 @@ func ReceiveFree(c *gin.Context) {
 	todayStr := time.Now().Format("2006-01-02")
 	_, err = global.Db.SQL("select count(*) from t_activity where user_id = ? and created_at >= ?", user.Id, todayStr).Get(&counts)
 	if counts >= 3 {
-		global.MyLogger(c).Error().Msgf("领取次数超过限制，email: %s", user.Email)
+		global.MyLogger(c).Warn().Msgf("领取次数超过限制，email: %s", user.Email)
 		response.RespFail(c, i18n.RetMsgActivity3TimesLimits, nil)
 		return
 	}
@@ -1005,8 +1019,9 @@ func ReceiveFree(c *gin.Context) {
 		user.ExpiredTime = newExpiredTime
 		user.UpdatedAt = time.Now()
 		rows, err = sess.Cols("expired_time", "updated_at").Where("id = ?", user.Id).Update(user)
-		if err != nil || rows < 1 {
-			global.MyLogger(c).Err(fmt.Errorf("err:%+v", err)).Msgf("更新用户状态失败, email: %s", user.Email)
+		if err != nil || rows > 1 {
+			global.MyLogger(c).Err(fmt.Errorf("err:%+v", err)).Msgf(
+				"更新用户状态失败, email: %s, rows: %d", user.Email, rows)
 			sess.Rollback()
 			response.RespFail(c, i18n.RetMsgOperateFailed, nil)
 			return
@@ -1106,10 +1121,6 @@ func DnsList(c *gin.Context) {
 			return
 		}
 		level = service.RatingMemberLevel(user)
-	}
-	if global.GetDevId(c) == "1733336209297510400" || global.GetClientId(c) == "9782DC21-7EC9-46FA-A70F-3D37FBF5AED0" {
-		level = 100
-		status = 100
 	}
 
 	var list []map[string]interface{}

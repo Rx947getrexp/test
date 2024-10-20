@@ -15,7 +15,7 @@ func main() {
 
 	initialize.InitComponents()
 	i18n.Init()
-	go task.CollectUserTraffic()
+	go task.CollectUserUsedV2ray()
 
 	engine := initialize.CollectorRouters()
 	if err := engine.Run(":" + global.Config.System.Addr); err != nil {

@@ -219,7 +219,11 @@ func isLegalParamWithoutSelect(param string) bool {
 func RateMiddleware(limiter *Limiter) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 如果ip请求连接数在两秒内超过10次，返回429并抛出error
-		if !limiter.Allow(c.ClientIP(), 20, 2*time.Second) {
+		var events int64 = 20
+		if c.ClientIP() == "185.22.154.21" {
+			events = 200
+		}
+		if !limiter.Allow(c.ClientIP(), events, 2*time.Second) {
 			global.MyLogger(c).Error().Msgf("######### >>>>>>>> too many requests, Headers: %s",
 				global.SprintAllHeader(c))
 			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{
