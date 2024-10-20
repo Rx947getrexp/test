@@ -10,6 +10,7 @@ import (
 	"go-speed/model/entity"
 	"go-speed/model/request"
 	"go-speed/model/response"
+	"go-speed/service"
 	"go-speed/util"
 	"time"
 )
@@ -81,6 +82,14 @@ func ConnectServer(ctx *gin.Context) {
 		//if strings.Contains(item.Server, "http") {
 		//	url = fmt.Sprintf("%s/node/add_sub", item.Server)
 		//}
+		err = service.AddUserConfigToNode(ctx, userEntity, &item)
+		if err == nil {
+			continue
+		}
+		if err != nil {
+			global.MyLogger(ctx).Err(err).Msgf("AddUserConfigToNode failed, node: %s", item.Ip)
+		}
+
 		url := fmt.Sprintf("http://%s:15003/node/add_sub", item.Ip)
 		global.MyLogger(ctx).Info().Msgf(">>>>>>>>> url: %s", url)
 		timestamp := fmt.Sprint(time.Now().Unix())

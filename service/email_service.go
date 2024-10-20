@@ -119,6 +119,9 @@ func CheckEmailSendFlag(ctx *gin.Context, email string) bool {
 	key := fmt.Sprintf(constant.TelMsgKey, email+"send-flag")
 	flag, err := global.Redis.Get(ctx, key).Result()
 	if err != nil {
+		if isRedisKeyNil(err) {
+			return false
+		}
 		global.MyLogger(ctx).Err(err).Msgf("redis get key[%s] failed", key)
 		return false
 	}
@@ -128,19 +131,22 @@ func CheckEmailSendFlag(ctx *gin.Context, email string) bool {
 }
 
 func VerifyMsg(ctx *gin.Context, mobile, code string) error {
-	verifyKey := fmt.Sprintf(constant.VerifySmsKey, mobile)
-	count, _ := global.Redis.Get(ctx, verifyKey).Int64()
-	if count >= constant.VerifyCountByHour {
-		return errors.New("验证次数受限制，请稍后再试")
-	}
-	err := global.Redis.Set(ctx, verifyKey, count+1, time.Hour).Err()
-	if err != nil {
-		global.MyLogger(ctx).Err(err).Msg("redis连接出错")
-		return errors.New("验证失败，请稍后再试")
-	}
+	//verifyKey := fmt.Sprintf(constant.VerifySmsKey, mobile)
+	//count, _ := global.Redis.Get(ctx, verifyKey).Int64()
+	//if count >= constant.VerifyCountByHour {
+	//	return errors.New("验证次数受限制，请稍后再试")
+	//}
+	//err := global.Redis.Set(ctx, verifyKey, count+1, time.Hour).Err()
+	//if err != nil {
+	//	global.MyLogger(ctx).Err(err).Msg("redis连接出错")
+	//	return errors.New("验证失败，请稍后再试")
+	//}
 	telKey := fmt.Sprintf(constant.TelMsgKey, mobile)
 	msgCode, err := global.Redis.Get(ctx, telKey).Result()
 	if err != nil {
+		if isRedisKeyNil(err) {
+			return errors.New("验证码不存在，需要重新发送验证码")
+		}
 		global.MyLogger(ctx).Err(err).Msg("redis连接出错")
 		return errors.New("验证失败，请稍后再试")
 	}

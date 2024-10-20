@@ -23,7 +23,7 @@ func GetUserByClaims(claims *CustomClaims) (*model.TUser, error) {
 		return nil, err
 	}
 	if !has {
-		return nil, errors.New("您已被风控，请联系客服！")
+		return nil, fmt.Errorf("user-not-found, uid:%d", uid)
 	}
 	return user, nil
 }
@@ -250,7 +250,7 @@ func CheckDevNumLimits(ctx *gin.Context, devId int64, user *model.TUser) (bool, 
 		return false, err
 	}
 	if rows < 1 {
-		err = fmt.Errorf("数据库操作出错, rows %d", rows)
+		err = fmt.Errorf("数据变更行数不符合预期, rows %d", rows)
 		global.MyLogger(ctx).Err(err).Msg("rows < 1")
 		return false, err
 	}

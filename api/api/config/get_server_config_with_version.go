@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go-speed/api/api/common"
@@ -113,6 +114,12 @@ func GetServerConfigWithoutRules(ctx *gin.Context) {
 
 		global.MyLogger(ctx).Info().Msgf("[choose-node-for-user-2] (%s) (%s) (%s) (%s) (nodeID: %d)", userEntity.Email, item.Ip, item.CountryEn, winCountry.Name, nodeID)
 
+		err = service.AddUserConfigToNode(ctx, userEntity, &item)
+		if err != nil {
+			global.MyLogger(ctx).Err(err).Msgf("AddUserConfigToNode failed, node: %s", item.Ip)
+			continue
+		}
+
 		nodeId := item.Id
 		nodePorts := []int{item.Port}
 		for x := item.MinPort; x <= item.MaxPort; x++ {
@@ -140,6 +147,11 @@ func GetServerConfigWithoutRules(ctx *gin.Context) {
 	global.MyLogger(ctx).Info().Msgf(">>>>> dns: %+v", dnss)
 	global.MyLogger(ctx).Info().Msgf(">>>>> v2rayServers: %+v", v2rayServers)
 
+	if len(v2rayServers) == 0 {
+		global.MyLogger(ctx).Err(errors.New("获取V2ray配置失败")).Msgf("v2rayServers is empty")
+		response.RespFail(ctx, i18n.RetMsgGetV2rayConfigFailed, nil)
+		return
+	}
 	v, err := json.Marshal(GenV2rayConfig(ctx, v2rayServers, winCountry.Name, true))
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("GenV2rayConfig failed")

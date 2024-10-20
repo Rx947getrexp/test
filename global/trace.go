@@ -106,7 +106,7 @@ func TraceIdMiddleware() gin.HandlerFunc {
 
 		c.Next()
 		endTime := time.Now()
-		MyLogger(c).Info().Msgf("____END____ <ClientIP: %s> <URL: %+v> <Method: %+v> <start-time: %+v> <end-time: %+v> <耗时：%d 毫秒>",
+		MyLogger(c).Info().Msgf("____END____ <ClientIP: %s> <API_URL: %+v> <Method: %+v> <start-time: %+v> <end-time: %+v> <耗时：%d 毫秒>",
 			c.ClientIP(), c.Request.URL.String(), c.Request.Method, startTime, endTime, endTime.Sub(startTime).Milliseconds())
 	}
 }
