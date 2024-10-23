@@ -29,3 +29,4 @@ cmd/go-collector/go-collector
 cmd/go-collector/go-mac-collector
 cmd/go-tools/main
 cmd/go-user-v2ray-config/go-user-v2ray-config
+cmd/go-tools/speedctl

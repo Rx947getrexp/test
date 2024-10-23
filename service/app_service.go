@@ -4,9 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/gogf/gf/v2/errors/gerror"
+	"github.com/gogf/gf/v2/os/gtime"
 	"go-speed/constant"
+	"go-speed/dao"
 	"go-speed/global"
 	"go-speed/model"
+	"go-speed/model/do"
+	"go-speed/model/entity"
 	"go-speed/model/request"
 	"math/rand"
 	"time"
@@ -216,43 +221,49 @@ func CheckDevNumLimits(ctx *gin.Context, devId int64, user *model.TUser) (bool, 
 			devCount = devCount + 1
 		}
 	}
-	global.Logger.Info().Msgf("account: %s, level: %d, devCount: %d, limits: %d", user.Email, user.Level, devCount, limits)
+	global.MyLogger(ctx).Info().Msgf("account: %s, level: %d, devCount: %d, limits: %d", user.Email, user.Level, devCount, limits)
 	if devCount >= limits {
 		global.MyLogger(ctx).Info().Msgf("dev limits error, account: %s, level: %d, devCount: %d, limits: %d",
 			user.Email, user.Level, devCount, limits)
 		return true, nil
 	}
 
-	// 插入数据
-	userDev := new(model.TUserDev)
-	has, err := global.Db.Where("user_id = ? and dev_id = ?", user.Id, devId).Get(userDev)
+	var record *entity.TUserDev
+	err = dao.TUserDev.Ctx(ctx).Where(do.TUserDev{
+		UserId: user.Id,
+		DevId:  devId,
+	}).Scan(&record)
 	if err != nil {
-		global.MyLogger(ctx).Err(err).Msg("数据库链接出错")
-		return false, errors.New("查询设备出错")
+		global.MyLogger(ctx).Err(err).Msgf("get TUserDev failed, email: %s", user.Email)
+		return false, err
 	}
+	global.MyLogger(ctx).Debug().Msgf("TUserDev: %+v", *record)
 
-	var rows int64
-	if has {
-		//更新
-		userDev.UpdatedAt = time.Now()
-		userDev.Status = constant.UserDevNormalStatus
-		rows, err = global.Db.Cols("updated_at", "user_id", "status").Where("id = ?", userDev.Id).Update(userDev)
+	if record == nil {
+		lastId, err := dao.TUserDev.Ctx(ctx).Data(do.TUserDev{
+			UserId:    user.Id,
+			DevId:     devId,
+			Status:    constant.UserDevNormalStatus,
+			CreatedAt: gtime.Now(),
+			UpdatedAt: gtime.Now(),
+			Comment:   "check&ban",
+		}).InsertAndGetId()
+		if err != nil {
+			return false, gerror.Wrap(err, "insert TUserDev failed")
+		}
+		global.MyLogger(ctx).Debug().Msgf("insert TUserDev lastId: %d", lastId)
 	} else {
-		userDev.UserId = user.Id
-		userDev.DevId = devId
-		userDev.Status = constant.UserDevNormalStatus
-		userDev.CreatedAt = time.Now()
-		userDev.UpdatedAt = time.Now()
-		rows, err = global.Db.Insert(userDev)
-	}
-	if err != nil {
-		global.MyLogger(ctx).Err(err).Msg("数据库链接出错")
-		return false, err
-	}
-	if rows < 1 {
-		err = fmt.Errorf("数据变更行数不符合预期, rows %d", rows)
-		global.MyLogger(ctx).Err(err).Msg("rows < 1")
-		return false, err
+		affect, err := dao.TUserDev.Ctx(ctx).Data(do.TUserDev{
+			Status:    constant.UserDevBanStatus,
+			UpdatedAt: gtime.Now(),
+		}).Where(do.TUserDev{
+			UserId: user.Id,
+			DevId:  devId,
+		}).UpdateAndGetAffected()
+		if err != nil {
+			return false, gerror.Wrap(err, "update TUserDev failed")
+		}
+		global.MyLogger(ctx).Debug().Msgf("update TUserDev affect: %d", affect)
 	}
 	return false, nil
 
