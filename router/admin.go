@@ -29,6 +29,7 @@ func AdminRoute(group *gin.RouterGroup) {
 	group.GET("get_user_recharge_times_list", admin.GetUserRechargeTimesList)
 	group.GET("get_recharge_click_list", admin.GetRechargeClickByDeviceList)
 	group.GET("get_report_device_day_list", admin.GetReportDeviceDayList)
+	group.GET("get_report_device_retention_list", admin.GetReportDeviceRetention)
 	group.GET("get_channel_user_recharge_list", admin.GetChannelUserRechargeList)
 	group.GET("get_channel_user_recharge_day_list", admin.GetChannelUserRecharge)
 	group.GET("get_channel_user_recharge_month_list", admin.GetChannelUserRechargeByMonth)

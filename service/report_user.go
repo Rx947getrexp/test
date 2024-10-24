@@ -501,3 +501,37 @@ func QueryUserChannelMonth(ctx context.Context, date int, Channel string, orderT
 	err = sess.Limit(size, offset).OrderBy(fmt.Sprintf("date %s, channel %s", order, order)).Find(&list)
 	return count, list, err
 }
+func QueryDeviceRetention(ctx context.Context, date int, Device string, orderType string, page, size int) (int64, []*model.TUserDeviceRetention, error) {
+	order := "desc"
+	if strings.ToLower(orderType) == "asc" {
+		order = "asc"
+	}
+	if size > constant.MaxPageSize {
+		size = constant.MaxPageSize
+	}
+	if size == 0 {
+		size = 20
+	}
+	var err error
+	var list []*model.TUserDeviceRetention
+	sessCount := global.Db2.Context(ctx)
+	sess := global.Db2.Context(ctx)
+	if date > 0 {
+		sess = sess.Where(" date = ?", date)
+		sessCount = sessCount.Where(" date = ?", date)
+	}
+	if Device != "" {
+		sess = sess.Where(" device = ?", Device)
+		sessCount = sessCount.Where(" device = ?", Device)
+	}
+	offset := 0
+	if page > 1 {
+		offset = (page - 1) * size
+	}
+	count, err := sessCount.Table(model.TUserDeviceRetention{}).Count()
+	if err != nil {
+		return 0, nil, err
+	}
+	err = sess.Limit(size, offset).OrderBy(fmt.Sprintf("id %s", order)).Find(&list)
+	return count, list, err
+}

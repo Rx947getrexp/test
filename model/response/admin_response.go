@@ -252,3 +252,17 @@ type GetTUserChannelMonthListResponse struct {
 	Total int64               `json:"total" dc:"数据总条数"`
 	Items []TUserChannelMonth `json:"items" dc:"数据明细"`
 }
+type TUserDeviceRetention struct {
+	Id            int64  `json:"id" dc:"自增主键ID"`
+	Date          int    `json:"date" dc:"报表日期，eg:20240101"`
+	Device        string `json:"device" dc:"渠道设备"`
+	New           int    `json:"new" dc:"设备类型新增用户"`
+	Retained      int    `json:"retained" dc:"设备类型次日留存"`
+	Day7Retained  int    `json:"day_7_retained" dc:"7日留存"`
+	Day15Retained int    `json:"day_15_retained" dc:"15日留存"`
+	CreatedAt     string `json:"created_at" dc:"记录创建时间"`
+}
+type GetTUserDeviceRetentionResponse struct {
+	Total int64                  `json:"total" dc:"数据总条数"`
+	Items []TUserDeviceRetention `json:"items" dc:"数据明细"`
+}

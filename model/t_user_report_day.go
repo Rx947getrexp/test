@@ -120,3 +120,13 @@ type TUserChannelMonth struct {
 	MonthRechargeMoney float64   `xorm:"decimal(10,2)"`
 	CreatedAt          time.Time `xorm:"comment('创建时间') TIMESTAMP"`
 }
+type TUserDeviceRetention struct {
+	Id            int64     `xorm:"pk autoincr comment('自增id') BIGINT"`
+	Date          int       `xorm:"INT"`
+	Device        string    `xorm:"VARCHAR(32)"`
+	New           int       `xorm:"INT"`
+	Retained      int       `xorm:"INT"`
+	Day7Retained  int       `xorm:"INT"`
+	Day15Retained int       `xorm:"INT"`
+	CreatedAt     time.Time `xorm:"comment('创建时间') TIMESTAMP"`
+}
