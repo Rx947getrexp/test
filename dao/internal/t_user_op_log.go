@@ -20,30 +20,38 @@ type TUserOpLogDao struct {
 
 // TUserOpLogColumns defines and stores column names for table t_user_op_log.
 type TUserOpLogColumns struct {
-	Id         string // 自增id
-	Email      string // 用户账号
-	DeviceId   string // 设备ID
-	DeviceType string // 设备类型
-	PageName   string // page_name
-	Result     string // result
-	Content    string // content
-	Version    string //
-	CreateTime string // 提交时间
-	CreatedAt  string // 记录创建时间
+	Id           string // 自增id
+	Email        string // 用户账号
+	DeviceId     string // 设备ID
+	DeviceType   string // 设备类型
+	PageName     string // page_name
+	Result       string // result
+	Content      string // content
+	InterfaceUrl string // interfaceUrl
+	ServerCode   string // serverCode
+	HttpCode     string // httpCode
+	TraceId      string // traceId
+	Version      string // version
+	CreateTime   string // 提交时间
+	CreatedAt    string // 记录创建时间
 }
 
 // tUserOpLogColumns holds the columns for table t_user_op_log.
 var tUserOpLogColumns = TUserOpLogColumns{
-	Id:         "id",
-	Email:      "email",
-	DeviceId:   "device_id",
-	DeviceType: "device_type",
-	PageName:   "page_name",
-	Result:     "result",
-	Content:    "content",
-	Version:    "version",
-	CreateTime: "create_time",
-	CreatedAt:  "created_at",
+	Id:           "id",
+	Email:        "email",
+	DeviceId:     "device_id",
+	DeviceType:   "device_type",
+	PageName:     "page_name",
+	Result:       "result",
+	Content:      "content",
+	InterfaceUrl: "interfaceUrl",
+	ServerCode:   "serverCode",
+	HttpCode:     "httpCode",
+	TraceId:      "traceId",
+	Version:      "version",
+	CreateTime:   "create_time",
+	CreatedAt:    "created_at",
 }
 
 // NewTUserOpLogDao creates and returns a new DAO object for table data access.

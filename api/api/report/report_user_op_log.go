@@ -2,25 +2,30 @@ package report
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/gogf/gf/v2/os/gtime"
 	"go-speed/api/api/common/remote"
 	"go-speed/dao"
 	"go-speed/global"
 	"go-speed/i18n"
 	"go-speed/model/do"
 	"go-speed/model/response"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gogf/gf/v2/os/gtime"
 )
 
 type ReportUserOpLogReq struct {
-	UserId     uint64 `form:"user_id" json:"user_id"`
-	DeviceId   string `form:"device_id" json:"device_id"`
-	DeviceType string `form:"device_type" json:"device_type"`
-	PageName   string `form:"page_name" json:"page_name"`
-	Content    string `form:"content" json:"content"`
-	CreateTime string `form:"create_time" json:"create_time"`
-	Version    string `form:"version" json:"version"`
-	Result     string `form:"result" json:"result"`
+	UserId       uint64 `form:"user_id" json:"user_id"`
+	DeviceId     string `form:"device_id" json:"device_id"`
+	DeviceType   string `form:"device_type" json:"device_type"`
+	PageName     string `form:"page_name" json:"page_name"`
+	Content      string `form:"content" json:"content"`
+	InterfaceUrl string `form:"interfaceUrl" json:"interfaceUrl"`
+	ServerCode   string `form:"serverCode" json:"serverCode"`
+	HttpCode     string `form:"httpCode" json:"httpCode"`
+	TraceId      string `form:"traceId" json:"traceId"`
+	CreateTime   string `form:"create_time" json:"create_time"`
+	Version      string `form:"version" json:"version"`
+	Result       string `form:"result" json:"result"`
 }
 
 func ReportUserOpLog(ctx *gin.Context) {
@@ -44,15 +49,19 @@ func ReportUserOpLog(ctx *gin.Context) {
 	}
 
 	lastInsertId, err = dao.TUserOpLog.Ctx(ctx).Data(do.TUserOpLog{
-		Email:      email,
-		DeviceId:   req.DeviceId,
-		DeviceType: req.DeviceType,
-		PageName:   req.PageName,
-		Result:     req.Result,
-		Content:    req.Content,
-		Version:    req.Version,
-		CreateTime: req.CreateTime,
-		CreatedAt:  gtime.Now(),
+		Email:        email,
+		DeviceId:     req.DeviceId,
+		DeviceType:   req.DeviceType,
+		PageName:     req.PageName,
+		Result:       req.Result,
+		Content:      req.Content,
+		InterfaceUrl: req.InterfaceUrl,
+		ServerCode:   req.ServerCode,
+		HttpCode:     req.HttpCode,
+		TraceId:      req.TraceId,
+		Version:      req.Version,
+		CreateTime:   req.CreateTime,
+		CreatedAt:    gtime.Now(),
 	}).InsertAndGetId()
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("insert op log failed")
