@@ -3,9 +3,15 @@ package service
 import (
 	"errors"
 	"fmt"
+	"github.com/gin-gonic/gin"
+	"github.com/gogf/gf/v2/errors/gerror"
+	"github.com/gogf/gf/v2/os/gtime"
 	"go-speed/constant"
+	"go-speed/dao"
 	"go-speed/global"
 	"go-speed/model"
+	"go-speed/model/do"
+	"go-speed/model/entity"
 	"go-speed/model/request"
 	"math/rand"
 	"time"
@@ -22,7 +28,7 @@ func GetUserByClaims(claims *CustomClaims) (*model.TUser, error) {
 		return nil, err
 	}
 	if !has {
-		return nil, errors.New("您已被风控，请联系客服！")
+		return nil, fmt.Errorf("user-not-found, uid:%d", uid)
 	}
 	return user, nil
 }
@@ -177,7 +183,7 @@ func UpdateUserDev(devId int64, user *model.TUser) error {
 }
 
 // 检查登录设备是否到达上限
-func CheckDevNumLimits(devId int64, user *model.TUser) (bool, error) {
+func CheckDevNumLimits(ctx *gin.Context, devId int64, user *model.TUser) (bool, error) {
 	// 登录设备数量上限，根据用户等级来定义
 	// TODO：先简单处理，目前还没有产品形态定义
 	limits := 6
@@ -205,7 +211,7 @@ func CheckDevNumLimits(devId int64, user *model.TUser) (bool, error) {
 		OrderBy("id asc").
 		Find(&list)
 	if err != nil {
-		global.Logger.Err(err).Msg("数据库链接出错")
+		global.MyLogger(ctx).Err(err).Msg("数据库链接出错")
 		return false, err
 	}
 	devCount := 0
@@ -215,42 +221,50 @@ func CheckDevNumLimits(devId int64, user *model.TUser) (bool, error) {
 			devCount = devCount + 1
 		}
 	}
-	global.Logger.Info().Msgf("account: %s, level: %d, devCount: %d, limits: %d", user.Email, user.Level, devCount, limits)
+	global.MyLogger(ctx).Info().Msgf("account: %s, level: %d, devCount: %d, limits: %d", user.Email, user.Level, devCount, limits)
 	if devCount >= limits {
-		global.Logger.Err(err).Msgf("dev limits error, account: %s, level: %d, devCount: %d, limits: %d",
+		global.MyLogger(ctx).Info().Msgf("dev limits error, account: %s, level: %d, devCount: %d, limits: %d",
 			user.Email, user.Level, devCount, limits)
 		return true, nil
 	}
 
-	// 插入数据
-	userDev := new(model.TUserDev)
-	has, err := global.Db.Where("user_id = ? and dev_id = ?", user.Id, devId).Get(userDev)
+	var record *entity.TUserDev
+	err = dao.TUserDev.Ctx(ctx).Where(do.TUserDev{
+		UserId: user.Id,
+		DevId:  devId,
+	}).Scan(&record)
 	if err != nil {
-		global.Logger.Err(err).Msg("数据库链接出错")
-		return false, errors.New("查询设备出错")
+		global.MyLogger(ctx).Err(err).Msgf("get TUserDev failed, email: %s", user.Email)
+		return false, err
 	}
 
-	var rows int64
-	if has {
-		//更新
-		userDev.UpdatedAt = time.Now()
-		userDev.Status = constant.UserDevNormalStatus
-		rows, err = global.Db.Cols("updated_at", "user_id", "status").Where("id = ?", userDev.Id).Update(userDev)
+	if record == nil {
+		lastId, err := dao.TUserDev.Ctx(ctx).Data(do.TUserDev{
+			UserId:    user.Id,
+			DevId:     devId,
+			Status:    constant.UserDevNormalStatus,
+			CreatedAt: gtime.Now(),
+			UpdatedAt: gtime.Now(),
+			Comment:   "check&ban",
+		}).InsertAndGetId()
+		if err != nil {
+			return false, gerror.Wrap(err, "insert TUserDev failed")
+		}
+		global.MyLogger(ctx).Debug().Msgf("insert TUserDev lastId: %d", lastId)
 	} else {
-		userDev.UserId = user.Id
-		userDev.DevId = devId
-		userDev.Status = constant.UserDevNormalStatus
-		userDev.CreatedAt = time.Now()
-		userDev.UpdatedAt = time.Now()
-		rows, err = global.Db.Insert(userDev)
-	}
-	if err != nil {
-		global.Logger.Err(err).Msg("数据库链接出错")
-		return false, errors.New("数据库链接出错")
-	}
-	if rows < 1 {
-		global.Logger.Err(err).Msg("数据库操作出错")
-		return false, errors.New("数据库操作出错")
+		global.MyLogger(ctx).Debug().Msgf("TUserDev: %+v", *record)
+
+		affect, err := dao.TUserDev.Ctx(ctx).Data(do.TUserDev{
+			Status:    constant.UserDevBanStatus,
+			UpdatedAt: gtime.Now(),
+		}).Where(do.TUserDev{
+			UserId: user.Id,
+			DevId:  devId,
+		}).UpdateAndGetAffected()
+		if err != nil {
+			return false, gerror.Wrap(err, "update TUserDev failed")
+		}
+		global.MyLogger(ctx).Debug().Msgf("update TUserDev affect: %d", affect)
 	}
 	return false, nil
 

@@ -72,7 +72,7 @@ ignore_tables = ["--ignore-table=speed.t_user_traffic_log",
 
 def export_databases(export_file_path):
     # 导出数据库
-    command = f'mysqldump --user={export_user} --databases {" ".join(databases_to_export)} {" ".join(ignore_tables)} > {export_file_path}'
+    command = f'mysqldump --user={export_user} --single-transaction --databases {" ".join(databases_to_export)} {" ".join(ignore_tables)} > {export_file_path}'
     logging.info(command)
     result = subprocess.run(command, shell=True, check=True)
     logging.info(result)
@@ -87,10 +87,10 @@ def export_databases(export_file_path):
 def import_databases(export_file_path):
     # 导入数据库
     if is_between_2_and_4():
-        logging.info("当前时间在凌晨2点到临晨4点之间，不更新DB，避免影响报表")
+        logging.info("当前时间在凌晨3点到早上12点之间，不更新DB，避免影响报表")
         return
     else:
-        logging.info("当前时间不在凌晨2点到临晨4点之间，同步 speed 库的数据")
+        logging.info("当前时间不在凌晨3点到临晨12点之间，同步 speed 库的数据")
 
     command = f'mysql --host={import_host} --user={import_user} --password=\'{import_password}\' < {export_file_path}'
     logging.info(command)
@@ -111,7 +111,7 @@ def gen_backup_filename():
 def is_between_2_and_4():
     now = datetime.now()
     current_hour = now.hour
-    return 2 <= current_hour < 4
+    return 3 <= current_hour < 12
 
 
 if __name__ == '__main__':
@@ -142,7 +142,6 @@ if __name__ == '__main__':
             import_databases(file_name)
             logging.info("-" * 20 + "备份成功")
 
-        logging.info("begin to sleep 1h")
-        # 间隔10分钟
-        time.sleep(60*60)
-        logging.info("\n\n\n")
+            logging.info("begin to sleep 2h")
+            time.sleep(60*60*2)
+            logging.info("\n\n\n")

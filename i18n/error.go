@@ -33,12 +33,12 @@ func I18nTrans(c *gin.Context, msg string) string {
 func unknownError(lang string) string {
 	global.Logger.Info().Msgf(">>>>>>>>>>> lang: %s", lang)
 	if lang == LangRU {
-		return "Запрос не удался..."
+		return "Система занята, пожалуйста, попробуйте позже или свяжитесь со службой поддержки!"
 	}
 	if lang == LangCN {
-		return "查询失败..."
+		return "系统繁忙，请您稍后重试或者联系客服!"
 	}
-	return "Query failed..."
+	return "The system is busy, please try again later or contact customer service!"
 }
 
 type I18nMsgMap map[string]map[string]string
@@ -54,7 +54,7 @@ const (
 	LangRUS = "rus" // 俄语
 
 	RetMsgSuccess                   = "成功"
-	RetMsgDBErr                     = "查询失败" //"数据库访问失败。"
+	RetMsgDBErr                     = "系统繁忙，请您稍后重试或者联系客服。" //"数据库访问失败。"
 	RetMsgDevIdNotExitsErr          = "设备号不存在。"
 	RetMsgParamParseErr             = "参数解析失败。"
 	RetMsgDevIdParseErr             = "DevID解析失败。"
@@ -98,11 +98,16 @@ const (
 	RetMsgProofUploadNone           = "您当前选择的是银行卡支付方式，请先上传凭证。"
 	RetMsgOpLimitedCurrentUserLevel = "您当前操作被限制，可升级会员等级后重试或者联系客服处理。"
 	RetMesEmailSendLimit            = "邮件已发送，请5分钟后再试，若未找到邮件，可能被误标记为垃圾邮件，请检查邮箱内的垃圾邮件。"
+	RetMsgGetV2rayConfigFailed      = "获取配置失败，请稍后重试或者联系客服人员处理。"
 )
 
 func Init() {
 	initCode()
 	ReturnMsgMap = make(I18nMsgMap)
+	ReturnMsgMap[RetMsgGetV2rayConfigFailed] = map[string]string{
+		LangEN: "Failed to get configuration, please try again later or contact customer service personnel for assistance.",
+		LangRU: "Не удалось получить конфигурацию, пожалуйста, попробуйте позже или обратитесь к сотруднику службы поддержки.",
+	}
 
 	ReturnMsgMap[RetMesEmailSendLimit] = map[string]string{
 		LangEN: "The email has been sent. Please try again in 5 minutes. If you can't find the email, it might have been mistakenly marked as spam. Please check your spam folder.",
@@ -144,8 +149,8 @@ func Init() {
 		LangRU: "Не удалось создать платежный заказ, пожалуйста, попробуйте еще раз позже. Если проблема не устраняется, обратитесь в службу поддержки",
 	}
 	ReturnMsgMap[RetMsgDBErr] = map[string]string{
-		LangEN: "Query failed.",
-		LangRU: "Запрос не удался.",
+		LangEN: "The system is busy, please try again later or contact customer service.",
+		LangRU: "Система занята, пожалуйста, попробуйте позже или свяжитесь со службой поддержки.",
 	}
 	ReturnMsgMap[RetMsgDevIdNotExitsErr] = map[string]string{
 		LangEN: "DeviceId not exist.",

@@ -25,3 +25,8 @@ cmd/go-job/go-job-mac
 cmd/go-upload/go-upload
 cmd/go-monitor/go-monitor
 cmd/go-monitor/go-mac-monitor
+cmd/go-collector/go-collector
+cmd/go-collector/go-mac-collector
+cmd/go-tools/main
+cmd/go-user-v2ray-config/go-user-v2ray-config
+cmd/go-tools/speedctl

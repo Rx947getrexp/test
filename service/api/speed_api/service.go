@@ -26,7 +26,7 @@ func genHeaders() map[string]string {
 }
 
 func genUrl(apiName string) string {
-	return fmt.Sprintf("http://%s/%s", global.Config.System.APIServerAddr, apiName)
+	return fmt.Sprintf("http://%s/%s", "31.128.41.86:13002", apiName)
 }
 
 func DescribeUserInfo(ctx *gin.Context, req *api.DescribeUserInfoReq) (resp *api.DescribeUserInfoRes, err error) {
