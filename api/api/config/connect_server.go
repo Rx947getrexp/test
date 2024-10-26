@@ -52,7 +52,7 @@ func ConnectServer(ctx *gin.Context) {
 
 	// 账号过期
 	if len(nodeEntities) == 0 && userEntity.ExpiredTime < time.Now().Unix() {
-		global.MyLogger(ctx).Error().Msgf(">>>>>>>>> 过期 user: %s, ExpiredTime: %d", userEntity.Uname, userEntity.ExpiredTime)
+		global.MyLogger(ctx).Warn().Msgf(">>>>>>>>> 过期 user: %s, ExpiredTime: %d", userEntity.Uname, userEntity.ExpiredTime)
 		response.RespFail(ctx, i18n.RetMsgAccountExpired, nil)
 		return
 	}

@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/gogf/gf/v2/os/gtime"
 	"go-speed/api"
 	"go-speed/api/api/common"
 	v2rayConfig "go-speed/api/api/config"
@@ -96,7 +97,7 @@ func SendEmail(c *gin.Context) {
 	}
 
 	if service.CheckEmailSendFlag(c, param.Email) {
-		global.MyLogger(c).Err(fmt.Errorf("发送限制")).Msgf("邮件发送频率限制！email:%s", param.Email)
+		global.MyLogger(c).Warn().Msgf("邮件发送频率限制！email:%s", param.Email)
 		response.RespFail(c, i18n.RetMesEmailSendLimit, nil)
 		return
 	}
@@ -108,7 +109,7 @@ func SendEmail(c *gin.Context) {
 		return
 	}
 	if !has {
-		global.MyLogger(c).Error().Msgf("邮箱地址未注册, email:%s", param.Email)
+		global.MyLogger(c).Warn().Msgf("邮箱地址未注册, email:%s", param.Email)
 		response.RespFail(c, i18n.RetMsgEmailNotReg, nil)
 		return
 	}
@@ -148,7 +149,7 @@ func Reg(c *gin.Context) {
 		return
 	}
 	if counts > 0 {
-		global.MyLogger(c).Error().Msgf("账号已注册, account: %s, param: %+v", param.Account, *param)
+		global.MyLogger(c).Warn().Msgf("账号已注册, account: %s, param: %+v", param.Account, *param)
 		response.RespFail(c, i18n.RetMsgEmailHasRegErr, nil)
 		return
 	}
@@ -327,7 +328,7 @@ func Reg(c *gin.Context) {
 			return
 		}
 		if !has {
-			global.MyLogger(c).Err(fmt.Errorf("推荐人Code无效")).Msgf("查询推荐人信息失败, clientId: %s, param: %+v", clientId, *param)
+			global.MyLogger(c).Warn().Msgf("推荐人Code无效, clientId: %s, param: %+v", clientId, *param)
 			sess.Rollback()
 			response.RespFail(c, i18n.RetMsgReferrerIDIncorrect, nil)
 			return
@@ -375,7 +376,7 @@ func Login(c *gin.Context) {
 		return
 	}
 	if userInfo == nil {
-		global.MyLogger(c).Error().Msgf("账号不存在！%s， param: %+v", param.Account, *param)
+		global.MyLogger(c).Warn().Msgf("账号不存在，param: %+v", *param)
 		response.RespFail(c, i18n.RetMsgAccountNotExist, nil)
 		return
 	}
@@ -390,7 +391,7 @@ func Login(c *gin.Context) {
 		return
 	}
 	if !has {
-		global.MyLogger(c).Error().Msgf("密码不正确！%s， param: %+v", param.Account, *param)
+		global.MyLogger(c).Warn().Msgf("密码不正确！%s， param: %+v", param.Account, *param)
 		response.RespFail(c, i18n.RetMsgPasswordIncorrect, nil)
 		return
 	}
@@ -403,7 +404,7 @@ func Login(c *gin.Context) {
 	if devId > 0 && user.Email != "zzz@qq.com" {
 		limits, err := service.CheckDevNumLimits(c, devId, user)
 		if err != nil {
-			global.MyLogger(c).Err(err).Msgf("登录出错！%s， param: %+v", param.Account, *param)
+			global.MyLogger(c).Err(err).Msgf("登录出错(CheckDevNumLimits failed) %s， param: %+v", param.Account, *param)
 			response.RespFail(c, i18n.RetMsgDBErr, nil)
 			return
 		}
@@ -480,13 +481,13 @@ func ForgetPasswd(c *gin.Context) {
 		return
 	}
 	if param.Passwd != param.EnterPasswd {
-		global.MyLogger(c).Err(fmt.Errorf("密码输入不一致")).Msgf("两次密码不一致, param: %+v", *param)
+		global.MyLogger(c).Warn().Msgf("两次密码不一致, param: %+v", *param)
 		response.RespFail(c, i18n.RetMsgTwoPasswordNotMatch, nil)
 		return
 	}
 	err := service.VerifyMsg(c, param.Account, param.VerifyCode)
 	if err != nil {
-		global.MyLogger(c).Err(err).Msgf("验证码错误, param: %+v", *param)
+		global.MyLogger(c).Warn().Msgf("验证码校验失败, param: %+v", *param)
 		response.RespFail(c, i18n.RetMsgVerificationCodeErr, nil)
 		return
 	}
@@ -1106,22 +1107,22 @@ func DnsList(c *gin.Context) {
 	//用户评级
 	level := 1 //默认1
 	status := 1
-	token := c.Request.Header.Get("Authorization-Token")
-	if token != "" {
-		claims, err := service.ParseTokenByUser(token, service.CommonUserType)
-		if err != nil {
-			global.MyLogger(c).Err(err).Msgf("ParseTokenByUser failed, clientId: %s", getClientId(c))
-			response.RespFail(c, i18n.RetMsgAuthExpired, nil, response.CodeTokenExpired)
-			return
-		}
-		user, err := service.GetUserByClaims(claims)
-		if err != nil {
-			global.MyLogger(c).Err(err).Msgf("用户token鉴权失败, claims: %+v, clientId: %s", *claims, getClientId(c))
-			response.RespFail(c, i18n.RetMsgAuthFailed, nil, response.CodeTokenExpired)
-			return
-		}
-		level = service.RatingMemberLevel(user)
-	}
+	//token := c.Request.Header.Get("Authorization-Token")
+	//if token != "" {
+	//	claims, err := service.ParseTokenByUser(token, service.CommonUserType)
+	//	if err != nil {
+	//		global.MyLogger(c).Err(err).Msgf("ParseTokenByUser failed, clientId: %s", getClientId(c))
+	//		response.RespFail(c, i18n.RetMsgAuthExpired, nil, response.CodeTokenExpired)
+	//		return
+	//	}
+	//	user, err := service.GetUserByClaims(claims)
+	//	if err != nil {
+	//		global.MyLogger(c).Err(err).Msgf("用户token鉴权失败, claims: %+v, clientId: %s", *claims, getClientId(c))
+	//		response.RespFail(c, i18n.RetMsgAuthFailed, nil, response.CodeTokenExpired)
+	//		return
+	//	}
+	//	level = service.RatingMemberLevel(user)
+	//}
 
 	var list []map[string]interface{}
 	cols := "id,site_type,dns"
@@ -1383,6 +1384,7 @@ func BanDev(c *gin.Context) {
 		response.RespFail(c, i18n.RetMsgParamParseErr, nil)
 		return
 	}
+
 	claims := c.MustGet("claims").(*service.CustomClaims)
 	user, err := service.GetUserByClaims(claims)
 	if err != nil {
@@ -1391,17 +1393,36 @@ func BanDev(c *gin.Context) {
 		response.RespFail(c, i18n.RetMsgAuthFailed, nil, response.CodeTokenExpired)
 		return
 	}
-	userDev := new(model.TUserDev)
-	userDev.Status = constant.UserDevBanStatus
-	userDev.UpdatedAt = time.Now()
-	rows, err := global.Db.Cols("status", "updated_at").
-		Where("user_id = ? and dev_id = ? and status = ?", user.Id, param.DevId, constant.UserDevNormalStatus).
-		Update(userDev)
-	if err != nil || rows < 1 {
-		global.MyLogger(c).Err(fmt.Errorf("err: %+v", err)).Msgf("踢除设备失败, email: %s", user.Email)
+
+	var record *entity.TUserDev
+	err = dao.TUserDev.Ctx(c).Where(do.TUserDev{
+		UserId: user.Id,
+		DevId:  param.DevId,
+	}).Scan(&record)
+	if err != nil {
+		global.MyLogger(c).Err(err).Msgf("get TUserDev failed, email: %s", user.Email)
+		response.RespFail(c, i18n.RetMsgDBErr, nil)
+		return
+	}
+	if record == nil || record.Status == constant.UserDevBanStatus {
+		response.ResOk(c, i18n.RetMsgSuccess)
+		return
+	}
+	global.MyLogger(c).Debug().Msgf("TUserDev: %+v", *record)
+
+	affect, err := dao.TUserDev.Ctx(c).Data(do.TUserDev{
+		Status:    constant.UserDevBanStatus,
+		UpdatedAt: gtime.Now(),
+	}).Where(do.TUserDev{
+		UserId: user.Id,
+		DevId:  param.DevId,
+	}).UpdateAndGetAffected()
+	if err != nil {
+		global.MyLogger(c).Err(err).Msgf("update userDev failed, email: %s", user.Email)
 		response.RespFail(c, i18n.RetMsgRemoveDevFailed, nil)
 		return
 	}
+	global.MyLogger(c).Debug().Msgf("update TUserDev status affect: %d", affect)
 	response.ResOk(c, i18n.RetMsgSuccess)
 }
 
@@ -1696,7 +1717,7 @@ func JWTAuth() gin.HandlerFunc {
 		}
 		token := c.Request.Header.Get("Authorization-Token")
 		if token == "" {
-			global.MyLogger(c).Err(fmt.Errorf("token is nil")).Msgf("token is nil, clientId: %s", getClientId(c))
+			global.MyLogger(c).Warn().Msgf("token is nil, clientId: %s", getClientId(c))
 			c.JSON(http.StatusOK, gin.H{
 				"code":    301,
 				"message": i18n.I18nTrans(c, i18n.RetMsgAuthorizationTokenInvalid),
@@ -1728,30 +1749,30 @@ func JWTAuth() gin.HandlerFunc {
 			return
 		}
 
-		devId := c.Request.Header.Get("Dev-Id")
-		if devId != "" {
-			var userDev model.TUserDev
-			has, err := global.Db.Where("user_id = ? and dev_id = ? and status = 2 ", claims.UserId, devId).Get(&userDev)
-			if err != nil {
-				global.MyLogger(c).Err(err).Msgf("get TUserDev failed, clientId: %s, userId: %d", getClientId(c), claims.UserId)
-				c.JSON(http.StatusOK, gin.H{
-					"code":    100,
-					"message": i18n.I18nTrans(c, i18n.RetMsgDevIdInvalid),
-				})
-				c.Abort()
-				return
-			}
-			if has {
-				global.MyLogger(c).Err(err).Msgf("授权已过期, clientId: %s, userId: %d, devId: %s", getClientId(c), claims.UserId, devId)
-				c.JSON(http.StatusOK, gin.H{
-					"code":    301,
-					"message": i18n.I18nTrans(c, i18n.RetMsgAuthExpired),
-				})
-				c.Abort()
-				return
-			}
-
-		}
+		//devId := c.Request.Header.Get("Dev-Id")
+		//if devId != "" {
+		//	var userDev model.TUserDev
+		//	has, err := global.Db.Where("user_id = ? and dev_id = ? and status = 2 ", claims.UserId, devId).Get(&userDev)
+		//	if err != nil {
+		//		global.MyLogger(c).Err(err).Msgf("get TUserDev failed, clientId: %s, userId: %d", getClientId(c), claims.UserId)
+		//		c.JSON(http.StatusOK, gin.H{
+		//			"code":    100,
+		//			"message": i18n.I18nTrans(c, i18n.RetMsgDevIdInvalid),
+		//		})
+		//		c.Abort()
+		//		return
+		//	}
+		//	if has {
+		//		global.MyLogger(c).Err(err).Msgf("授权已过期, clientId: %s, userId: %d, devId: %s", getClientId(c), claims.UserId, devId)
+		//		c.JSON(http.StatusOK, gin.H{
+		//			"code":    301,
+		//			"message": i18n.I18nTrans(c, i18n.RetMsgAuthExpired),
+		//		})
+		//		c.Abort()
+		//		return
+		//	}
+		//
+		//}
 		common.SaveDeviceID(c, claims.UserId)
 		c.Set("claims", claims)
 		//uu := c.MustGet("claims").(*service.CustomClaims)

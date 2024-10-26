@@ -22,5 +22,7 @@ curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:
 "result": "success"
 }'
 
+curl -X GET -H "Content-Type: application/json" -H "Lang: cn" http://185.22.154.21:23001/get_client_ip
+curl -X GET -H "Content-Type: application/json" -H "Lang: cn" https://www.qd8.shop/app-api/get_client_ip
 
 curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13002/internal/describe_user_info -d '{"user_id": 219122692}'

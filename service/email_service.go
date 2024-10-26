@@ -122,11 +122,11 @@ func CheckEmailSendFlag(ctx *gin.Context, email string) bool {
 		if isRedisKeyNil(err) {
 			return false
 		}
-		global.MyLogger(ctx).Err(err).Msgf("redis get key[%s] failed", key)
+		global.MyLogger(ctx).Err(err).Msgf("redis get key failed, key: %s", key)
 		return false
 	}
 
-	global.MyLogger(ctx).Info().Msgf("%s -> %s", email, flag)
+	global.MyLogger(ctx).Debug().Msgf("%s -> %s", email, flag)
 	return flag == "success"
 }
 
@@ -145,6 +145,7 @@ func VerifyMsg(ctx *gin.Context, mobile, code string) error {
 	msgCode, err := global.Redis.Get(ctx, telKey).Result()
 	if err != nil {
 		if isRedisKeyNil(err) {
+			global.MyLogger(ctx).Warn().Msgf("验证码不存在，需要重新发送验证码, code:%s, msgCode:%s", code, msgCode)
 			return errors.New("验证码不存在，需要重新发送验证码")
 		}
 		global.MyLogger(ctx).Err(err).Msg("redis连接出错")
@@ -152,7 +153,7 @@ func VerifyMsg(ctx *gin.Context, mobile, code string) error {
 	}
 	global.MyLogger(ctx).Info().Msgf("%s [%s] [%s]", mobile, code, msgCode)
 	if code != msgCode {
-		global.MyLogger(ctx).Err(err).Msgf("code:%s,msgCode:%s", code, msgCode)
+		global.MyLogger(ctx).Warn().Msgf("验证码不正确, code:%s, msgCode:%s", code, msgCode)
 		return errors.New("验证码不正确")
 	}
 	return nil

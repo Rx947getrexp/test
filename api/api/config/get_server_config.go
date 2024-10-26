@@ -126,8 +126,7 @@ func chooseCountryForUser(ctx *gin.Context, userId uint64, countryName string) (
 		}
 	}
 	if service.IsVIPExpired(userEntity) && !match {
-		err = fmt.Errorf("AccountExpired")
-		global.MyLogger(ctx).Err(err).Msgf(">>>>>>>>> 过期 user: %s, ExpiredTime: %d, 用户选择的不是免费站点",
+		global.MyLogger(ctx).Warn().Msgf(">>>>>>>>> 过期 user: %s, ExpiredTime: %d, 用户选择的不是免费站点",
 			userEntity.Uname, userEntity.ExpiredTime)
 		response.RespFail(ctx, i18n.RetMsgAccountExpired, nil)
 		return
