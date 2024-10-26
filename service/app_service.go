@@ -237,7 +237,6 @@ func CheckDevNumLimits(ctx *gin.Context, devId int64, user *model.TUser) (bool, 
 		global.MyLogger(ctx).Err(err).Msgf("get TUserDev failed, email: %s", user.Email)
 		return false, err
 	}
-	global.MyLogger(ctx).Debug().Msgf("TUserDev: %+v", *record)
 
 	if record == nil {
 		lastId, err := dao.TUserDev.Ctx(ctx).Data(do.TUserDev{
@@ -253,6 +252,8 @@ func CheckDevNumLimits(ctx *gin.Context, devId int64, user *model.TUser) (bool, 
 		}
 		global.MyLogger(ctx).Debug().Msgf("insert TUserDev lastId: %d", lastId)
 	} else {
+		global.MyLogger(ctx).Debug().Msgf("TUserDev: %+v", *record)
+
 		affect, err := dao.TUserDev.Ctx(ctx).Data(do.TUserDev{
 			Status:    constant.UserDevBanStatus,
 			UpdatedAt: gtime.Now(),

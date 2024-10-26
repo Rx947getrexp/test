@@ -1749,30 +1749,30 @@ func JWTAuth() gin.HandlerFunc {
 			return
 		}
 
-		devId := c.Request.Header.Get("Dev-Id")
-		if devId != "" {
-			var userDev model.TUserDev
-			has, err := global.Db.Where("user_id = ? and dev_id = ? and status = 2 ", claims.UserId, devId).Get(&userDev)
-			if err != nil {
-				global.MyLogger(c).Err(err).Msgf("get TUserDev failed, clientId: %s, userId: %d", getClientId(c), claims.UserId)
-				c.JSON(http.StatusOK, gin.H{
-					"code":    100,
-					"message": i18n.I18nTrans(c, i18n.RetMsgDevIdInvalid),
-				})
-				c.Abort()
-				return
-			}
-			if has {
-				global.MyLogger(c).Err(err).Msgf("授权已过期, clientId: %s, userId: %d, devId: %s", getClientId(c), claims.UserId, devId)
-				c.JSON(http.StatusOK, gin.H{
-					"code":    301,
-					"message": i18n.I18nTrans(c, i18n.RetMsgAuthExpired),
-				})
-				c.Abort()
-				return
-			}
-
-		}
+		//devId := c.Request.Header.Get("Dev-Id")
+		//if devId != "" {
+		//	var userDev model.TUserDev
+		//	has, err := global.Db.Where("user_id = ? and dev_id = ? and status = 2 ", claims.UserId, devId).Get(&userDev)
+		//	if err != nil {
+		//		global.MyLogger(c).Err(err).Msgf("get TUserDev failed, clientId: %s, userId: %d", getClientId(c), claims.UserId)
+		//		c.JSON(http.StatusOK, gin.H{
+		//			"code":    100,
+		//			"message": i18n.I18nTrans(c, i18n.RetMsgDevIdInvalid),
+		//		})
+		//		c.Abort()
+		//		return
+		//	}
+		//	if has {
+		//		global.MyLogger(c).Err(err).Msgf("授权已过期, clientId: %s, userId: %d, devId: %s", getClientId(c), claims.UserId, devId)
+		//		c.JSON(http.StatusOK, gin.H{
+		//			"code":    301,
+		//			"message": i18n.I18nTrans(c, i18n.RetMsgAuthExpired),
+		//		})
+		//		c.Abort()
+		//		return
+		//	}
+		//
+		//}
 		common.SaveDeviceID(c, claims.UserId)
 		c.Set("claims", claims)
 		//uu := c.MustGet("claims").(*service.CustomClaims)
