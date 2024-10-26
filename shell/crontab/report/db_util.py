@@ -687,7 +687,7 @@ class SpeedCollector:
         if self.conn:
             self.conn.close()
     def check_task(self, date):
-        sql = f"SELECT COUNT(*) FROM t_task WHERE ip='node-all' AND date='{date}' AND type='node-user'"
+        sql = f"SELECT COUNT(*) as cnt FROM t_task WHERE ip='node-all' AND date='{date.replace('-','')}' AND type='node-user'"
         rows = mysql_query_db(self.conn, sql)
         if rows[0]["cnt"] > 0:
             return True  # 代表执行成功
