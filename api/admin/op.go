@@ -579,6 +579,37 @@ func GetReportDeviceDayList(c *gin.Context) {
 	response.RespOk(c, i18n.RetMsgSuccess, resp)
 	return
 }
+func GetReportDeviceRetention(c *gin.Context) {
+	param := new(request.GetReportDeviceRetentionRequest)
+	if err := c.ShouldBind(param); err != nil {
+		global.Logger.Err(err).Msg("绑定参数")
+		response.ResFail(c, "参数错误")
+		return
+	}
+
+	total, list, err := service.QueryDeviceRetention(c, param.Date, param.Device, param.OrderType, param.Page, param.Size)
+	if err != nil {
+		global.Logger.Err(err).Msg("查询出错！")
+		response.ResFail(c, "查询出错！")
+		return
+	}
+	items := make([]response.TUserDeviceRetention, 0)
+	for _, item := range list {
+		items = append(items, response.TUserDeviceRetention{
+			Id:            item.Id,
+			Date:          item.Date,
+			Device:        item.Device,
+			New:           item.New,
+			Retained:      item.Retained,
+			Day7Retained:  item.Day7Retained,
+			Day15Retained: item.Day15Retained,
+			CreatedAt:     item.CreatedAt.String(),
+		})
+	}
+	resp := response.GetTUserDeviceRetentionResponse{Total: total, Items: items}
+	response.RespOk(c, i18n.RetMsgSuccess, resp)
+	return
+}
 func ComboList(c *gin.Context) {
 	param := new(request.GoodsListAdminRequest)
 	if err := c.ShouldBind(param); err != nil {

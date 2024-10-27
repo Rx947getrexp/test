@@ -1,14 +1,15 @@
 package report
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/gogf/gf/v2/os/gtime"
 	"go-speed/api/api/common/remote"
 	"go-speed/dao"
 	"go-speed/global"
 	"go-speed/i18n"
 	"go-speed/model/do"
 	"go-speed/model/response"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gogf/gf/v2/os/gtime"
 )
 
 type ReportUserOpLogReq struct {
@@ -56,13 +57,13 @@ func ReportUserOpLog(ctx *gin.Context) {
 		PageName:     req.PageName,
 		Result:       req.Result,
 		Content:      req.Content,
-		Version:      req.Version,
-		CreateTime:   req.CreateTime,
-		CreatedAt:    gtime.Now(),
 		InterfaceUrl: req.InterfaceUrl,
 		ServerCode:   req.ServerCode,
 		HttpCode:     req.HttpCode,
 		TraceId:      req.TraceId,
+		Version:      req.Version,
+		CreateTime:   req.CreateTime,
+		CreatedAt:    gtime.Now(),
 	}).InsertAndGetId()
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("insert op log failed")

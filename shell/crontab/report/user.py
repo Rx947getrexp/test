@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
+import time
 from datetime import timedelta, datetime
 import logging
 import db_util
@@ -15,22 +16,33 @@ class ReportUser:
         self.month_start_time = month_start_time
         self.db_speed_conn = db_util.Speed()
         self.db_report_conn = db_util.SpeedReport()
+        self.db_collector_conn = db_util.SpeedCollector()
 
 
     def run(self):
-        self.report_daily_user()
-        self.report_daily_user_recharge()
-        self.report_daily_user_recharge_times()
-        self.report_daily_channel_user_recharge_times()
-        self.report_daily_channel_user()
-        self.report_daily_node()
-        self.report_online_node_user()
-        self.device_recharge_behavior()
-        self.device_recharges()
-        self.report_daily_channel_recharge_by_month()
-        self.report_online_user()
+        if self.check_collector():
+            self.report_daily_user()
+            self.report_daily_user_recharge()
+            self.report_daily_user_recharge_times()
+            self.report_daily_channel_user_recharge_times()
+            self.report_daily_channel_user()
+            self.report_daily_node()
+            self.report_online_node_user()
+            self.device_recharge_behavior()
+            self.device_recharges()
+            self.report_daily_channel_recharge_by_month()
+            self.report_device_retaind()
+            self.report_online_user()
         self.db_speed_conn.close_connection()
         self.db_report_conn.close_connection()
+        self.db_collector_conn.close_connection()
+
+    def check_collector(self):
+        logging.info("*" * 20 + sys._getframe().f_code.co_name + "*" * 20)
+        while not self.db_collector_conn.check_task(self.date):
+            time.sleep(600)
+        return True  # 当检查到任务完成后返回 True
+
     def report_daily_user_recharge(self):
         logging.info("*" * 20 + sys._getframe().f_code.co_name + "*" * 20)
         """获取商品id列表"""
@@ -340,3 +352,33 @@ class ReportUser:
             """月充值金额"""
             data[channel]["month_recharge_money_cnt"] = self.db_speed_conn.count_total_recharge_amount_by_create_time(channel, self.month_start_time,self.end_time)
         self.db_report_conn.insert_daily_channel_recharge_by_month(self.date, data)
+
+    def report_device_retaind(self):
+        logging.info(f"{'*' * 20}{sys._getframe().f_code.co_name}{'*' * 20}")
+        data = {}
+        rows = self.db_speed_conn.query_device_list(self.end_time)
+        end_date = datetime.strptime(self.date, '%Y-%m-%d')
+        day7_date = end_date - timedelta(days=7)
+        day15_date = end_date - timedelta(days=15)
+        day7_start_time = end_date - timedelta(days=15)
+        day15_start_time = end_date - timedelta(days=15)
+        for row in rows:
+            device = row["device"]
+            # 获取新增用户数量
+            new_cnt = self.db_speed_conn.count_device_user_by_create_time(device, self.start_time, self.end_time)
+            # 获取次日留存
+            retained_cnt = self.db_speed_conn.count_device_user_online(device, self.date, self.start_time,self.end_time)
+            # 获取7日留存
+            day7_retained = self.db_speed_conn.count_device_retained(device, day7_date.strftime('%Y-%m-%d'),day7_start_time,self.end_time)
+            # 获取15日留存
+            day15_retained = self.db_speed_conn.count_device_retained(device, day15_date.strftime('%Y-%m-%d'),day15_start_time,self.end_time)
+            if device not in data:
+                data[device] = {}
+            data[device].update({
+                "new_cnt": new_cnt,
+                "retained_cnt": retained_cnt,
+                "day7_retained": day7_retained,
+                "day15_retained": day15_retained
+            })
+        self.db_report_conn.insert_daily_device_retention(self.date, data)
+
