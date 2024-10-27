@@ -50,3 +50,9 @@ type NodeItem struct {
 	Status      int    `json:"status"       description:"状态:1-正常；2-已软删"`
 	Weight      uint   `json:"weight"       description:"权重"`
 }
+
+type DeleteCancelledUserReq struct {
+	Email         string `form:"email" json:"email" dc:"邮箱"`
+	UUID          string `form:"v2ray_uuid" json:"v2ray_uuid" dc:"uuid"`
+	OnlyLocalFile bool   `form:"only_local_file" json:"only_local_file" dc:"是否只删除本地文件"`
+}

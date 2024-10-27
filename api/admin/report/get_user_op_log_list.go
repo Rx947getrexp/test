@@ -33,16 +33,21 @@ type GetUserOpLogListRes struct {
 }
 
 type UserOpLog struct {
-	Id         uint64 `json:"id"          dc:"自增id"`
-	Email      string `json:"email"       dc:"用户账号"`
-	DeviceId   string `json:"device_id"   dc:"设备ID"`
-	DeviceType string `json:"device_type" dc:"设备类型"`
-	PageName   string `json:"page_name"   dc:"page_name"`
-	Result     string `json:"result"      dc:"result"`
-	Version    string `json:"version"     dc:"version"`
-	Content    string `json:"content"     dc:"content"`
-	CreateTime string `json:"create_time" dc:"提交时间"`
-	CreatedAt  string `json:"created_at"  dc:"记录创建时间"`
+	Id           uint64 `json:"id"          dc:"自增id"`
+	Email        string `json:"email"       dc:"用户账号"`
+	DeviceId     string `json:"device_id"   dc:"设备ID"`
+	DeviceType   string `json:"device_type" dc:"设备类型"`
+	PageName     string `json:"page_name"   dc:"page_name"`
+	Result       string `json:"result"      dc:"result"`
+	Version      string `json:"version"     dc:"version"`
+	Content      string `json:"content"     dc:"content"`
+	CreateTime   string `json:"create_time" dc:"提交时间"`
+	CreatedAt    string `json:"created_at"  dc:"记录创建时间"`
+	InterfaceUrl string `json:"interface_url" dc:"接口地址"`
+	ServerCode   string `json:"server_code" dc:"后端状态码"`
+	HttpCode     string `json:"http_code" dc:"HTTP状态码"`
+	TraceId      string `json:"trace_id" dc:"TraceId"`
+	UserId       uint64 `json:"user_id" dc:"用户uid"`
 }
 
 // GetUserOpLogList 查询用户操作日志列表
@@ -109,16 +114,21 @@ func GetUserOpLogList(ctx *gin.Context) {
 	items := make([]UserOpLog, 0)
 	for _, i := range entities {
 		items = append(items, UserOpLog{
-			Id:         i.Id,
-			Email:      i.Email,
-			DeviceId:   i.DeviceId,
-			DeviceType: i.DeviceType,
-			PageName:   i.PageName,
-			Result:     i.Result,
-			Content:    i.Content,
-			Version:    i.Version,
-			CreateTime: i.CreateTime,
-			CreatedAt:  i.CreatedAt.String(),
+			Id:           i.Id,
+			Email:        i.Email,
+			DeviceId:     i.DeviceId,
+			DeviceType:   i.DeviceType,
+			PageName:     i.PageName,
+			Result:       i.Result,
+			Content:      i.Content,
+			Version:      i.Version,
+			CreateTime:   i.CreateTime,
+			CreatedAt:    i.CreatedAt.String(),
+			InterfaceUrl: i.InterfaceUrl,
+			ServerCode:   i.ServerCode,
+			HttpCode:     i.HttpCode,
+			TraceId:      i.TraceId,
+			UserId:       i.UserId,
 		})
 	}
 	response.RespOk(ctx, i18n.RetMsgSuccess, GetUserOpLogListRes{

@@ -54,6 +54,7 @@ const (
 	LangRUS = "rus" // 俄语
 
 	RetMsgSuccess                   = "成功"
+	RetMsgInternalErr               = "ErrCode500，请联系客服人员处理。"
 	RetMsgDBErr                     = "系统繁忙，请您稍后重试或者联系客服。" //"数据库访问失败。"
 	RetMsgDevIdNotExitsErr          = "设备号不存在。"
 	RetMsgParamParseErr             = "参数解析失败。"
@@ -104,6 +105,11 @@ const (
 func Init() {
 	initCode()
 	ReturnMsgMap = make(I18nMsgMap)
+	ReturnMsgMap[RetMsgInternalErr] = map[string]string{
+		LangEN: "ErrCode500, please contact customer service for assistance.",
+		LangRU: "ErrCode500, пожалуйста, обратитесь к службе поддержки.",
+	}
+
 	ReturnMsgMap[RetMsgGetV2rayConfigFailed] = map[string]string{
 		LangEN: "Failed to get configuration, please try again later or contact customer service personnel for assistance.",
 		LangRU: "Не удалось получить конфигурацию, пожалуйста, попробуйте позже или обратитесь к сотруднику службы поддержки.",

@@ -1,10 +1,12 @@
 package global
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"go-speed/constant"
+	"runtime/debug"
 	"strings"
 	"time"
 )
@@ -91,6 +93,13 @@ func PrintAllHeader(c *gin.Context, err ...error) {
 func TraceIdMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 插入请求开始时间
+		defer func() {
+			if r := recover(); r != nil {
+				// 同时打印到日志文件和标准输出中
+				MyLogger(c).Err(errors.New("panic-error-dump")).Msgf("%v\n\n%v", r, string(debug.Stack()))
+			}
+		}()
+
 		startTime := time.Now()
 		traceId := c.GetHeader(constant.HeaderKeyTraceId)
 		if traceId == "" {

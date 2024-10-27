@@ -10,6 +10,7 @@ import (
 	"go-speed/api"
 	"go-speed/api/api/common"
 	v2rayConfig "go-speed/api/api/config"
+	types_api "go-speed/api/types/api"
 	"go-speed/constant"
 	"go-speed/dao"
 	"go-speed/global"
@@ -20,6 +21,7 @@ import (
 	"go-speed/model/request"
 	"go-speed/model/response"
 	"go-speed/service"
+	"go-speed/service/api/speed_api"
 	"go-speed/task"
 	"go-speed/util"
 	"go-speed/util/geo"
@@ -1817,12 +1819,44 @@ func CancelAccount(c *gin.Context) {
 		return
 	}
 
+	//affect, err := dao.TUser.Ctx(c).Data(do.TUser{
+	//	Status:    constant.UserStatusCancelled,
+	//	UpdatedAt: gtime.Now(),
+	//}).Where(do.TUser{
+	//	Id:        user.Id,
+	//	Email:     user.Email,
+	//	V2RayUuid: user.V2rayUuid,
+	//}).UpdateAndGetAffected()
+	//if err != nil {
+	//	global.MyLogger(c).Err(err).Msgf("update user status = 10 failed, email: %s", user.Email)
+	//	response.RespFail(c, i18n.RetMsgLogoutFailed, nil)
+	//	return
+	//}
+	//if affect != 1 {
+	//	global.MyLogger(c).Err(errors.New("update rows failed")).Msgf("affect: %d, email: %s", affect, user.Email)
+	//	response.RespFail(c, i18n.RetMsgLogoutFailed, nil)
+	//	return
+	//}
+
 	// 删除所有节点上的配置
 	err = task.DeleteUserV2rayConfig(c, user)
 	if err != nil {
 		global.MyLogger(c).Err(err).Msgf("DeleteUser failed, email: %s", user.Email)
 		response.RespFail(c, i18n.RetMsgLogoutFailed, nil)
 		return
+	}
+
+	for _, ip := range strings.Split(global.Config.System.APIServerIPs, ",") {
+		err = speed_api.DeleteCancelledUser(c, ip, &types_api.DeleteCancelledUserReq{
+			Email:         user.Email,
+			UUID:          user.V2rayUuid,
+			OnlyLocalFile: true,
+		})
+		if err != nil {
+			global.MyLogger(c).Err(err).Msgf("DeleteCancelledUser failed, email: %s", user.Email)
+			response.RespFail(c, i18n.RetMsgLogoutFailed, nil)
+			return
+		}
 	}
 
 	//开启事务
@@ -1878,6 +1912,7 @@ func CancelAccount(c *gin.Context) {
 		response.RespFail(c, i18n.RetMsgLogoutFailed, nil)
 		return
 	}
+
 	response.ResOk(c, i18n.RetMsgSuccess)
 	return
 }

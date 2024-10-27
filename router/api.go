@@ -20,8 +20,9 @@ func ApiRoute(group *gin.RouterGroup) {
 	internalGroup := group.Group("internal")
 	internalGroup.Use(api.InternalAuth())
 	{
-		internalGroup.POST("describe_user_info", user.DescribeUserInfo) // call
-		internalGroup.POST("describe_node_list", node.DescribeNodeList) // call
+		internalGroup.POST("describe_user_info", user.DescribeUserInfo)
+		internalGroup.POST("describe_node_list", node.DescribeNodeList)
+		internalGroup.POST("delete_cancelled_user", user.DeleteCancelledUser)
 	}
 
 	group.POST("generate_dev_id", api.GenerateDevId) // call

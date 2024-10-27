@@ -77,17 +77,16 @@ func ConnectServer(ctx *gin.Context) {
 	nodeAddSubRequest.Level = fmt.Sprintf("%d", userEntity.Level)
 
 	global.MyLogger(ctx).Info().Msgf(">>>>>>>>> nodeEntities: %+v", nodeEntities)
+	allFailed := true
 	for _, item := range nodeEntities {
 		//url := fmt.Sprintf("https://%s/site-api/node/add_sub", item.Server)
 		//if strings.Contains(item.Server, "http") {
 		//	url = fmt.Sprintf("%s/node/add_sub", item.Server)
 		//}
 		err = service.AddUserConfigToNode(ctx, userEntity, &item)
-		if err == nil {
-			continue
-		}
 		if err != nil {
 			global.MyLogger(ctx).Err(err).Msgf("AddUserConfigToNode failed, node: %s", item.Ip)
+			continue
 		}
 
 		url := fmt.Sprintf("http://%s:15003/node/add_sub", item.Ip)
@@ -107,6 +106,13 @@ func ConnectServer(ctx *gin.Context) {
 			global.MyLogger(ctx).Err(err).Msgf("email: %s, add_sub 发送失败", userEntity.Email)
 			continue
 		}
+		allFailed = false
+	}
+	if allFailed {
+		err = fmt.Errorf("allFailed is true")
+		global.MyLogger(ctx).Err(err).Msgf("%s connect server failed", userEntity.Uname)
+		response.RespFail(ctx, i18n.RetMsgGetV2rayConfigFailed, nil)
+		return
 	}
 
 	count := IncrementCounter(winCountry.Name)

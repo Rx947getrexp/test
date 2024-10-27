@@ -1,7 +1,6 @@
 package report
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gogf/gf/v2/os/gtime"
 	"go-speed/api/api/common/remote"
@@ -13,14 +12,19 @@ import (
 )
 
 type ReportUserOpLogReq struct {
-	UserId     uint64 `form:"user_id" json:"user_id"`
-	DeviceId   string `form:"device_id" json:"device_id"`
-	DeviceType string `form:"device_type" json:"device_type"`
-	PageName   string `form:"page_name" json:"page_name"`
-	Content    string `form:"content" json:"content"`
-	CreateTime string `form:"create_time" json:"create_time"`
-	Version    string `form:"version" json:"version"`
-	Result     string `form:"result" json:"result"`
+	Email        string `form:"email" json:"email"`
+	UserId       uint64 `form:"user_id" json:"user_id"`
+	DeviceId     string `form:"device_id" json:"device_id"`
+	DeviceType   string `form:"device_type" json:"device_type"`
+	PageName     string `form:"page_name" json:"page_name"`
+	Content      string `form:"content" json:"content"`
+	InterfaceUrl string `form:"interface_url" json:"interface_url"`
+	ServerCode   string `form:"server_code" json:"server_code"`
+	HttpCode     string `form:"http_code" json:"http_code"`
+	TraceId      string `form:"trace_id" json:"trace_id"`
+	CreateTime   string `form:"create_time" json:"create_time"`
+	Version      string `form:"version" json:"version"`
+	Result       string `form:"result" json:"result"`
 }
 
 func ReportUserOpLog(ctx *gin.Context) {
@@ -36,23 +40,29 @@ func ReportUserOpLog(ctx *gin.Context) {
 		response.RespFail(ctx, i18n.RetMsgParamParseErr, nil)
 		return
 	}
-	if req.UserId > 0 {
+	email = req.Email
+	if req.UserId > 0 && email == "" {
 		email, err = remote.GetUserEmailByUserId(ctx, req.UserId)
-	}
-	if email == "" {
-		email = fmt.Sprintf("%d", req.UserId)
+		if err != nil {
+			global.MyLogger(ctx).Err(err).Msgf("GetUserEmailByUserId failed")
+		}
 	}
 
 	lastInsertId, err = dao.TUserOpLog.Ctx(ctx).Data(do.TUserOpLog{
-		Email:      email,
-		DeviceId:   req.DeviceId,
-		DeviceType: req.DeviceType,
-		PageName:   req.PageName,
-		Result:     req.Result,
-		Content:    req.Content,
-		Version:    req.Version,
-		CreateTime: req.CreateTime,
-		CreatedAt:  gtime.Now(),
+		Email:        email,
+		UserId:       req.UserId,
+		DeviceId:     req.DeviceId,
+		DeviceType:   req.DeviceType,
+		PageName:     req.PageName,
+		Result:       req.Result,
+		Content:      req.Content,
+		Version:      req.Version,
+		CreateTime:   req.CreateTime,
+		CreatedAt:    gtime.Now(),
+		InterfaceUrl: req.InterfaceUrl,
+		ServerCode:   req.ServerCode,
+		HttpCode:     req.HttpCode,
+		TraceId:      req.TraceId,
 	}).InsertAndGetId()
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("insert op log failed")
