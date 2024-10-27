@@ -11,4 +11,5 @@ type System struct {
 	V2rayConfigPath string `mapstructure:"v2ray_config_path"`  // v2ray 配置文件 地址
 	V2rayApiAddress string `mapstructure:"v2ray_api_address"`  // v2ray api 地址
 	APIServerAddr   string `mapstructure:"api_server_address"` // api 地址
+	APIServerIPs    string `mapstructure:"api_server_ips"`     // api 地址
 }

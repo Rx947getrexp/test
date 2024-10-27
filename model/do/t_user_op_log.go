@@ -19,11 +19,12 @@ type TUserOpLog struct {
 	PageName     interface{} // page_name
 	Result       interface{} // result
 	Content      interface{} // content
-	InterfaceUrl interface{} // interfaceUrl
-	ServerCode   interface{} // serverCode
-	HttpCode     interface{} // httpCode
-	TraceId      interface{} // traceId
-	Version      interface{} // version
+	Version      interface{} //
 	CreateTime   interface{} // 提交时间
 	CreatedAt    *gtime.Time // 记录创建时间
+	InterfaceUrl interface{} // 接口地址
+	ServerCode   interface{} // 后端状态码
+	HttpCode     interface{} // HTTP状态码
+	TraceId      interface{} // TraceId
+	UserId       interface{} // 用户uid
 }

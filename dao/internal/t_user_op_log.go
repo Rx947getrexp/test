@@ -27,13 +27,14 @@ type TUserOpLogColumns struct {
 	PageName     string // page_name
 	Result       string // result
 	Content      string // content
-	InterfaceUrl string // interfaceUrl
-	ServerCode   string // serverCode
-	HttpCode     string // httpCode
-	TraceId      string // traceId
-	Version      string // version
+	Version      string //
 	CreateTime   string // 提交时间
 	CreatedAt    string // 记录创建时间
+	InterfaceUrl string // 接口地址
+	ServerCode   string // 后端状态码
+	HttpCode     string // HTTP状态码
+	TraceId      string // TraceId
+	UserId       string // 用户uid
 }
 
 // tUserOpLogColumns holds the columns for table t_user_op_log.
@@ -45,13 +46,14 @@ var tUserOpLogColumns = TUserOpLogColumns{
 	PageName:     "page_name",
 	Result:       "result",
 	Content:      "content",
-	InterfaceUrl: "interfaceUrl",
-	ServerCode:   "serverCode",
-	HttpCode:     "httpCode",
-	TraceId:      "traceId",
 	Version:      "version",
 	CreateTime:   "create_time",
 	CreatedAt:    "created_at",
+	InterfaceUrl: "interface_url",
+	ServerCode:   "server_code",
+	HttpCode:     "http_code",
+	TraceId:      "trace_id",
+	UserId:       "user_id",
 }
 
 // NewTUserOpLogDao creates and returns a new DAO object for table data access.
