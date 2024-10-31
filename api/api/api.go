@@ -1731,7 +1731,11 @@ func JWTAuth() gin.HandlerFunc {
 		// parseToken 解析token包含的信息
 		claims, err := service.ParseTokenByUser(token, service.CommonUserType)
 		if err != nil {
-			global.MyLogger(c).Err(err).Msgf("ParseTokenByUser failed, clientId: %s", getClientId(c))
+			if strings.Contains(err.Error(), "token is expired by ") {
+				global.MyLogger(c).Warn().Msgf("token is expired. %s", getClientId(c))
+			} else {
+				global.MyLogger(c).Err(err).Msgf("ParseTokenByUser failed, clientId: %s", getClientId(c))
+			}
 			c.JSON(http.StatusOK, gin.H{
 				"code":    301,
 				"message": i18n.I18nTrans(c, i18n.RetMsgAuthExpired),

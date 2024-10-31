@@ -235,3 +235,8 @@ curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:
 }'
 
 curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13001/get_official_docs
+
+
+select * from t_v2ray_user_traffic where email in ('alt.j9-co173v7i@yopmail.com','alt.j9-co173v7i@yopmail.com','kakyoin2929@gmail.com','cry69gry@mail.ru','vlad.ku4erov2015@gmail.com','sergey-gamzik11@mail.ru','slavamihailov222@gmail.com','Kapshanova14@gmail.com')
+
+grep 'alt.j9-co173v7i@yopmail.com\|kakyoin2929@gmail.com\|cry69gry@mail.ru\|vlad.ku4erov2015@gmail.com\|sergey-gamzik11@mail.ru\|slavamihailov222@gmail.com\|Kapshanova14@gmail.com' config.json

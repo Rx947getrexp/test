@@ -113,3 +113,40 @@ func GetMinLoadNode(ctx *gin.Context, nodes []entity.TNode) (nodeId int64, err e
 	}
 	return
 }
+
+func GetUserTraffic(ctx *gin.Context, email, ip string) (items []response.UserTrafficItem, err error) {
+	//url := fmt.Sprintf("https://%s/site-api/node/get_user_traffic", server)
+	//if strings.Contains(server, "http") {
+	//
+	//}
+	url := fmt.Sprintf("http://%s:15003/node/get_user_traffic", ip)
+	req := &request.GetUserTrafficRequest{
+		//All:   true,
+		Reset: false,
+		Emails: []string{
+			email,
+		},
+	}
+	res := new(response.Response)
+	timestamp := fmt.Sprint(time.Now().Unix())
+	headerParam := make(map[string]string)
+	headerParam["timestamp"] = timestamp
+	headerParam["accessToken"] = util.MD5(fmt.Sprint(timestamp, constant.AccessTokenSalt))
+	err = util.HttpClientPostV2(url, headerParam, req, res)
+	if err != nil {
+		global.MyLogger(ctx).Err(err).Msgf("%s http failed: %s", url, err.Error())
+		return
+	}
+	if res.Code != response.Success {
+		err = fmt.Errorf("Code: %d, Msg: %s ", res.Code, res.Msg)
+		global.MyLogger(ctx).Err(err).Msgf("%s return code is not success: Code: %d, Msg: %s", url, res.Code, res.Msg)
+		return
+	}
+	resp := response.GetUserTrafficResponse{}
+	err = json.Unmarshal(res.Data, &resp)
+	if err != nil {
+		global.MyLogger(ctx).Err(err).Msgf("%s Unmarshal failed, Data: %s, err: %s", url, string(res.Data), err.Error())
+		return
+	}
+	return resp.Items, nil
+}

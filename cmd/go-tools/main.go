@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/gin-gonic/gin"
 	_ "github.com/gogf/gf/contrib/drivers/mysql/v2"
 	"github.com/spf13/cobra"
 	"go-speed/cmd/go-tools/tools"
@@ -25,5 +26,6 @@ func AddCommand(cmd *cobra.Command) {
 }
 
 func main() {
+	gin.SetMode(gin.ReleaseMode)
 	cmdInit()
 }

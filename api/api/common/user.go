@@ -28,8 +28,8 @@ func CheckUserByUserId(ctx *gin.Context, userId uint64) (userEntity *entity.TUse
 		return
 	}
 	if userEntity == nil {
-		err = fmt.Errorf("userId %d 无效", userId)
-		global.MyLogger(ctx).Err(err).Msgf("userId无效 %d", userId)
+		err = fmt.Errorf("userId无效: %d", userId)
+		global.MyLogger(ctx).Warn().Msgf("userId无效: %d", userId)
 		response.RespFail(ctx, i18n.RetMsgAccountNotExist, nil)
 		return
 	}
