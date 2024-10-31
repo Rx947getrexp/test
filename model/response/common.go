@@ -82,7 +82,7 @@ func RespFail(c *gin.Context, msg string, data interface{}, code ...int) {
 	} else if _code != 0 && _code != 200 {
 		retCode = _code
 	}
-	global.MyLogger(c).Err(fmt.Errorf(">>>>>>>>> code: %d, msg: %s", retCode, msg)).Msgf("response fail msg to client")
+	global.MyLogger(c).Err(fmt.Errorf("RespFailPrintError: >>>>>>>>> code: %d, msg: %s", retCode, msg)).Msgf("response fail msg to client")
 	c.JSON(http.StatusOK, Response{
 		Code: retCode,
 		Msg:  msg,

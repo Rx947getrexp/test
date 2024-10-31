@@ -1,7 +1,6 @@
 package i18n
 
 import (
-	"fmt"
 	"go-speed/global"
 
 	"github.com/gin-gonic/gin"
@@ -13,7 +12,7 @@ func I18nTrans(c *gin.Context, msg string) string {
 		lang = "ru"
 	}
 	claims, claimsExist := c.Get("claims")
-	global.MyLogger(c).Err(fmt.Errorf(msg)).Msgf("lang: %s, msg: %s, Client-Id: %+v, Dev-Id: %+v, claims: %+v, claimsExist: %+v",
+	global.MyLogger(c).Warn().Msgf("I18nTransPrintError: lang: %s, msg: %s, Client-Id: %+v, Dev-Id: %+v, claims: %+v, claimsExist: %+v",
 		lang, msg, c.GetHeader("Client-Id"), c.GetHeader("Dev-Id"), claims, claimsExist)
 	m, ok := ReturnMsgMap[msg]
 	if !ok {
