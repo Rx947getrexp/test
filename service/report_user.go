@@ -6,9 +6,11 @@ import (
 	"go-speed/constant"
 	"go-speed/global"
 	"go-speed/model"
-	"go-speed/model/entity"
+	"go-speed/model/response"
 	"strconv"
 	"strings"
+
+	"github.com/gogf/gf/frame/g"
 )
 
 func QueryUserReportDay(ctx context.Context, date, channelId int, orderType string, page, size int) (int64, []*model.TUserReportDay, error) {
@@ -537,37 +539,52 @@ func QueryDeviceRetention(ctx context.Context, date int, Device string, orderTyp
 	return count, list, err
 }
 
-func QueryDeviceMonthlyRetention(ctx context.Context, date int, Device string, orderType string, page, size int) (int64, []*entity.TUserReportMonthly, error) {
+// QueryDeviceMonthlyRetention 查询设备月度留存数据
+func QueryDeviceMonthlyRetention(ctx context.Context, date int, device string, orderType string, page, size int) (int, []*response.TUserReportMonthly, error) {
+	// 处理排序类型
 	order := "desc"
 	if strings.ToLower(orderType) == "asc" {
 		order = "asc"
 	}
+
+	// 处理分页大小
 	if size > constant.MaxPageSize {
 		size = constant.MaxPageSize
 	}
 	if size == 0 {
 		size = 20
 	}
-	var err error
-	var list []*entity.TUserReportMonthly
-	sessCount := global.Db2.Context(ctx)
-	sess := global.Db2.Context(ctx)
-	if date > 0 {
-		sess = sess.Where(" date = ?", date)
-		sessCount = sessCount.Where(" date = ?", date)
-	}
-	if Device != "" {
-		sess = sess.Where(" device = ?", Device)
-		sessCount = sessCount.Where(" device = ?", Device)
-	}
+
+	// 计算偏移量
 	offset := 0
 	if page > 1 {
 		offset = (page - 1) * size
 	}
-	count, err := sessCount.Table(entity.TUserReportMonthly{}).Count()
+
+	// 构建查询条件
+	conditions := g.Map{}
+	if date > 0 {
+		conditions["stat_month"] = date
+	}
+	if device != "" {
+		conditions["os"] = device
+	}
+
+	// 创建数据库会话并设置上下文
+	db := g.DB("speed-report").Model(response.TUserReportMonthly{}).Where(conditions).Ctx(ctx)
+
+	// 查询总记录数
+	var count int
+	count, err := db.Count()
 	if err != nil {
 		return 0, nil, err
 	}
-	err = sess.Limit(size, offset).OrderBy(fmt.Sprintf("id %s", order)).Find(&list)
-	return count, list, err
+
+	// 查询数据列表
+	var list []*response.TUserReportMonthly
+	if err := db.Limit(size, offset).Order(fmt.Sprintf("id %s", order)).Scan(&list); err != nil {
+		return 0, nil, err
+	}
+
+	return count, list, nil
 }

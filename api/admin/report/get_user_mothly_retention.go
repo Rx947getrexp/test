@@ -3,7 +3,6 @@ package report
 import (
 	"go-speed/global"
 	"go-speed/i18n"
-	"go-speed/model/entity"
 	"go-speed/model/request"
 	"go-speed/model/response"
 	"go-speed/service"
@@ -24,16 +23,16 @@ func GetUserMonthlyRetention(c *gin.Context) {
 		response.ResFail(c, err.Error())
 		return
 	}
-	items := make([]entity.TUserReportMonthly, 0)
+	items := make([]response.TUserReportMonthly, 0)
 
 	for _, item := range list {
-		items = append(items, entity.TUserReportMonthly{
+		items = append(items, response.TUserReportMonthly{
 			Id:            item.Id,
-			StatMonth:     uint(item.StatMonth),
+			StatMonth:     int(item.StatMonth),
 			Os:            item.Os,
-			UserCount:     uint(item.UserCount),
-			NewUsers:      uint(item.NewUsers),
-			RetainedUsers: uint(item.RetainedUsers),
+			UserCount:     int(item.UserCount),
+			NewUsers:      int(item.NewUsers),
+			RetainedUsers: int(item.RetainedUsers),
 			CreatedAt:     item.CreatedAt,
 		})
 	}
