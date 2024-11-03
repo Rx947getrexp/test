@@ -6,6 +6,7 @@ import (
 	"go-speed/constant"
 	"go-speed/global"
 	"go-speed/model"
+	"go-speed/model/entity"
 	"strconv"
 	"strings"
 )
@@ -536,7 +537,7 @@ func QueryDeviceRetention(ctx context.Context, date int, Device string, orderTyp
 	return count, list, err
 }
 
-func QueryDeviceMonthlyRetention(ctx context.Context, date int, Device string, orderType string, page, size int) (int64, []*model.TUserReportMonthly, error) {
+func QueryDeviceMonthlyRetention(ctx context.Context, date int, Device string, orderType string, page, size int) (int64, []*entity.TUserReportMonthly, error) {
 	order := "desc"
 	if strings.ToLower(orderType) == "asc" {
 		order = "asc"
@@ -548,7 +549,7 @@ func QueryDeviceMonthlyRetention(ctx context.Context, date int, Device string, o
 		size = 20
 	}
 	var err error
-	var list []*model.TUserReportMonthly
+	var list []*entity.TUserReportMonthly
 	sessCount := global.Db2.Context(ctx)
 	sess := global.Db2.Context(ctx)
 	if date > 0 {
@@ -563,7 +564,7 @@ func QueryDeviceMonthlyRetention(ctx context.Context, date int, Device string, o
 	if page > 1 {
 		offset = (page - 1) * size
 	}
-	count, err := sessCount.Table(model.TUserReportMonthly{}).Count()
+	count, err := sessCount.Table(entity.TUserReportMonthly{}).Count()
 	if err != nil {
 		return 0, nil, err
 	}

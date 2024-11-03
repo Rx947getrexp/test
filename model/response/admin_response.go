@@ -1,5 +1,7 @@
 package response
 
+import "go-speed/model/entity"
+
 // 登陆后台
 type LoginAdminParam struct {
 	UserId int64 `json:"user_id"`
@@ -267,17 +269,7 @@ type GetTUserDeviceRetentionResponse struct {
 	Items []TUserDeviceRetention `json:"items" dc:"数据明细"`
 }
 
-type TUserReportMonthly struct {
-	Id            uint64 `json:"id"             dc:"自增主键ID"`
-	StatMonth     int    `json:"stat_month"     dc:"统计月份"`
-	Os            string `json:"os"             dc:"设备类型"`
-	UserCount     int    `json:"user_count"     dc:"用户总数"`
-	NewUsers      int    `json:"new_users"      dc:"新增用户量"`
-	RetainedUsers int    `json:"retained_users" dc:"次月留存"`
-	CreatedAt     string `json:"created_at" dc:"记录创建时间"`
-}
-
 type GetTUserReportMonthlyResponse struct {
-	Total int64                `json:"total" dc:"数据总条数"`
-	Items []TUserReportMonthly `json:"items" dc:"数据明细"`
+	Total int64                       `json:"total" dc:"数据总条数"`
+	Items []entity.TUserReportMonthly `json:"items" dc:"数据明细"`
 }
