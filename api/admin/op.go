@@ -611,8 +611,8 @@ func GetReportDeviceRetention(c *gin.Context) {
 	return
 }
 
-func GetReportDeviceMonthlyRetention(c *gin.Context) {
-	param := new(request.GetReportDeviceRetentionRequest)
+func GetUserMonthlyRetention(c *gin.Context) {
+	param := new(request.GetUserMonthlyRetentionRequest)
 	if err := c.ShouldBind(param); err != nil {
 		global.Logger.Err(err).Msg("绑定参数")
 		response.ResFail(c, "参数错误")
