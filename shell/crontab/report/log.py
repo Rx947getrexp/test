@@ -3,7 +3,7 @@ import os
 import subprocess
 import sys
 import time
-import fcntl
+# import fcntl
 
 import logging
 from logging.handlers import RotatingFileHandler

@@ -5,3 +5,4 @@
 * * * * * /usr/bin/python3 /shell/report/clean_report_data.py &
 * * * * * /usr/bin/python3 /shell/app_port.py &
 * * * * * /usr/bin/python3 /shell/monitor_ng.py &
+#0 5 * * * /usr/bin/python3 /shell/report/user_monthly_retention_task.py &

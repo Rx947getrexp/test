@@ -1,22 +1,17 @@
 import sys
-import fcntl
 import logging
-from logging.handlers import RotatingFileHandler
+import fcntl
 import traceback
-from db_util import get_connection
+from logging.handlers import RotatingFileHandler
+from util import get_previous_months
+from log import init_logging
 from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
+import pymysql
+from common import load_config
 
 TASK_NAME = "user_monthly_retention_task"
+start_month = get_previous_months(2) #获取当前月份的前两个月
 
-def get_two_months_ago():
-    two_months_ago = datetime.now() - relativedelta(months=2)
-    return two_months_ago.strftime('%Y-%m')
-
-# 指定起始月份
-start_month = get_two_months_ago()
-
-# 设备类型映射
 device_mapping = {
     'Android': ['Android'],
     'iPhone': ['iPhone', 'iOS'],
@@ -25,7 +20,6 @@ device_mapping = {
     'Others': []  # 任何未匹配的都归为 Others
 }
 
-# 设备类型列表
 os_types = list(device_mapping.keys())
 
 def categorize_os(original_os):
@@ -41,40 +35,30 @@ def categorize_os(original_os):
     else:
         return 'Others'
 
-def get_registered_users_by_month(month, db_conn):
-    query = """
-        SELECT 
-            DATE_FORMAT(tu.created_at, '%%Y-%%m') AS stat_month,
-            tu.email,
-            COUNT(*) AS user_count
-        FROM 
-            t_user tu
-        WHERE 
-            DATE_FORMAT(tu.created_at, '%%Y-%%m') = %s
-        GROUP BY 
-            tu.email, stat_month;
-    """
+def get_connection(db_name):
+    config = load_config("config.yaml")
+    config = config.get(db_name)
+    return pymysql.connect(
+        host=config["host"],
+        port=config["port"],
+        user=config["user"],
+        passwd=config["pswd"],
+        db=config["db"],
+        charset=config["charset"]
+    )
+
+def execute_query(db_conn, query, params=None):
     with db_conn.cursor() as cursor:
-        cursor.execute(query, (month,))
+        cursor.execute(query, params)
         return cursor.fetchall()
 
+def get_registered_users_by_month(month, db_conn):
+    query = """SELECT DATE_FORMAT(tu.created_at, '%%Y-%%m') AS stat_month, tu.email, COUNT(*) AS user_count FROM t_user tu WHERE DATE_FORMAT(tu.created_at, '%%Y-%%m') = %s GROUP BY tu.email, stat_month;"""
+    return execute_query(db_conn, query, (month,))
+
 def get_device_types_and_counts(month, db_conn, device_mapping):
-    query = """
-        SELECT 
-            tud.os AS os,
-            COUNT(*) AS device_count
-        FROM 
-            t_user_device tud
-        JOIN 
-            t_user tu ON tud.user_id = tu.id
-        WHERE 
-            DATE_FORMAT(tu.created_at, '%%Y-%%m') = %s
-        GROUP BY 
-            tud.os;
-    """
-    with db_conn.cursor() as cursor:
-        cursor.execute(query, (month,))
-        results = cursor.fetchall()
+    query = """SELECT  tud.os AS os, COUNT(*) AS device_count FROM t_user_device tud JOIN t_user tu ON tud.user_id = tu.id WHERE DATE_FORMAT(tu.created_at, '%%Y-%%m') = %s GROUP BY tud.os;"""
+    results = execute_query(db_conn, query, (month,))
     
     categorized_counts = {os_type: 0 for os_type in device_mapping.keys()}
     
@@ -86,36 +70,13 @@ def get_device_types_and_counts(month, db_conn, device_mapping):
     return [(os_type, count) for os_type, count in categorized_counts.items()]
 
 def get_new_users_in_month(month, db_conn):
-    query = """
-        SELECT 
-            tud.os,
-            tu.email,
-            COUNT(*) AS new_users
-        FROM 
-            t_user tu
-        JOIN 
-            t_user_device tud ON tu.id = tud.user_id
-        WHERE 
-            DATE_FORMAT(tu.created_at, '%%Y-%%m') = %s
-        GROUP BY 
-            tud.os, tu.email;
-    """
-    with db_conn.cursor() as cursor:
-        cursor.execute(query, (month,))
-        return cursor.fetchall()
+    query = """SELECT tud.os, tu.email, COUNT(*) AS new_users FROM t_user tu JOIN t_user_device tud ON tu.id = tud.user_id WHERE DATE_FORMAT(tu.created_at, '%%Y-%%m') = %s GROUP BY tud.os, tu.email;"""
+    return execute_query(db_conn, query, (month,))
 
 def get_registered_emails_by_month(month, db_conn):
-    query = """
-        SELECT 
-            tu.email
-        FROM 
-            t_user tu
-        WHERE 
-            DATE_FORMAT(tu.created_at, '%%Y-%%m') = %s
-    """
-    with db_conn.cursor() as cursor:
-        cursor.execute(query, (month,))
-        return [row[0] for row in cursor.fetchall()]
+    query = """SELECT tu.email FROM t_user tu WHERE DATE_FORMAT(tu.created_at, '%%Y-%%m') = %s"""
+    results = execute_query(db_conn, query, (month,))
+    return [row[0] for row in results]
 
 def get_active_emails_in_next_month(month, traffic_db_conn):
     month_date = datetime.strptime(month, '%Y-%m')
@@ -125,18 +86,9 @@ def get_active_emails_in_next_month(month, traffic_db_conn):
     next_month_start = next_month_date.replace(day=1)
     next_month_end = (next_month_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
     
-    query = """
-        SELECT 
-            tut.email
-        FROM 
-            t_v2ray_user_traffic tut
-        WHERE 
-            tut.date >= %s
-            AND tut.date <= %s
-    """
-    with traffic_db_conn.cursor() as cursor:
-        cursor.execute(query, (int(next_month_start.strftime('%Y%m%d')), int(next_month_end.strftime('%Y%m%d'))))
-        return [row[0] for row in cursor.fetchall()]
+    query = """SELECT tut.email FROM t_v2ray_user_traffic tut WHERE tut.date >= %s AND tut.date <= %s"""
+    results = execute_query(traffic_db_conn, query, (int(next_month_start.strftime('%Y%m%d')), int(next_month_end.strftime('%Y%m%d'))))
+    return [row[0] for row in results]
 
 def calculate_retention_of_next_month(month, speed_db_conn, traffic_db_conn):
     registered_emails = get_registered_emails_by_month(month, speed_db_conn)
@@ -146,19 +98,9 @@ def calculate_retention_of_next_month(month, speed_db_conn, traffic_db_conn):
         return {os_type: set() for os_type in os_types}  # 如果没有注册用户，直接返回空结果
     
     registered_device_emails = {}
-    query = """
-        SELECT 
-            tud.os, tu.email
-        FROM 
-            t_user_device tud
-        JOIN 
-            t_user tu ON tud.user_id = tu.id
-        WHERE 
-            tu.email IN %s;
-    """
-    with speed_db_conn.cursor() as cursor:
-        cursor.execute(query, (tuple(registered_emails),))
-        registered_device_emails = {email: os for os, email in cursor.fetchall()}
+    query = """SELECT tud.os, tu.email FROM t_user_device tud JOIN t_user tu ON tud.user_id = tu.id WHERE tu.email IN %s;"""
+    results = execute_query(speed_db_conn, query, (tuple(registered_emails),))
+    registered_device_emails = {email: os for os, email in results}
 
     retained_users_by_os = {os_type: set() for os_type in os_types}
     
@@ -171,17 +113,12 @@ def calculate_retention_of_next_month(month, speed_db_conn, traffic_db_conn):
     return retained_users_by_os
 
 def clear_t_user_report_monthly(cursor):
-    query = """
-        TRUNCATE TABLE t_user_report_monthly;
-    """
+    query = """TRUNCATE TABLE t_user_report_monthly;"""
     cursor.execute(query)
 
 def insert_into_report(stat_month, os, user_count, new_users, retained_users, cursor):
     stat_month_date = int(stat_month.replace('-', ''))
-    query = """
-        INSERT INTO t_user_report_monthly (stat_month, os, user_count, new_users, retained_users)
-        VALUES (%s, %s, %s, %s, %s);
-    """
+    query = """INSERT INTO t_user_report_monthly (stat_month, os, user_count, new_users, retained_users) VALUES (%s, %s, %s, %s, %s);"""
     cursor.execute(query, (stat_month_date, os, user_count, new_users, retained_users))
 
 def process_monthly_data(start_month):
@@ -189,9 +126,9 @@ def process_monthly_data(start_month):
     end_month = datetime.now().strftime('%Y-%m')  # 终止于当前月份
     
     # 连接数据库
-    speed_db_conn = get_connection('speed')
-    traffic_db_conn = get_connection('speed_collector')
-    report_db_conn = get_connection('speed_report')
+    speed_db_conn = get_connection('speed-db')
+    traffic_db_conn = get_connection('speed-collector-db')
+    report_db_conn = get_connection('report-speed-db')
     
     with report_db_conn.cursor() as cursor:
         clear_t_user_report_monthly(cursor)
@@ -244,38 +181,25 @@ def process_monthly_data(start_month):
         # 移动到下一个月
         current_month += timedelta(days=32)
         current_month = current_month.replace(day=1)
-def init_logging(file_name):
-    log = logging.getLogger()
-    log.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - [line]:%(lineno)d - %(levelname)s - %(message)s','%Y-%m-%d %H:%M:%S')
-
-    ch = logging.StreamHandler()  # 输出到控制台的handler
-    ch.setFormatter(formatter)
-    ch.setLevel(logging.DEBUG)  # 也可以不设置，不设置就默认用logger的level
-
-    handler = RotatingFileHandler(filename=file_name, mode='a', maxBytes=1024 * 1024 * 200, backupCount=2)
-    handler.setFormatter(formatter)
-    log.addHandler(handler)
-    logging.info("init_logging success")
-
 
 if __name__ == '__main__':
-    lock_file = "/tmp/%s.lock" % TASK_NAME
+    lock_file = f"/tmp/{TASK_NAME}.lock"
     fp = open(lock_file, "w")
     try:
         fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except IOError:
-        logging.error("已经有一个 %s 进程在运行，本进程将退出" % TASK_NAME)
+        logging.error(f"已经有一个 {TASK_NAME} 进程在运行，本进程将退出")
         sys.exit(1)
 
-    init_logging("/shell/retention_report/log/%s.log" % TASK_NAME)
-    logging.info("\n\n\n start %s" % TASK_NAME)
+    init_logging(f"/shell/report/retention_log/{TASK_NAME}.log")
+    logging.info(f"\n\n\n start {TASK_NAME}")
     try:
         process_monthly_data(start_month)
     except Exception as e:
-        # 这里处理异常
         logging.error(f"捕获到异常：{type(e).__name__}")
         logging.error(f"异常信息：{str(e)}")
         logging.error(traceback.format_exc())
+    finally:
+        fp.close()
 
-    logging.info("end %s" % TASK_NAME)
+    logging.info(f"end {TASK_NAME}")
