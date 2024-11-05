@@ -10,7 +10,7 @@ import pymysql
 from common import load_config
 
 TASK_NAME = "user_monthly_retention_task"
-start_month = get_previous_months(2) #获取当前月份的前两个月
+start_month = get_previous_months(2) #获取当前月份的前几个月
 
 device_mapping = {
     'Android': ['Android'],
@@ -36,7 +36,7 @@ def categorize_os(original_os):
         return 'Others'
 
 def get_connection(db_name):
-    config = load_config("config.yaml")
+    config = load_config("/shell/report/config.yaml")
     config = config.get(db_name)
     return pymysql.connect(
         host=config["host"],
@@ -78,7 +78,7 @@ def get_registered_emails_by_month(month, db_conn):
     results = execute_query(db_conn, query, (month,))
     return [row[0] for row in results]
 
-def get_active_emails_in_next_month(month, traffic_db_conn):
+def get_active_emails_in_next_month(month, collector_db_conn):
     month_date = datetime.strptime(month, '%Y-%m')
     next_month_date = month_date + timedelta(days=32)
     next_month = next_month_date.strftime('%Y-%m')
@@ -87,12 +87,12 @@ def get_active_emails_in_next_month(month, traffic_db_conn):
     next_month_end = (next_month_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
     
     query = """SELECT tut.email FROM t_v2ray_user_traffic tut WHERE tut.date >= %s AND tut.date <= %s"""
-    results = execute_query(traffic_db_conn, query, (int(next_month_start.strftime('%Y%m%d')), int(next_month_end.strftime('%Y%m%d'))))
+    results = execute_query(collector_db_conn, query, (int(next_month_start.strftime('%Y%m%d')), int(next_month_end.strftime('%Y%m%d'))))
     return [row[0] for row in results]
 
-def calculate_retention_of_next_month(month, speed_db_conn, traffic_db_conn):
+def calculate_retention_of_next_month(month, speed_db_conn, collector_db_conn):
     registered_emails = get_registered_emails_by_month(month, speed_db_conn)
-    active_emails = set(get_active_emails_in_next_month(month, traffic_db_conn))  # 转换成集合
+    active_emails = set(get_active_emails_in_next_month(month, collector_db_conn))  # 转换成集合
     
     if not registered_emails:
         return {os_type: set() for os_type in os_types}  # 如果没有注册用户，直接返回空结果
@@ -127,7 +127,7 @@ def process_monthly_data(start_month):
     
     # 连接数据库
     speed_db_conn = get_connection('speed-db')
-    traffic_db_conn = get_connection('speed-collector-db')
+    collector_db_conn = get_connection('collector-speed-db')
     report_db_conn = get_connection('report-speed-db')
     
     with report_db_conn.cursor() as cursor:
@@ -156,7 +156,7 @@ def process_monthly_data(start_month):
                 new_users_by_os[categorized_os] += new_users
             
             # 计算次月留存用户数
-            retained_users_by_os = calculate_retention_of_next_month(month_str, speed_db_conn, traffic_db_conn)
+            retained_users_by_os = calculate_retention_of_next_month(month_str, speed_db_conn, collector_db_conn)
             
             # 处理results并插入到t_user_report_monthly中
             if registered_results:
@@ -191,7 +191,7 @@ if __name__ == '__main__':
         logging.error(f"已经有一个 {TASK_NAME} 进程在运行，本进程将退出")
         sys.exit(1)
 
-    init_logging(f"/shell/report/retention_log/{TASK_NAME}.log")
+    init_logging(f"/shell/report/log/{TASK_NAME}.log")
     logging.info(f"\n\n\n start {TASK_NAME}")
     try:
         process_monthly_data(start_month)

@@ -11,36 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// func GetUserMonthlyRetention2(c *gin.Context) {
-// 	param := new(request.GetUserMonthlyRetentionRequest)
-// 	if err := c.ShouldBind(param); err != nil {
-// 		global.Logger.Err(err).Msg("绑定参数")
-// 		response.ResFail(c, err.Error())
-// 		return
-// 	}
-// 	total, list, err := service.QueryDeviceMonthlyRetention(c, param.Date, param.Device, param.OrderType, param.Page, param.Size)
-// 	if err != nil {
-// 		global.Logger.Err(err).Msg("查询出错！")
-// 		response.ResFail(c, err.Error())
-// 		return
-// 	}
-// 	items := make([]response.TUserReportMonthly, 0)
-
-// 	for _, item := range list {
-// 		items = append(items, response.TUserReportMonthly{
-// 			Id:            item.Id,
-// 			StatMonth:     int(item.StatMonth),
-// 			Os:            item.Os,
-// 			UserCount:     int(item.UserCount),
-// 			NewUsers:      int(item.NewUsers),
-// 			RetainedUsers: int(item.RetainedUsers),
-// 			CreatedAt:     item.CreatedAt,
-// 		})
-// 	}
-// 	resp := response.GetTUserReportMonthlyResponse{Total: total, Items: items}
-// 	response.RespOk(c, i18n.RetMsgSuccess, resp)
-// }
-
 type GetUserMonthlyRetentionRequest struct {
 	Date      int    `form:"date" json:"date" dc:"报表日期，eg:20240101"`
 	Device    string `form:"device" json:"device" dc:"渠道设备"`

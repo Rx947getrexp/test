@@ -1,7 +1,6 @@
 .idea/
 .vscode/
 logs/
-internal/
 go.sum
 data.txt
 http-test/
