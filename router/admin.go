@@ -55,6 +55,9 @@ func AdminRoute(group *gin.RouterGroup) {
 
 		//首页
 
+		//获取最近前两个月的月留存数据
+		group.GET("get_user_monthly_retention_list", report.GetUserMonthlyRetention)
+
 		//系统管理
 		sysGroup := group.Group("sys")
 		sysGroup.GET("full_tree", admin.GetFullTree)
