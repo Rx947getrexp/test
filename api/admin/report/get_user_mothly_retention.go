@@ -46,7 +46,7 @@ func GetUserMonthlyRetention(ctx *gin.Context) {
 	)
 	if err = ctx.ShouldBind(req); err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("绑定参数失败")
-		response.ResFail(ctx, i18n.RetMsgParamParseErr)
+		response.ResFail(ctx, err.Error())
 		return
 	}
 	if req.StatMonth > 0 {
