@@ -1,6 +1,7 @@
 package report
 
 import (
+	"go-speed/constant"
 	"go-speed/dao"
 	"go-speed/global"
 	"go-speed/i18n"
@@ -12,8 +13,8 @@ import (
 )
 
 type GetUserMonthlyRetentionRequest struct {
-	Date      int    `form:"date" json:"date" dc:"报表日期，eg:20240101"`
-	Device    string `form:"device" json:"device" dc:"渠道设备"`
+	StatMonth int    `form:"stat_month" json:"stat_month" dc:"报表日期，eg:20240101"`
+	Os        string `form:"os" json:"os" dc:"渠道设备"`
 	OrderBy   string `form:"order_by" json:"order_by" dc:"排序字段，eg: id|created_time"`
 	OrderType string `form:"order_type" json:"order_type" dc:"排序类型，eg: asc|desc"`
 	Page      int    `form:"page" json:"page" dc:"分页查询page, 从1开始"`
@@ -48,14 +49,14 @@ func GetUserMonthlyRetention(ctx *gin.Context) {
 		response.ResFail(ctx, i18n.RetMsgParamParseErr)
 		return
 	}
-	if req.Date > 0 {
-		doWhere.StatMonth = req.Date
+	if req.StatMonth > 0 {
+		doWhere.StatMonth = req.StatMonth
 	}
-	if req.Device != "" {
-		doWhere.Os = req.Device
+	if req.Os != "" {
+		doWhere.Os = req.Os
 	}
 	size := req.Size
-	if size < 1 || size > 8000 {
+	if size < 1 || size > constant.MaxPageSize {
 		size = 20
 	}
 	offset := 0
@@ -67,12 +68,16 @@ func GetUserMonthlyRetention(ctx *gin.Context) {
 
 	total, err = model.Count()
 	if err != nil {
-		global.MyLogger(ctx).Err(err).Msgf("count user op log failed")
+		global.MyLogger(ctx).Err(err).Msgf("count user monthly retention failed")
 		response.ResFail(ctx, err.Error())
 		return
 	}
 	err = model.Order(req.OrderBy, req.OrderType).Offset(offset).Limit(size).Scan(&entities)
-
+	if err != nil {
+		global.MyLogger(ctx).Err(err).Msgf("get user monthly retention failed")
+		response.ResFail(ctx, err.Error())
+		return
+	}
 	items := make([]UserReportMonthly, 0)
 	for _, item := range entities {
 		items = append(items, UserReportMonthly{
