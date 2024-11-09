@@ -11,14 +11,6 @@ import (
 	"time"
 )
 
-func GetDevId(c *gin.Context) string {
-	return c.GetHeader(constant.HeaderKeyDevId)
-}
-
-func GetDevIdKV(c *gin.Context) string {
-	return fmt.Sprintf(`{"%s":"%s"}"`, constant.HeaderKeyDevId, c.GetHeader(constant.HeaderKeyDevId))
-}
-
 func GetLang(c *gin.Context) string {
 	return c.GetHeader(constant.HeaderKeyLang)
 }
@@ -28,7 +20,7 @@ func GetLangKV(c *gin.Context) string {
 }
 
 func GetClientId(c *gin.Context) string {
-	return c.GetHeader(constant.HeaderKeyClientId)
+	return strings.TrimSpace(c.GetHeader(constant.HeaderKeyClientId))
 }
 
 func GetClientIdKV(c *gin.Context) string {

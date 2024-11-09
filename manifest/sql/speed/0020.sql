@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 CREATE TABLE `t_user_device_retention`
 (
     `id`              bigint UNSIGNED                                              NOT NULL AUTO_INCREMENT COMMENT '自增id',
@@ -12,7 +11,7 @@ CREATE TABLE `t_user_device_retention`
     PRIMARY KEY (`id`) USING BTREE,
     UNIQUE INDEX `uiq_k` (`date`, `device`) USING BTREE
 );
-=======
+
 create database speed_status;
 use speed_status;
 set names utf8;
@@ -46,4 +45,3 @@ CREATE TABLE IF NOT EXISTS `t_task`
     UNIQUE KEY `uiq_k1` (`ip`,`date`,`type`),
     KEY `ind_1` (`date`)
     ) ENGINE = InnoDB AUTO_INCREMENT = 1 COMMENT ='任务表';
->>>>>>> 72415f4265a4aeae55f380a6dbc357bf7f5dad5c

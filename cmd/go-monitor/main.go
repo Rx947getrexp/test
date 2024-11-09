@@ -4,81 +4,124 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/gogf/gf/v2/os/glog"
-	"go-speed/global"
-	"go-speed/initialize"
-	"go-speed/service/email"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gogf/gf/v2/os/glog"
+
+	"go-speed/global"
+	"go-speed/initialize"
+	"go-speed/model/response"
+	"go-speed/service"
+	"go-speed/service/email"
 )
 
-var dnsList = []string{
-	"eigrrht.xyz",
-	"siaax.xyz",
-	"beiyo.xyz",
-	"thertee.xyz",
-	"weechat.xyz",
-	"2yiny.xyz",
-	"yinyong.xyz",
+type DialType string
+
+const (
+	DialTypeAPI  DialType = "API"
+	DialTypeNode DialType = "Node"
+)
+
+var errCounterAPIServerDNS = make(map[string]uint64)
+var errCounterNodeServerDNS = make(map[string]uint64)
+
+func getConfig(c string) (out []string) {
+	for _, v := range strings.Split(c, ",") {
+		v = strings.TrimSpace(v)
+		if v != "" {
+			out = append(out, v)
+		}
+	}
+	return out
 }
 
 func main() {
 	glog.SetLevel(glog.LEVEL_ALL)
 	initialize.InitComponentsV2()
-	errCounter := make(map[string]uint64)
-	for _, dns := range dnsList {
-		errCounter[dns] = 0
-	}
+
 	var (
-		times        uint64
-		failedFlag   bool
-		successTimes uint64 = 1
+		apiServerDNSList  = getConfig(global.Config.System.APIServerDNSList)
+		nodeServerDNSList = getConfig(global.Config.System.NodeServerDNSList)
 	)
+
+	if len(apiServerDNSList) == 0 || len(nodeServerDNSList) == 0 {
+		global.Logger.Fatal().Msgf("apiServerDNSList or nodeServerDNSList is empty")
+	}
+
+	for _, dns := range apiServerDNSList {
+		errCounterAPIServerDNS[dns] = 0
+	}
+
+	for _, dns := range nodeServerDNSList {
+		errCounterNodeServerDNS[dns] = 0
+	}
+
 	for {
-		global.Logger.Info().Msgf("------------------------------ [%d] ----------------------------------------", times)
-		times++
-		failedFlag = false
-		global.Logger.Info().Msgf("-------- begin-to-dial-dns -------- [times: %d]", times)
-		for _, dns := range dnsList {
-			ctx := context.Background()
-			err := dialAPIServer(ctx, fmt.Sprintf("https://%s/app-api/dns_list", dns))
-			if err != nil {
-				failedFlag = true
-				errCounter[dns]++
-			} else {
-				errCounter[dns] = 0
-			}
-			global.Logger.Info().Msgf("dns: %s, errCounter: %d", dns, errCounter[dns])
-			if errCounter[dns] > 5 {
-				if e := sendAlarm(dns, err); e == nil {
-					errCounter[dns] = 3
-				}
-			}
-		}
-		if !failedFlag {
-			successTimes++
-		}
-		if successTimes%(60) == 0 {
-			sendSuccessNotify()
-		}
-		global.Logger.Info().Msgf("-------- finished-once-dial -------- [times: %d, successTimes: %d]", times, successTimes)
-		global.Logger.Info().Msgf("begin to sleep, 1 minute ...")
-		global.Logger.Info().Msgf("----------------------------------------------------------------------------")
+		doDialApiServer(apiServerDNSList)
+		doDialNodeServer(nodeServerDNSList)
 		time.Sleep(time.Minute * 1)
 	}
 }
 
-func sendAlarm(dns string, err error) error {
+var (
+	times        uint64
+	successTimes uint64 = 1
+)
+
+func doDialApiServer(dnsList []string) {
+	times++
+	global.Logger.Info().Msgf("--------------------------------------------------------------------------------")
+	global.Logger.Info().Msgf("--------------- DialApiServer [times: %d] start -----------------------------", times)
+
+	var (
+		ctx        = context.Background()
+		err        error
+		failedFlag = false
+	)
+	for _, dns := range dnsList {
+		err = dialAPIServer(ctx, fmt.Sprintf("https://%s/app-api/dns_list", dns))
+		if err != nil {
+			failedFlag = true
+			errCounterAPIServerDNS[dns]++
+		} else {
+			errCounterAPIServerDNS[dns] = 0
+		}
+		global.Logger.Info().Msgf("dns: %s, errCounterAPIServerDNS: %d", dns, errCounterAPIServerDNS[dns])
+
+		if errCounterAPIServerDNS[dns] > 5 {
+			if e := sendAlarm(DialTypeAPI, dns, err); e == nil {
+				errCounterAPIServerDNS[dns] = 3
+			}
+		}
+	}
+	if !failedFlag {
+		successTimes++
+	}
+	if successTimes%(120) == 0 {
+		sendSuccessNotify(DialTypeAPI)
+	}
+	global.Logger.Info().Msgf("--------------- DialApiServer [times: %d, successTimes: %d] end --------------", times, successTimes)
+	global.Logger.Info().Msgf("################################################################################")
+}
+
+func sendAlarm(dType DialType, dns string, err error) error {
+	var emailSubject string
+	if dType == DialTypeAPI {
+		emailSubject = "【拨测失败告警】应用服务器-异常！！！"
+	} else {
+		emailSubject = "【拨测失败告警】节点服务器-异常！！！"
+	}
 	var builder strings.Builder
 	builder.WriteString(fmt.Sprintf("拨测对象：%s (%s)<br/>", dns, time.Now().Format(time.DateTime)))
 	builder.WriteString(fmt.Sprintf("异常原因：%s<br/>", err.Error()))
 	builder.WriteString("<br/>")
 	builder.WriteString("赶紧处理!!!<br/>\n")
-	return sendEmail("【拨测失败告警】应用服务器异常！！！", builder.String())
+	return sendEmail(emailSubject, builder.String())
 }
 
 func sendEmail(emailSubject, emailBody string) (err error) {
@@ -104,8 +147,13 @@ func sendEmail(emailSubject, emailBody string) (err error) {
 	return
 }
 
-func sendSuccessNotify() {
-	emailSubject := "<拨测成功> 应用服务器拨测定时通知"
+func sendSuccessNotify(dType DialType) {
+	var emailSubject string
+	if dType == DialTypeAPI {
+		emailSubject = "<拨测成功> 应用服务器-拨测定时通知"
+	} else {
+		emailSubject = "<拨测成功> 节点服务器-拨测定时通知"
+	}
 	emailBody := fmt.Sprintf("应用服务器和nginx服务器拨测成功 (%s)", time.Now().Format(time.DateTime))
 	_ = sendEmail(emailSubject, emailBody)
 }
@@ -193,4 +241,49 @@ func dialAPIServer(c context.Context, url string) (err error) {
 	//	fmt.Printf("DNS: %s, ID: %d, SiteType: %d\n", item.DNS, item.ID, item.SiteType)
 	//}
 	return
+}
+
+// /////////////////////////////////// dial node server
+var (
+	dialNodeTimes        uint64
+	dialNodeSuccessTimes uint64 = 1
+)
+
+func doDialNodeServer(dnsList []string) {
+	dialNodeTimes++
+	global.Logger.Info().Msgf("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+	global.Logger.Info().Msgf("--------------- doDialNodeServer [dialNodeTimes: %d] start -----------------------------", dialNodeTimes)
+
+	var (
+		ctx, _     = gin.CreateTestContext(httptest.NewRecorder())
+		err        error
+		failedFlag = false
+		rsp        *response.GetV2raySysStatsResponse
+	)
+	defer ctx.Done()
+
+	for _, dns := range dnsList {
+		rsp, err = service.GetSysStatsByIp(ctx, dns)
+		if err != nil {
+			failedFlag = true
+			errCounterNodeServerDNS[dns]++
+		} else {
+			errCounterNodeServerDNS[dns] = 0
+		}
+		global.Logger.Info().Msgf("dns: %s, errCounterNodeServerDNS: %d, rsp: %+v", dns, errCounterNodeServerDNS[dns], rsp)
+
+		if errCounterNodeServerDNS[dns] > 5 {
+			if e := sendAlarm(DialTypeNode, dns, err); e == nil {
+				errCounterNodeServerDNS[dns] = 3
+			}
+		}
+	}
+	if !failedFlag {
+		dialNodeSuccessTimes++
+	}
+	if dialNodeSuccessTimes%(120) == 0 {
+		sendSuccessNotify(DialTypeNode)
+	}
+	global.Logger.Info().Msgf("--------------- doDialNodeServer [dialNodeTimes: %d, dialNodeSuccessTimes: %d] end --------------", dialNodeTimes, dialNodeSuccessTimes)
+	global.Logger.Info().Msgf("################################################################################")
 }

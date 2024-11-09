@@ -83,14 +83,13 @@ func GenSnowflake() (int64, error) {
 func AddLog(c *gin.Context, uid int64) error {
 	dateStr := time.Now().Format("2006-01-02")
 	userLogs := &model.UserLogs{
-		Id:        0,
 		UserId:    uid,
 		Datestr:   dateStr,
 		Ip:        c.ClientIP(),
 		UserAgent: c.GetHeader("User-Agent"),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
-		Comment:   "",
+		Comment:   global.GetClientId(c),
 	}
 	sql := "insert ignore into user_logs(user_id,datestr,ip,user_agent,created_at,updated_at) values (?,?,?,?,?,?)"
 	_, err := global.Db.Exec(sql, userLogs.UserId, userLogs.Datestr, userLogs.Ip, userLogs.UserAgent, userLogs.CreatedAt, userLogs.UpdatedAt)
