@@ -207,7 +207,8 @@ if __name__ == '__main__':
     init_logging(f"/shell/report/log/{TASK_NAME}.log")
     logging.info(f"\n\n\n start {TASK_NAME}")
     try:
-        start_day = get_previous_days(15)  # 获取当前日期的前两天
+        # 获取前15天的数据并插入到t_user_device_retention中
+        start_day = get_previous_days(15)  # 获取当前日期的前15天
         process_daily_data(start_day)
     except Exception as e:
         logging.error(f"捕获到异常：{type(e).__name__}")
