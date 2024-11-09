@@ -31,7 +31,7 @@ class ReportUser:
             self.device_recharge_behavior()
             self.device_recharges()
             self.report_daily_channel_recharge_by_month()
-            self.report_device_retaind()
+            #self.report_device_retaind()
             self.report_online_user()
         self.db_speed_conn.close_connection()
         self.db_report_conn.close_connection()

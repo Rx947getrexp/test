@@ -42,6 +42,14 @@ def get_previous_months(months_back):
     formatted_date = previous_month.strftime("%Y-%m")
     return formatted_date
 
+def get_previous_days(days=15):
+    # 获取今天的日期
+    today = datetime.now()
+    # 计算多少天前的日期
+    previous_day = today - timedelta(days)
+    # 将多少天前的日期格式化为 "2024-01-01" 格式
+    return previous_day.strftime('%Y-%m-%d')
+
 def time_format(s):
     return datetime.strptime(s, "%Y-%m-%d %H:%M:%S")
 
