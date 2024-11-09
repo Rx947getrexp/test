@@ -6,7 +6,6 @@ import logging
 import db_util
 import util
 
-
 class ReportUser:
     def __init__(self, date, start_time, end_time,month_start_time):
         logging.info("---> (%s) (%s) (%s) (%s)" % (date, start_time, end_time, month_start_time))
@@ -17,7 +16,6 @@ class ReportUser:
         self.db_speed_conn = db_util.Speed()
         self.db_report_conn = db_util.SpeedReport()
         self.db_collector_conn = db_util.SpeedCollector()
-
 
     def run(self):
         if self.check_collector():
@@ -31,8 +29,10 @@ class ReportUser:
             self.device_recharge_behavior()
             self.device_recharges()
             self.report_daily_channel_recharge_by_month()
-            #self.report_device_retaind()
+            ##self.report_device_retaind() #旧的统计7日，15日留存
             self.report_online_user()
+            self.report_daily_device_retaind() #新的按设备统计次日，7日，15日留存
+            self.report_monthly_device_retaind() #新的按设备统计次月留存
         self.db_speed_conn.close_connection()
         self.db_report_conn.close_connection()
         self.db_collector_conn.close_connection()
@@ -382,3 +382,101 @@ class ReportUser:
             })
         self.db_report_conn.insert_daily_device_retention(self.date, data)
 
+    def report_daily_device_retaind(self):
+        logging.info(f"{'*' * 20}{sys._getframe().f_code.co_name}{'*' * 20}")
+        # 获取前15天的数据并插入到t_user_device_retention中
+        start_day = util.get_previous_days(15)  # 获取当前日期的前15天
+        current_day = datetime.strptime(start_day, '%Y-%m-%d')
+        end_day = datetime.now().strftime('%Y-%m-%d')
+
+        while current_day.strftime('%Y-%m-%d') <= end_day:
+            day_str = current_day.strftime('%Y-%m-%d')
+            
+            # 获取新用户统计信息
+            new_users_results = self.db_speed_conn.query_registered_users_by_day(day_str)
+
+            # 获取注册用户的设备类型
+            registered_emails = self.db_speed_conn.query_registered_emails_by_day(day_str)
+            registered_device_emails = self.db_speed_conn.query_registered_device_emails(registered_emails)
+           
+            # 新用户按设备类型分组
+            new_users_by_os = {os_type: 0 for os_type in util.os_types}
+            
+            for row in new_users_results:
+                _, email, _ = row
+                original_os = registered_device_emails.get(email, 'Others')
+                categorized_os = util.categorize_os(original_os)
+                new_users_by_os[categorized_os] += 1
+            
+            # 计算次日留存用户数
+            next_day_retention_by_os = self.db_speed_conn.query_retention_of_next_days(day_str, 1)
+            
+            # 计算7日留存用户数
+            seven_days_retention_by_os = self.db_speed_conn.query_retention_of_next_days(day_str, 7)
+            
+            # 计算15日留存用户数
+            fifteen_days_retention_by_os = self.db_speed_conn.query_retention_of_next_days(day_str, 15)
+
+            # 处理results并插入到t_user_device_retention数据表中
+            if new_users_results:
+                stat_day = new_users_results[0][0]
+                #user_count = sum([row[2] for row in registered_results])
+            else:
+                stat_day = day_str
+                #user_count = 0
+            for os in util.os_types:
+                total_new_users = new_users_by_os.get(os, 0)
+                next_day_retention_count = len(next_day_retention_by_os.get(os, set()))
+                seven_days_retention_count = len(seven_days_retention_by_os.get(os, set()))
+                fifteen_days_retention_count = len(fifteen_days_retention_by_os.get(os, set()))
+                self.db_report_conn.insert_or_update_daily_device_report(stat_day, os, total_new_users, next_day_retention_count, seven_days_retention_count, fifteen_days_retention_count,)
+            # 移动到下一天
+            current_day += timedelta(days=1)
+
+    def report_monthly_device_retaind(self):
+        logging.info(f"{'*' * 20}{sys._getframe().f_code.co_name}{'*' * 20}")
+        start_month = util.get_previous_months(2) #获取当前月份的前几个月
+        current_month = datetime.strptime(start_month, '%Y-%m')
+        end_month = datetime.now().strftime('%Y-%m')  # 终止于当前月份
+
+        self.db_report_conn.clear_t_user_report_monthly()
+
+        while current_month.strftime('%Y-%m') <= end_month:
+            month_str = current_month.strftime('%Y-%m')
+            # 获取注册用户的统计信息
+            registered_results = self.db_speed_conn.get_registered_users_by_month(month_str)
+            # 获取设备类型和计数
+            device_results = self.db_speed_conn.get_device_types_and_counts(month_str)
+            # 获取新用户统计信息
+            new_users_results = self.db_speed_conn.get_new_users_in_month(month_str)
+            # 新用户按设备类型分组
+            new_users_by_os = {os_type: 0 for os_type in util.os_types}
+            
+            for row in new_users_results:
+                original_os, email, new_users = row
+                categorized_os = util.categorize_os(original_os)
+                new_users_by_os[categorized_os] += new_users
+            
+            # 计算次月留存用户数
+            retained_users_by_os = self.db_speed_conn.calculate_retention_of_next_month(month_str)
+
+             # 处理results并插入到t_user_report_monthly中
+            if registered_results:
+                stat_month = registered_results[0][0]  # 获取正确的stat_month
+                user_count = sum([row[2] for row in registered_results])  # 计算总用户数
+            else:
+                stat_month = month_str
+                user_count = 0
+            
+            # 设备类型和计数
+            #device_os_counts = {row[0]: row[1] for row in device_results}
+
+            for os in util.os_types:
+                total_new_users = new_users_by_os.get(os, 0)
+                # total_device_count = device_os_counts.get(os, 0)
+                retained_users_count = len(retained_users_by_os.get(os, set()))
+                self.db_report_conn.insert_into_report_monthly(stat_month, os, user_count, total_new_users, retained_users_count)
+            
+            # 移动到下一个月
+            current_month += timedelta(days=32)
+            current_month = current_month.replace(day=1)

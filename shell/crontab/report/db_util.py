@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
+from datetime import datetime, timedelta
 import logging
 import sys
-
 import pymysql
-
 from common import load_config
-
+import util
 
 def mysql_connect(db):
     """连接DB"""
@@ -30,7 +29,6 @@ def mysql_execute(_conn, sql):
     # cursor.execute(sql)
     _conn.commit()
     cursor.close()
-
 
 class Speed:
     def __init__(self):
@@ -415,6 +413,106 @@ class Speed:
             device_recharge_totals[device_type] += amount_in_rub
         # 返回各个设备类型的总金额
         return device_recharge_totals
+    
+    ################################
+    def query_registered_users_by_day(self, day_str):
+        sql = """SELECT DATE_FORMAT(tu.created_at, '%%Y-%%m-%%d') AS stat_day, tu.email, COUNT(*) AS user_count FROM speed.t_user tu WHERE DATE_FORMAT(tu.created_at, '%%Y-%%m-%%d') = '%s' GROUP BY tu.email, stat_day;""" % (day_str)
+        rows = mysql_query_db(self.conn, sql)
+        return [(row['stat_day'], row['email'], row['user_count']) for row in rows]
+    
+    def query_registered_emails_by_day(self, day_str):
+        sql = """SELECT tu.email FROM speed.t_user tu WHERE DATE_FORMAT(tu.created_at, '%%Y-%%m-%%d') = '%s'""" % (day_str)
+        results = mysql_query_db(self.conn, sql)
+        return [row['email'] for row in results]
+    
+    def query_registered_device_emails(self, registered_emails):
+        if not registered_emails:
+            return {}
+        # 将 registered_emails 转换为元组，并将其转换为逗号分隔的字符串
+        email_list_str = ', '.join([f"'{email}'" for email in registered_emails])
+        sql = f"""SELECT tud.os, tu.email FROM t_user_device tud JOIN t_user tu ON tud.user_id = tu.id WHERE tu.email IN ({email_list_str});"""
+        results = mysql_query_db(self.conn, sql)
+        return {item['email']: item['os'] for item in results}
+
+    def query_active_emails_in_next_days(self, date, days):
+        date_obj = datetime.strptime(date, '%Y-%m-%d')
+        start_date = date_obj + timedelta(days=1)
+        end_date = (date_obj + timedelta(days=days + 1)) - timedelta(seconds=1)
+        sql = """SELECT tut.email FROM speed_collector.t_v2ray_user_traffic tut WHERE tut.date >= %s AND tut.date <= %s""" % (int(start_date.strftime('%Y%m%d')), int(end_date.strftime('%Y%m%d')))
+        results = mysql_query_db(self.conn, sql)
+        return [row['email'] for row in results]
+
+    def query_retention_of_next_days(self, day_str, days):
+        registered_emails = self.query_registered_emails_by_day(day_str)
+        active_emails = set(self.query_active_emails_in_next_days(day_str, days))
+        if not registered_emails:
+            return {os_type: set() for os_type in util.os_types}
+        registered_device_emails = self.query_registered_device_emails(registered_emails)
+        retained_users_by_os = {os_type: set() for os_type in util.os_types}
+        for email in registered_emails:
+            if email in active_emails:
+                original_os = registered_device_emails.get(email, 'Others')
+                categorized_os = util.categorize_os(original_os)
+                retained_users_by_os[categorized_os].add(email)
+        return retained_users_by_os
+    
+    ################################
+    def get_registered_users_by_month(self, month):
+        sql = """SELECT DATE_FORMAT(tu.created_at, '%%Y-%%m') AS stat_month, tu.email, COUNT(*) AS user_count FROM speed.t_user tu WHERE DATE_FORMAT(tu.created_at, '%%Y-%%m') = '%s' GROUP BY tu.email, stat_month;""" % (month)
+        rows = mysql_query_db(self.conn, sql)
+        return [(row['stat_month'], row['email'], row['user_count']) for row in rows]
+
+    def get_device_types_and_counts(self, month):
+        query = """SELECT tud.os AS os, COUNT(*) AS device_count FROM speed.t_user_device tud JOIN t_user tu ON tud.user_id = tu.id WHERE DATE_FORMAT(tu.created_at, '%%Y-%%m') = '%s' GROUP BY tud.os;""" % (month,)
+        res = mysql_query_db(self.conn, query)
+        results = [(row['os'], row['device_count']) for row in res]
+        categorized_counts = {os_type: 0 for os_type in util.device_mapping.keys()}
+        for row in results:
+            original_os = row[0]
+            categorized_os = util.categorize_os(original_os)
+            categorized_counts[categorized_os] += row[1]
+        return [(os_type, count) for os_type, count in categorized_counts.items()]
+    
+    def get_new_users_in_month(self, month):
+        sql = """SELECT tud.os, tu.email, COUNT(*) AS new_users FROM speed.t_user tu JOIN speed.t_user_device tud ON tu.id = tud.user_id WHERE DATE_FORMAT(tu.created_at, '%%Y-%%m') = '%s' GROUP BY tud.os, tu.email;""" % (month,)
+        rows = mysql_query_db(self.conn, sql)
+        return  [(row['os'], row['email'], row['new_users']) for row in rows]
+
+    def get_registered_emails_by_month(self, month):
+        sql = """SELECT tu.email FROM speed.t_user tu WHERE DATE_FORMAT(tu.created_at, '%%Y-%%m') = '%s'""" % (month,)
+        results = mysql_query_db(self.conn, sql)
+        return [row['email'] for row in results]
+    
+    def get_active_emails_in_next_month(self, month):
+        month_date = datetime.strptime(month, '%Y-%m')
+        next_month_date = month_date + timedelta(days=32)
+        #next_month = next_month_date.strftime('%Y-%m')
+        next_month_start = next_month_date.replace(day=1)
+        next_month_end = (next_month_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+        sql = """SELECT tut.email FROM speed_collector.t_v2ray_user_traffic tut WHERE tut.date >= %s AND tut.date <= %s""" % (int(next_month_start.strftime('%Y%m%d')), int(next_month_end.strftime('%Y%m%d')))
+        results = mysql_query_db(self.conn, sql)
+        return [row['email'] for row in results]
+    
+    def calculate_retention_of_next_month(self, month):
+        registered_emails = self.get_registered_emails_by_month(month)
+        active_emails = set(self.get_active_emails_in_next_month(month))  # 转换成集合
+        if not registered_emails:
+            return {os_type: set() for os_type in util.os_types}  # 如果没有注册用户，直接返回空结果
+        registered_device_emails = {}
+        # 将 registered_emails 转换为元组，并将其转换为逗号分隔的字符串
+        in_registered_emails = ', '.join([f"'{email}'" for email in registered_emails])
+        sql = f"""SELECT tud.os, tu.email FROM speed.t_user_device tud JOIN speed.t_user tu ON tud.user_id = tu.id WHERE tu.email IN ({in_registered_emails});"""
+        res = mysql_query_db(self.conn, sql)
+        results = [(row['os'], row['email']) for row in res]
+        registered_device_emails = {email: os for os, email in results}
+        retained_users_by_os = {os_type: set() for os_type in util.os_types}
+        for email in registered_emails:  # 直接遍历列表中的每个邮箱地址
+            if email in active_emails:
+                original_os = registered_device_emails.get(email, 'Others')
+                categorized_os = util.categorize_os(original_os)
+                retained_users_by_os[categorized_os].add(email)
+        return retained_users_by_os
+
 class SpeedReport:
     def __init__(self):
         self.config = load_config("/shell/report/config.yaml")
@@ -679,6 +777,31 @@ class SpeedReport:
             insert_queries.append(insert_sql)
         for query in insert_queries:
             mysql_execute(self.conn, query)
+
+    def insert_or_update_daily_device_report(self, date, device, new, retained, day7_retained, day15_retained):
+        date = int(date.replace('-', ''))
+        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        sql = """
+        INSERT INTO speed_report.t_user_device_retention (date, device, new, retained, day7_retained, day15_retained, created_at)
+        VALUES (%s, '%s', %s, %s, %s, %s,'%s')
+        ON DUPLICATE KEY UPDATE
+        new = VALUES(new),
+        retained = VALUES(retained),
+        day7_retained = VALUES(day7_retained),
+        day15_retained = VALUES(day15_retained);
+        """ % (date, device, new, retained, day7_retained, day15_retained, current_time)
+        mysql_execute(self.conn, sql)
+
+    def clear_t_user_report_monthly(self):
+        sql = """TRUNCATE TABLE t_user_report_monthly;"""
+        mysql_execute(self.conn, sql)
+
+    def insert_into_report_monthly(self, stat_month, os, user_count, new_users, retained_users):
+        stat_month_date = int(stat_month.replace('-', ''))
+        print(stat_month, os, user_count, new_users, retained_users)
+        sql = """INSERT INTO t_user_report_monthly (stat_month, os, user_count, new_users, retained_users) VALUES (%s, '%s', %s, %s, %s);""" % (stat_month_date, os, user_count, new_users, retained_users)
+        mysql_execute(self.conn, sql)
+
 class SpeedCollector:
     def __init__(self):
         self.config = load_config("/shell/report/config.yaml")

@@ -103,33 +103,19 @@ def calculate_retention_of_next_days(date, days, speed_db_conn, collector_db_con
             retained_users_by_os[categorized_os].add(email)
     return retained_users_by_os
 
-# def insert_or_update_report(stat_day, os, user_count, new_users, next_day_retention, seven_days_retention, fifteen_days_retention, cursor):
-#     stat_day_date = int(stat_day.replace('-', ''))
-#     query = """
-#     INSERT INTO t_user_report_daily (stat_day, os, user_count, new_users, next_day_retention, seven_days_retention, fifteen_days_retention)
-#     VALUES (%s, %s, %s, %s, %s, %s, %s)
-#     ON DUPLICATE KEY UPDATE
-#     user_count = VALUES(user_count),
-#     new_users = VALUES(new_users),
-#     next_day_retention = VALUES(next_day_retention),
-#     seven_days_retention = VALUES(seven_days_retention),
-#     fifteen_days_retention = VALUES(fifteen_days_retention);
-#     """
-#     cursor.execute(query, (stat_day_date, os, user_count, new_users, next_day_retention, seven_days_retention, fifteen_days_retention))
-
-def insert_or_update_report2(date, device, new, retained, day7_retained, day15_retained, cursor):
-    date = int(date.replace('-', ''))
-    current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+def insert_or_update_report(stat_day, os, user_count, new_users, next_day_retention, seven_days_retention, fifteen_days_retention, cursor):
+    stat_day_date = int(stat_day.replace('-', ''))
     query = """
-    INSERT INTO t_user_device_retention (date, device, new, retained, day7_retained, day15_retained, created_at)
+    INSERT INTO t_user_report_daily (stat_day, os, user_count, new_users, next_day_retention, seven_days_retention, fifteen_days_retention)
     VALUES (%s, %s, %s, %s, %s, %s, %s)
     ON DUPLICATE KEY UPDATE
-    new = VALUES(new),
-    retained = VALUES(retained),
-    day7_retained = VALUES(day7_retained),
-    day15_retained = VALUES(day15_retained);
+    user_count = VALUES(user_count),
+    new_users = VALUES(new_users),
+    next_day_retention = VALUES(next_day_retention),
+    seven_days_retention = VALUES(seven_days_retention),
+    fifteen_days_retention = VALUES(fifteen_days_retention);
     """
-    cursor.execute(query, (date, device, new, retained, day7_retained, day15_retained, current_time))
+    cursor.execute(query, (stat_day_date, os, user_count, new_users, next_day_retention, seven_days_retention, fifteen_days_retention))
 
 def process_daily_data(start_day):
     current_day = datetime.strptime(start_day, '%Y-%m-%d')
@@ -148,7 +134,7 @@ def process_daily_data(start_day):
             registered_results = get_registered_users_by_day(day_str, speed_db_conn)
             
             # 获取设备类型和计数
-            #device_results = get_device_types_and_counts(day_str, speed_db_conn, device_mapping)
+            device_results = get_device_types_and_counts(day_str, speed_db_conn, device_mapping)
             
             # 获取新用户统计信息
             new_users_results = get_registered_users_by_day(day_str, speed_db_conn)
@@ -178,10 +164,10 @@ def process_daily_data(start_day):
             # 处理results并插入到t_user_report_daily中
             if registered_results:
                 stat_day = registered_results[0][0]
-                #user_count = sum([row[2] for row in registered_results])
+                user_count = sum([row[2] for row in registered_results])
             else:
                 stat_day = day_str
-                #user_count = 0
+                user_count = 0
             
             # 插入或更新数据
             with report_db_conn.cursor() as cursor:
@@ -190,7 +176,7 @@ def process_daily_data(start_day):
                     next_day_retention_count = len(next_day_retention_by_os.get(os, set()))
                     seven_days_retention_count = len(seven_days_retention_by_os.get(os, set()))
                     fifteen_days_retention_count = len(fifteen_days_retention_by_os.get(os, set()))
-                    insert_or_update_report2(stat_day, os, total_new_users, next_day_retention_count, seven_days_retention_count, fifteen_days_retention_count, cursor)
+                    insert_or_update_report(stat_day, os, user_count, total_new_users, next_day_retention_count, seven_days_retention_count, fifteen_days_retention_count, cursor)
                 report_db_conn.commit()
         
         # 移动到下一天
@@ -207,8 +193,6 @@ if __name__ == '__main__':
     init_logging(f"/shell/report/log/{TASK_NAME}.log")
     logging.info(f"\n\n\n start {TASK_NAME}")
     try:
-        # 获取前15天的数据并插入到t_user_device_retention中
-        start_day = get_previous_days(15)  # 获取当前日期的前15天
         process_daily_data(start_day)
     except Exception as e:
         logging.error(f"捕获到异常：{type(e).__name__}")

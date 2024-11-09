@@ -53,6 +53,28 @@ def get_previous_days(days=15):
 def time_format(s):
     return datetime.strptime(s, "%Y-%m-%d %H:%M:%S")
 
+# 设备型号映射表
+device_mapping = {
+    'Android': ['Android'],
+    'iPhone': ['iPhone', 'iOS'],
+    'Mac': ['Mac', 'macOS', 'Mac OS'],
+    'Windows': ['Windows'],
+    'Others': []  # 任何未匹配的都归为 Others
+}
+os_types = list(device_mapping.keys())
+def categorize_os(original_os):
+    if 'Mac OS' in original_os:
+        if 'iPhone' in original_os:
+            return 'iPhone'
+        else:
+            return 'Mac'
+    elif 'Android' in original_os:
+        return 'Android'
+    elif 'Windows' in original_os:
+        return 'Windows'
+    else:
+        return 'Others'
+
 
 class Time:
     def __init__(self, date):
