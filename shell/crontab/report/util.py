@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 import geoip2.database
 
 
@@ -29,7 +30,17 @@ def get_yesterday_date():
     #DATE=input("请输入：")
     #return DATE
     #return "2024-09-10"
-
+def get_previous_months(months_back):
+    """
+    获取当前日期之前的指定月数的月份，格式为 "YYYY-MM"。
+    :param months_back: int, 要回溯的月数
+    :return: str, 指定月数之前的月份，格式为 "YYYY-MM"
+    """
+    # 计算过去的月份
+    previous_month = datetime.now() - relativedelta(months=months_back)
+    # 格式化输出为 "YYYY-MM"
+    formatted_date = previous_month.strftime("%Y-%m")
+    return formatted_date
 
 def time_format(s):
     return datetime.strptime(s, "%Y-%m-%d %H:%M:%S")

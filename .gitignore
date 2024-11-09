@@ -11,6 +11,7 @@ public/
 #upload/
 *.key
 *.yaml
+*.toml
 .idea/go-speed.iml
 .DS_Store
 manifest/.DS_Store
