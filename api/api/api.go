@@ -6,10 +6,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/gogf/gf/v2/os/gtime"
 	"go-speed/api"
 	"go-speed/api/api/common"
 	v2rayConfig "go-speed/api/api/config"
+	"go-speed/api/api/internal"
 	types_api "go-speed/api/types/api"
 	"go-speed/constant"
 	"go-speed/dao"
@@ -27,73 +27,28 @@ import (
 	"go-speed/util/geo"
 	"math/rand"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/mssola/user_agent"
 	"github.com/shopspring/decimal"
 	"xorm.io/xorm"
 )
 
 var gConnectNum int
 
-var configs = "{\"log\":{\"level\":\"{{logLevel}}\",\"output\":\"{{leafLogFile}}\"},\"dns\":{\"servers\":[\"1.1.1.1\",\"8.8.8.8\"],\"hosts\":{\"node2.wuwuwu360.xyz\":[\"107.148.239.239\"]}},\"inbounds\":[{\"protocol\":\"tun\",\"settings\":{\"fd\":\"{{tunFd}}\"},\"tag\":\"tun_in\"}],\"outbounds\":[{\"protocol\":\"failover\",\"tag\":\"failover_out\",\"settings\":{\"actors\":[\"proxy1\",\"proxy2\"],\"failTimeout\":4,\"healthCheck\":true,\"checkInterval\":300,\"failover\":true,\"fallbackCache\":false,\"cacheSize\":256,\"cacheTimeout\":60}},{\"tag\":\"proxy1\",\"protocol\":\"chain\",\"settings\":{\"actors\":[\"tls\",\"ws\",\"trojan\"]}},{\"tag\":\"proxy2\",\"protocol\":\"chain\",\"settings\":{\"actors\":[\"tls\",\"ws\",\"trojan\"]}},{\"protocol\":\"tls\",\"tag\":\"tls\",\"settings\":{\"alpn\":[\"http/1.1\"],\"insecure\":true}},{\"protocol\":\"ws\",\"tag\":\"ws\",\"settings\":{\"path\":\"/work\"}},%s,{\"protocol\":\"direct\",\"tag\":\"direct_out\"},{\"protocol\":\"drop\",\"tag\":\"reject_out\"}],\"router\":{\"domainResolve\":true,\"rules\":[{\"external\":[\"site:{{dlcFile}}:cn\"],\"target\":\"direct_out\"},{\"external\":[\"mmdb:{{geoFile}}:cn\"],\"target\":\"direct_out\"},{\"domainKeyword\":[\"apple\",\"icloud\"],\"target\":\"direct_out\"}]}}"
-
 // GenerateDevId C端获取DEV_ID，并保存在本地全局存储
 func GenerateDevId(c *gin.Context) {
 	result := make(map[string]interface{})
-	//查询库中是否有Client-Id
-	clientId := getClientId(c)
-	if clientId != "" {
-		var bean model.TDev
-		has, err := global.Db.Where("client_id = ?", clientId).Get(&bean)
-		if err != nil {
-			global.MyLogger(c).Err(err).Msgf("db连接出错, clientId: %s", clientId)
-			response.RespFail(c, i18n.RetMsgDBErr, nil)
-			return
-		}
-		if has {
-			result["dev_id"] = fmt.Sprint(bean.Id)
-			response.RespOk(c, i18n.RetMsgSuccess, result)
-			return
-		}
-	}
-
-	id, _ := service.GenSnowflake()
-	userAgent := c.GetHeader("User-Agent")
-	ua := user_agent.New(userAgent)
-	os := ua.OS()
-	if os == "" {
-		os = userAgent
-	}
-	dev := &model.TDev{
-		Id:        id,
-		Os:        os,
-		ClientId:  clientId,
-		Network:   constant.NetworkAutoMode,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		IsSend:    2,
-		Comment:   "",
-	}
-	rows, err := global.Db.Insert(dev)
-	if err != nil || rows != 1 {
-		global.MyLogger(c).Err(fmt.Errorf("err:%+v", err)).Msgf("db连接出错, clientId: %s", clientId)
-		response.RespFail(c, i18n.RetMsgDBErr, nil)
-		return
-	}
-
-	result["dev_id"] = fmt.Sprint(id)
+	result["dev_id"] = "123123"
 	response.RespOk(c, i18n.RetMsgSuccess, result)
 }
 
 func SendEmail(c *gin.Context) {
 	param := new(request.SendEmailRequest)
 	if err := c.ShouldBind(param); err != nil {
-		global.MyLogger(c).Err(err).Msgf("绑定参数失败, clientId: %s", getClientId(c))
+		global.MyLogger(c).Err(err).Msgf("%s 绑定参数失败, clientId: %s", i18n.ErrLabelParams, getClientId(c))
 		response.RespFail(c, i18n.RetMsgParamParseErr, nil)
 		return
 	}
@@ -106,12 +61,12 @@ func SendEmail(c *gin.Context) {
 	user := new(model.TUser)
 	has, err := global.Db.Where("uname = ?", param.Email).Get(user)
 	if err != nil {
-		global.MyLogger(c).Err(err).Msgf("db连接出错, email:%s", param.Email)
+		global.MyLogger(c).Err(err).Msgf("%s query t_user failed, param: %+v", i18n.ErrLabelDB, *param)
 		response.RespFail(c, i18n.RetMsgDBErr, nil)
 		return
 	}
 	if !has {
-		global.MyLogger(c).Warn().Msgf("邮箱地址未注册, email:%s", param.Email)
+		global.MyLogger(c).Warn().Msgf("%s 邮箱地址未注册！param: %+v", i18n.ErrLabelParams, *param)
 		response.RespFail(c, i18n.RetMsgEmailNotReg, nil)
 		return
 	}
@@ -128,60 +83,47 @@ func SendEmail(c *gin.Context) {
 func Reg(c *gin.Context) {
 	param := new(request.RegRequest)
 	if err := c.ShouldBind(param); err != nil {
-		global.MyLogger(c).Err(err).Msgf("绑定参数失败, clientId: %s", getClientId(c))
+		global.MyLogger(c).Err(err).Msgf("%s 绑定参数失败, clientId: %s", i18n.ErrLabelParams, getClientId(c))
 		response.RespFail(c, i18n.RetMsgParamParseErr, nil)
 		return
 	}
 	// 参数检查
 	if param.Account == "" || param.Passwd == "" || param.EnterPasswd == "" {
-		global.MyLogger(c).Error().Msgf("参数无效！param: %+v", *param)
+		global.MyLogger(c).Warn().Msgf("%s 参数无效！param: %+v", i18n.ErrLabelParams, *param)
 		response.RespFail(c, i18n.RetMsgParamInputInvalid, nil)
 		return
 	}
 	if param.Passwd != param.EnterPasswd {
-		global.MyLogger(c).Error().Msgf("密码错误！param: %+v", *param)
+		global.MyLogger(c).Warn().Msgf("%s 密码错误！param: %+v", i18n.ErrLabelParams, *param)
 		response.RespFail(c, i18n.RetMsgTwoPasswordNotMatch, nil)
 		return
 	}
-	var counts int64
-	_, err := global.Db.SQL("select count(*) from t_user where uname = ?", param.Account).Get(&counts)
+
+	// 检查推荐人ID是否有效
+	inviteUserId, inviteUserInfo, inviteUserTeam, err := internal.GetInviteUserWithErrRsp(c, param.InviteCode)
 	if err != nil {
-		global.MyLogger(c).Err(err).Msgf("db连接出错, param: %+v", *param)
+		return
+	}
+	if inviteUserId > 0 && inviteUserInfo == nil {
+		global.MyLogger(c).Warn().Msgf("%s 推荐人Code无效, param: %+v", i18n.ErrLabelParams, *param)
+		response.RespFail(c, i18n.RetMsgReferrerIDIncorrect, nil)
+		return
+	}
+
+	// 检查账号是否已经注册
+	var counts int64
+	_, err = global.Db.SQL("select count(*) from t_user where uname = ?", param.Account).Get(&counts)
+	if err != nil {
+		global.MyLogger(c).Err(err).Msgf("%s query t_user failed, param: %+v", i18n.ErrLabelDB, *param)
 		response.RespFail(c, i18n.RetMsgDBErr, nil)
 		return
 	}
 	if counts > 0 {
-		global.MyLogger(c).Warn().Msgf("账号已注册, account: %s, param: %+v", param.Account, *param)
+		global.MyLogger(c).Warn().Msgf("%s 账号已注册, account: %s, param: %+v", i18n.ErrLabelParams, param.Account, *param)
 		response.RespFail(c, i18n.RetMsgEmailHasRegErr, nil)
 		return
 	}
 
-	// 通过以上检查后，说明账号没有注册过，或者已经注销了。
-	//// 先看用户是否有注册过
-	//userInfo, err := service.GetUserByUserName(param.Account)
-	//if err != nil {
-	//	response.RespFail(c, i18n.RetMsgDBErr, nil)
-	//	return
-	//}
-	//// 注册过，且非已注销，直接报错返回
-	//if userInfo != nil && userInfo.Status != constant.UserStatusCancelled {
-	//	fmt.Printf("zzzzzzz用户邮箱：%s", param.Account)
-	//	response.RespFail(c, i18n.RetMsgEmailHasRegErr, nil)
-	//	return
-	//}
-	/*
-		//渠道来源
-		var channel int = 1 //默认大陆区域 1-中国；2-俄罗斯；3-其它(英语系)
-		var err error
-		sourceChannel := c.GetHeader("Channel")
-		if sourceChannel != "" {
-			channel, err = sourceChannel
-			if err != nil {
-				response.RespFail(c, lang.Translate("cn", "fail"), nil)
-				return
-			}
-		}
-	*/
 	channel := c.GetHeader("Channel")
 	var sendSec int64 = 0
 	//查询库中是否有Client-Id
@@ -194,42 +136,22 @@ func Reg(c *gin.Context) {
 		)
 		_, rx := global.Db.SQL("select count(*) as total from t_user where client_id = ?", clientId).Get(&userFlag)
 		if rx != nil {
-			global.MyLogger(c).Err(rx).Msgf("db连接出错, clientId: %s, param: %+v", clientId, *param)
+			global.MyLogger(c).Err(rx).Msgf("%s query t_user failed, clientId: %s, param: %+v", i18n.ErrLabelDB, clientId, *param)
 			response.RespFail(c, i18n.RetMsgDBErr, nil)
 			return
 		}
 
 		_, rx = global.Db.SQL("select count(*) as total from t_user_cancelled where client_id = ?", clientId).Get(&userCancelledFlag)
 		if rx != nil {
-			global.MyLogger(c).Err(rx).Msgf("db连接出错, clientId: %s, param: %+v", clientId, *param)
+			global.MyLogger(c).Err(rx).Msgf("%s query t_user_cancelled failed, clientId: %s, param: %+v", i18n.ErrLabelDB, clientId, *param)
 			response.RespFail(c, i18n.RetMsgDBErr, nil)
 			return
 		}
 
 		global.MyLogger(c).Info().Msgf("userFlag:%d, userCancelledFlag: %d", userFlag, userCancelledFlag)
 		if userFlag == 0 && userCancelledFlag == 0 {
-			//sendSec = 3600
 			sendSec = 2 * 60 * 60 // 统一赠送15天 (之前没有送过的)
 		}
-		//sendSec = 31536000 // TODO: 统一赠送一年
-
-		/*
-			var bean model.TDev
-				if !has { //送过一次的不再送了
-					sendSec += 3600 //此种情况才赠送时间
-				}
-
-				has, err := global.Db.Where("client_id = ? and is_send = 2", clientId).Get(&bean)
-
-				if err != nil {
-					global.MyLogger(c).Err(err).Msg("db连接出错")
-					response.RespFail(c, lang.Translate("cn", "fail"), nil)
-					return
-				}
-				if !has { //送过一次的不再送了
-					sendSec += 3600 //此种情况才赠送时间
-				}
-		*/
 	} else if channel != "" {
 		sendSec = 2 * 60 * 60 // 统一赠送15天 (通过渠道推广来的)，TODO: 目前没办法校验渠道的有效性
 	}
@@ -269,7 +191,7 @@ func Reg(c *gin.Context) {
 	}
 	rows, err := sess.Insert(user)
 	if err != nil || rows != 1 {
-		global.MyLogger(c).Err(fmt.Errorf("err:%+v", err)).Msgf("添加user出错, clientId: %s, param: %+v", clientId, *param)
+		global.MyLogger(c).Err(fmt.Errorf("err:%+v, rows: %d", err, rows)).Msgf("添加user出错, clientId: %s, param: %+v", clientId, *param)
 		sess.Rollback()
 		response.RespFail(c, i18n.RetMsgDBErr, nil)
 		return
@@ -280,10 +202,9 @@ func Reg(c *gin.Context) {
 	uuid.SetRand(rnd)
 	nonce, _ := uuid.NewRandomFromReader(rnd)
 	user.V2rayUuid = nonce.String() //正式注册生成uuid
-	//user.V2rayUuid = "bf268a88-318f-d58f-0e9f-66d6f066be31" //需要注释
 	rows, err = sess.Cols("v2ray_uuid").Where("id = ?", user.Id).Update(user)
 	if err != nil || rows != 1 {
-		global.MyLogger(c).Err(fmt.Errorf("err:%+v", err)).Msgf("添加user-uuid出错, clientId: %s, param: %+v", clientId, *param)
+		global.MyLogger(c).Err(fmt.Errorf("err:%+v, rows: %d", err, rows)).Msgf("添加user-uuid出错, clientId: %s, param: %+v", clientId, *param)
 		sess.Rollback()
 		response.RespFail(c, i18n.RetMsgRegFailed, nil)
 		return
@@ -304,7 +225,7 @@ func Reg(c *gin.Context) {
 		}
 		rows, err = sess.Insert(gift)
 		if err != nil || rows != 1 {
-			global.MyLogger(c).Err(fmt.Errorf("err:%+v", err)).Msgf("添加赠送记录出错, clientId: %s, param: %+v", clientId, *param)
+			global.MyLogger(c).Err(fmt.Errorf("err:%+v, rows: %d", err, rows)).Msgf("添加赠送记录出错, clientId: %s, param: %+v", clientId, *param)
 			sess.Rollback()
 			response.RespFail(c, i18n.RetMsgDBErr, nil)
 			return
@@ -320,51 +241,43 @@ func Reg(c *gin.Context) {
 		UpdatedAt:  time.Now(),
 		Comment:    "",
 	}
-	if param.InviteCode != "" {
-		directTeam := new(model.TUserTeam)
-		has, err := global.Db.Where("user_id = ?", param.InviteCode).Get(directTeam)
-		if err != nil {
-			global.MyLogger(c).Err(err).Msgf("查询推荐人信息失败, clientId: %s, param: %+v", clientId, *param)
-			sess.Rollback()
-			response.RespFail(c, i18n.RetMsgDBErr, nil)
-			return
-		}
-		if !has {
-			global.MyLogger(c).Warn().Msgf("推荐人Code无效, clientId: %s, param: %+v", clientId, *param)
-			sess.Rollback()
-			response.RespFail(c, i18n.RetMsgReferrerIDIncorrect, nil)
-			return
-		}
-		team.DirectId = directTeam.UserId
-		if directTeam.DirectTree == "" {
-			team.DirectTree = fmt.Sprint(directTeam.UserId)
+	if inviteUserId > 0 {
+		if inviteUserTeam != nil {
+			team.DirectId = inviteUserTeam.UserId
+			if inviteUserTeam.DirectTree == "" {
+				team.DirectTree = fmt.Sprint(inviteUserTeam.UserId)
+			} else {
+				team.DirectTree = fmt.Sprint(inviteUserTeam.DirectTree, ",", inviteUserTeam.UserId)
+			}
 		} else {
-			team.DirectTree = fmt.Sprint(directTeam.DirectTree, ",", directTeam.UserId)
+			team.DirectTree = fmt.Sprint(inviteUserId)
 		}
 	}
 	rows, err = sess.Insert(team)
 	if err != nil || rows != 1 {
-		global.MyLogger(c).Err(fmt.Errorf("err:%+v", err)).Msgf("添加team出错, clientId: %s, param: %+v", clientId, *param)
+		global.MyLogger(c).Err(fmt.Errorf("err:%+v, rows:%d", err, rows)).Msgf("添加team出错, clientId: %s, param: %+v", clientId, *param)
 		sess.Rollback()
 		response.RespFail(c, i18n.RetMsgDBErr, nil)
 		return
 	}
 
 	sess.Commit()
+	_ = internal.UpdateUserDeviceByClientId(c, user.Id, user.Email)
+
 	response.ResOk(c, i18n.RetMsgRegSuccess)
 }
 
 func Login(c *gin.Context) {
 	param := new(request.LoginRequest)
 	if err := c.ShouldBind(param); err != nil {
-		global.MyLogger(c).Err(err).Msgf("绑定参数失败, clientId: %s", getClientId(c))
+		global.MyLogger(c).Err(err).Msgf("%s 绑定参数失败, clientId: %s", i18n.ErrLabelParams, getClientId(c))
 		response.RespFail(c, i18n.RetMsgParamParseErr, nil)
 		return
 	}
 	param.Account = strings.TrimSpace(param.Account)
 	param.Passwd = strings.TrimSpace(param.Passwd)
 	if param.Account == "" || param.Passwd == "" {
-		global.MyLogger(c).Error().Msgf("参数无效, param: %+v", *param)
+		global.MyLogger(c).Warn().Msgf("%s 账号或密码为空, param: %+v", i18n.ErrLabelParams, *param)
 		response.RespFail(c, i18n.RetMsgAccountPasswordEmptyErr, nil)
 		return
 	}
@@ -373,68 +286,35 @@ func Login(c *gin.Context) {
 	var userInfo *entity.TUser
 	err := dao.TUser.Ctx(c).Where(do.TUser{Uname: param.Account}).Scan(&userInfo)
 	if err != nil {
-		global.MyLogger(c).Err(err).Msgf("检查是否有注册失败, param: %+v", *param)
+		global.MyLogger(c).Err(err).Msgf("%s 检查是否有注册失败, param: %+v", i18n.ErrLabelDB, *param)
 		response.RespFail(c, i18n.RetMsgDBErr, nil)
 		return
 	}
 	if userInfo == nil {
-		global.MyLogger(c).Warn().Msgf("账号不存在，param: %+v", *param)
+		global.MyLogger(c).Warn().Msgf("%s 账号不存在，param: %+v", i18n.ErrLabelParams, *param)
 		response.RespFail(c, i18n.RetMsgAccountNotExist, nil)
 		return
 	}
 
 	pwdDecode := util.AesDecrypt(param.Passwd)
 	pwdMd5 := util.MD5(pwdDecode)
-	user := new(model.TUser)
-	has, err := global.Db.Where("uname = ? and passwd = ? and status = 0", param.Account, pwdMd5).Get(user)
-	if err != nil {
-		global.MyLogger(c).Err(err).Msgf("登录出错！%s， param: %+v", param.Account, *param)
-		response.RespFail(c, i18n.RetMsgDBErr, nil)
-		return
-	}
-	if !has {
-		global.MyLogger(c).Warn().Msgf("密码不正确！%s， param: %+v", param.Account, *param)
+	if userInfo.Passwd != pwdMd5 {
+		global.MyLogger(c).Warn().Msgf("%s 密码不正确, param: %+v", i18n.ErrLabelParams, *param)
 		response.RespFail(c, i18n.RetMsgPasswordIncorrect, nil)
 		return
 	}
 
-	devId, e := service.GetDevIdByClientId(c)
-	if e != nil {
-		global.MyLogger(c).Err(e).Msgf("GetDevIdByClientId failed")
+	err = internal.CheckClientIdNumLimitsWithErrRsp(c, userInfo)
+	if err != nil {
+		return
 	}
 
-	if devId > 0 && user.Email != "zzz@qq.com" {
-		limits, err := service.CheckDevNumLimits(c, devId, user)
-		if err != nil {
-			global.MyLogger(c).Err(err).Msgf("登录出错(CheckDevNumLimits failed) %s， param: %+v", param.Account, *param)
-			response.RespFail(c, i18n.RetMsgDBErr, nil)
-			return
-		}
-		if limits {
-			global.MyLogger(c).Warn().Msgf("登录出错，设备数量超过限制！%s， param: %+v", param.Account, *param)
-			response.RespFail(c, i18n.RetMsgReachedDevicesLimit, nil)
-			return
-		}
-	}
+	// 更新失败时，不返回报错，自己内部评估如何优化
+	_ = internal.UpdateUserDeviceByClientId(c, userInfo.Id, userInfo.Email)
 
-	//devId := c.Request.Header.Get("Dev-Id")
-	//if devId != "" && user.Email != "zzz@qq.com" {
-	//	dId, err := strconv.ParseInt(devId, 10, 64)
-	//	if err != nil {
-	//		global.MyLogger(c).Err(err).Msgf("DevID atoi failed！%s, devId: %s, param: %+v", param.Account, devId, *param)
-	//		response.RespFail(c, i18n.RetMsgDevIdParseErr, nil)
-	//		return
-	//	}
-	//
-	//	if !service.HasDev(int64(dId)) {
-	//		global.MyLogger(c).Err(fmt.Errorf("%s", i18n.RetMsgDevIdNotExitsErr)).Msgf("param: %+v", *param)
-	//		response.RespFail(c, i18n.RetMsgDevIdNotExitsErr, nil)
-	//		return
-	//	}
-	//}
 	dataParam := response.LoginClientParam{
-		UserId: user.Id,
-		Token:  service.GenerateTokenByUser(user.Id, service.CommonUserType),
+		UserId: userInfo.Id,
+		Token:  service.GenerateTokenByUser(userInfo.Id, service.CommonUserType),
 	}
 	response.RespOk(c, i18n.RetMsgSuccess, dataParam)
 }
@@ -670,38 +550,8 @@ func GetConfig(c *gin.Context) {
 		return
 	}
 
-	//var sqlWhere string
-	//if param.NodeId > 0 {
-	//	sqlWhere = fmt.Sprintf("id = %d and status = 1", param.NodeId)
-	//} else {
-	//	sqlWhere = "is_recommend = 1 and status = 1"
-	//}
-	//
-	////else if user.Email == "ru100@qq.com" {
-	////	sqlWhere = fmt.Sprintf("status = 1")
-	////} /*else {
-	////	sqlWhere = fmt.Sprintf("id not in (100003) and status = 1")
-	////}*/
-	//
 	uuid := user.V2rayUuid
-	//var list []map[string]interface{}
-	//cols := "id,name,title,title_en,country,country_en,server,port," +
-	//	"min_port as min,max_port as max,path,is_recommend"
-	//errs := global.Db.Where(sqlWhere).
-	//	Table("t_node").
-	//	Cols(cols).
-	//	OrderBy("id desc").
-	//	Find(&list)
-	//if errs != nil {
-	//	global.MyLogger(c).Err(errs).Msgf("数据库链接出错, email: %s", user.Email)
-	//	response.RespFail(c, i18n.RetMsgDBErr, nil)
-	//	return
-	//}
-	//var dnsArray = []string{}
 	var d_proxy = []string{}
-	//var d_data = []string{}
-	//var d_proto = []string{}
-	//i := 0
 	v2rayServs := make([]v2rayConfig.Server, 0)
 	for _, item := range nodeEntities {
 		nodeId := item.Id
@@ -715,19 +565,6 @@ func GetConfig(c *gin.Context) {
 
 		for _, dns := range dnsList {
 			for _, nodePort := range nodePorts {
-				//i = i + 1
-				//mproxy := "\"proxy" + strconv.Itoa(i) + "\""
-
-				//d_proxy = append(d_proxy, mproxy)
-				//m := fmt.Sprintf("{\"tag\": %s,\"protocol\": \"chain\",\"settings\": {\"actors\": [\"tls\",\"ws\",\"trojan%d\"]}}", mproxy, i)
-				//d_data = append(d_data, m)
-				//np := fmt.Sprintf("{\"protocol\": \"trojan\",\"settings\": {\"address\": \"%s\",\"port\": %d,\"password\": \"%s\"},\"tag\": \"trojan%d\"}", dns.Dns, nodePort, uuid, i)
-				//d_proto = append(d_proto, np)
-				//name := fmt.Sprintf("trojan%d", i)
-				//name := "trojan"
-				//retstr := fmt.Sprintf("{\"protocol\": \"trojan\",\"settings\": {\"address\": \"%s\",\"port\": 443,\"password\": \"%s\"},\"tag\": \"%s\"}", dns.Dns, uuid, name)
-
-				//dnsArray = append(dnsArray, retstr)
 				v2rayServs = append(v2rayServs, v2rayConfig.Server{Password: uuid, Port: nodePort, Address: dns.Dns})
 
 				mproxy := fmt.Sprintf("{\"password\": \"%s\",\"port\": %d,\"email\": \"\",\"level\": 0,\"flow\": \"\",\"address\": \"%s\"}", uuid, nodePort, dns.Dns)
@@ -736,73 +573,15 @@ func GetConfig(c *gin.Context) {
 		}
 	}
 	global.MyLogger(c).Info().Msgf(">>>>> d_proxy: %+v", d_proxy)
-	//mystring := "{\"log\":{\"level\":\"{{logLevel}}\",\"output\":\"{{leafLogFile}}\"},\"dns\":{\"servers\":[\"1.1.1.1\",\"8.8.8.8\"],\"hosts\":{\"node2.wuwuwu360.xyz\":[\"107.148.239.239\"]}},\"inbounds\":[{\"protocol\":\"tun\",\"settings\":{\"fd\":\"{{tunFd}}\"},\"tag\":\"tun_in\"}],\"outbounds\":[{\"protocol\":\"failover\",\"tag\":\"failover_out\",\"settings\":{\"actors\":[%s],\"failTimeout\":4,\"healthCheck\":true,\"checkInterval\":300,\"failover\":true,\"fallbackCache\":false,\"cacheSize\":256,\"cacheTimeout\":60}},%s,{\"protocol\":\"tls\",\"tag\":\"tls\",\"settings\":{\"alpn\":[\"http/1.1\"],\"insecure\":true}},{\"protocol\":\"ws\",\"tag\":\"ws\",\"settings\":{\"path\":\"/work\"}},%s,{\"protocol\":\"direct\",\"tag\":\"direct_out\"},{\"protocol\":\"drop\",\"tag\":\"reject_out\"}],\"router\":{\"domainResolve\":true,\"rules\":[{\"external\":[\"site:{{dlcFile}}:cn\"],\"target\":\"direct_out\"},{\"external\":[\"mmdb:{{geoFile}}:cn\"],\"target\":\"direct_out\"},{\"domainKeyword\":[\"apple\",\"icloud\"],\"target\":\"direct_out\"}]}}"
-	//mystring := "{\"routing\":{\"rules\":[{\"type\":\"field\",\"outboundTag\":\"direct\",\"domain\":[\"icloud\",\"apple\",\"geosite:private\",\"geosite:cn\"]},{\"ip\":[\"geoip:private\",\"geoip:cn\"],\"outboundTag\":\"direct\",\"type\":\"field\"}],\"domainMatcher\":\"hybrid\",\"domainStrategy\":\"AsIs\",\"balancers\":[]},\"log\":{\"loglevel\":\"warning\",\"dnsLog\":false},\"outbounds\":[{\"tag\":\"proxy\",\"mux\":{\"enabled\":false,\"concurrency\":50},\"protocol\":\"trojan\",\"streamSettings\":{\"wsSettings\":{\"path\":\"/work\",\"headers\":{\"host\":\"\"}},\"tlsSettings\":{\"alpn\":[\"http/1.1\"],\"allowInsecure\":true,\"fingerprint\":\"\"},\"security\":\"tls\",\"network\":\"ws\"},\"settings\":{\"servers\":[%s]}},{\"tag\":\"direct\",\"protocol\":\"freedom\"},{\"tag\":\"reject\",\"protocol\":\"blackhole\"}]}"
-	//mystring := "{\"routing\":{\"rules\":[{\"type\":\"field\",\"outboundTag\":\"direct\",\"domain\":[\"icloud\",\"apple\",\"geosite:private\"]},{\"ip\":[\"geoip:private\"],\"outboundTag\":\"direct\",\"type\":\"field\"}],\"domainMatcher\":\"hybrid\",\"domainStrategy\":\"AsIs\",\"balancers\":[]},\"log\":{\"loglevel\":\"warning\",\"dnsLog\":false},\"outbounds\":[{\"tag\":\"proxy\",\"mux\":{\"enabled\":false,\"concurrency\":50},\"protocol\":\"trojan\",\"streamSettings\":{\"wsSettings\":{\"path\":\"/work\",\"headers\":{\"host\":\"\"}},\"tlsSettings\":{\"alpn\":[\"http/1.1\"],\"allowInsecure\":true,\"fingerprint\":\"\"},\"security\":\"tls\",\"network\":\"ws\"},\"settings\":{\"servers\":[%s]}},{\"tag\":\"direct\",\"protocol\":\"freedom\"},{\"tag\":\"reject\",\"protocol\":\"blackhole\"}]}"
-	//if user.Email == "ru101@qq.com" {
-	//	mystring = "{\"routing\":{\"rules\":[{\"type\":\"field\",\"outboundTag\":\"proxy\",\"domain\":[\"regexp:.*\"]}],\"domainMatcher\":\"hybrid\",\"domainStrategy\":\"AsIs\",\"balancers\":[]},\"log\":{\"loglevel\":\"warning\",\"dnsLog\":false},\"outbounds\":[{\"tag\":\"proxy\",\"mux\":{\"enabled\":false,\"concurrency\":50},\"protocol\":\"trojan\",\"streamSettings\":{\"wsSettings\":{\"path\":\"/work\",\"headers\":{\"host\":\"\"}},\"tlsSettings\":{\"alpn\":[\"http/1.1\"],\"allowInsecure\":true,\"fingerprint\":\"\"},\"security\":\"tls\",\"network\":\"ws\"},\"settings\":{\"servers\":[%s]}},{\"tag\":\"direct\",\"protocol\":\"freedom\"},{\"tag\":\"reject\",\"protocol\":\"blackhole\"}]}"
-	//}
-	//if user.Email == "test12345@qq.com" {
 	v, err := json.Marshal(v2rayConfig.GenV2rayConfig(c, v2rayServs, nodeEntity.CountryEn, false))
 	if err != nil {
 		global.MyLogger(c).Err(err).Msgf("GenV2rayConfig failed, email: %s", user.Email)
 		response.RespFail(c, i18n.RetMsgDBErr, nil)
 		return
 	}
-	//global.MyLogger(c).Info().Msgf(">>> get_conf 1 >>> user.Email: %s, config: %+v", user.Email, string(v))
-	//global.MyLogger(c).Info().Msgf(">>> get_conf 2 >>> user.Email: %s, config: %+v", user.Email, fmt.Sprintf(mystring, strings.Join(d_proxy, ",")))
 	c.String(http.StatusOK, fmt.Sprintf(string(v)))
-	//} else {
-	//	global.MyLogger(c).Info().Msgf(">>> get_conf >>> user.Email: %s, mystring: %+v", user.Email, mystring)
-	//	c.String(http.StatusOK, fmt.Sprintf(mystring, strings.Join(d_proxy, ",")))
-	//}
-
-	//	d_proxy,d_data,d_proto)
-	//c.String(http.StatusOK, fmt.Sprintf(configs, strings.Join(dnsArray, ",")))
-	/*
-		param := new(request.NoticeListRequest)
-		if err := c.ShouldBind(param); err != nil {
-			global.MyLogger(c).Err(err).Msg("绑定参数")
-			response.RespFail(c, lang.Translate("cn", "fail"), nil)
-			return
-		}
-		session := service.NoticeList(param)
-		count, err := service.NoticeList(param).Count()
-		if err != nil {
-			global.MyLogger(c).Err(err).Msg(i18n.RetMsgDBErr)
-			response.RespFail(c, i18n.RetMsgDBErr)
-			return
-		}
-		cols := "n.id,n.title,n.tag,n.created_at"
-		session.Cols(cols)
-		session.OrderBy("n.id desc")
-		dataList, _ := commonPageListV2(c, param.Page, param.Size, count, session)
-		response.RespOk(c, "成功", dataList)
-		response.RespFail(c, "推荐人ID不正确", nil)
-	*/
-
 }
 func AppInfo(c *gin.Context) {
-	/*
-		host := "http://" + c.Request.Host
-		gateWay := host + "/app-upload"
-		var version model.TAppVersion
-		has, err := global.Db.Where("status = 1 and app_type = 3").OrderBy("id desc").Limit(1).Get(&version)
-		if err != nil || !has {
-			global.MyLogger(c).Err(err).Msg("key不存在！")
-			response.RespFail(c, "失败！")
-			return
-		}
-		type Result struct {
-			Code int    `json:"code"`
-			Msg  string `json:"message"`
-		}
-		c.JSON(http.StatusOK, Result{
-			Code: -1,
-			Msg:  gateWay + version.Link,
-		})
-		return
-	*/
 	disablePayment := geo.IsNeedDisablePaymentFeature(c, "")
 	if disablePayment {
 		response.RespOk(c, "", "")
@@ -839,26 +618,6 @@ func AppInfo(c *gin.Context) {
 }
 
 func PCAppInfo(c *gin.Context) {
-	/*
-		host := "http://" + c.Request.Host
-		gateWay := host + "/app-upload"
-		var version model.TAppVersion
-		has, err := global.Db.Where("status = 1 and app_type = 3").OrderBy("id desc").Limit(1).Get(&version)
-		if err != nil || !has {
-			global.MyLogger(c).Err(err).Msg("key不存在！")
-			response.RespFail(c, "失败！")
-			return
-		}
-		type Result struct {
-			Code int    `json:"code"`
-			Msg  string `json:"message"`
-		}
-		c.JSON(http.StatusOK, Result{
-			Code: -1,
-			Msg:  gateWay + version.Link,
-		})
-		return
-	*/
 	disablePayment := geo.IsNeedDisablePaymentFeature(c, "")
 	if disablePayment {
 		response.RespOk(c, "", "")
@@ -1109,22 +868,6 @@ func DnsList(c *gin.Context) {
 	//用户评级
 	level := 1 //默认1
 	status := 1
-	//token := c.Request.Header.Get("Authorization-Token")
-	//if token != "" {
-	//	claims, err := service.ParseTokenByUser(token, service.CommonUserType)
-	//	if err != nil {
-	//		global.MyLogger(c).Err(err).Msgf("ParseTokenByUser failed, clientId: %s", getClientId(c))
-	//		response.RespFail(c, i18n.RetMsgAuthExpired, nil, response.CodeTokenExpired)
-	//		return
-	//	}
-	//	user, err := service.GetUserByClaims(claims)
-	//	if err != nil {
-	//		global.MyLogger(c).Err(err).Msgf("用户token鉴权失败, claims: %+v, clientId: %s", *claims, getClientId(c))
-	//		response.RespFail(c, i18n.RetMsgAuthFailed, nil, response.CodeTokenExpired)
-	//		return
-	//	}
-	//	level = service.RatingMemberLevel(user)
-	//}
 
 	var list []map[string]interface{}
 	cols := "id,site_type,dns"
@@ -1245,25 +988,10 @@ func UploadLog(c *gin.Context) {
 		response.RespFail(c, i18n.RetMsgAuthFailed, nil, response.CodeTokenExpired)
 		return
 	}
-	devId := c.Request.Header.Get("Dev-Id")
-	var dId int64
-	if devId != "" {
-		dId, err = strconv.ParseInt(devId, 10, 64)
-		if err != nil {
-			global.MyLogger(c).Err(err).Msgf("设备鉴权失败, email: %s", user.Email)
-			response.RespFail(c, i18n.RetMsgDeviceAuthFailed, nil)
-			return
-		}
-		if !service.CheckUserDev(dId, user) {
-			global.MyLogger(c).Err(fmt.Errorf("设备鉴权失败 err:%+v", err)).Msgf("设备鉴权失败, email: %s", user.Email)
-			response.RespFail(c, i18n.RetMsgDeviceAuthFailed, nil)
-			return
-		}
-	}
 
 	log := &model.TUploadLog{
 		UserId:    user.Id,
-		DevId:     dId,
+		DevId:     0,
 		Content:   param.Content,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -1388,7 +1116,7 @@ func BanDev(c *gin.Context) {
 	}
 
 	claims := c.MustGet("claims").(*service.CustomClaims)
-	user, err := service.GetUserByClaims(claims)
+	_, err := service.GetUserByClaims(claims)
 	if err != nil {
 		global.MyLogger(c).Err(err).Msgf("用户token鉴权失败, param: %+v, claims: %+v, clientId: %s",
 			*param, *claims, getClientId(c))
@@ -1396,35 +1124,35 @@ func BanDev(c *gin.Context) {
 		return
 	}
 
-	var record *entity.TUserDev
-	err = dao.TUserDev.Ctx(c).Where(do.TUserDev{
-		UserId: user.Id,
-		DevId:  param.DevId,
-	}).Scan(&record)
-	if err != nil {
-		global.MyLogger(c).Err(err).Msgf("get TUserDev failed, email: %s", user.Email)
-		response.RespFail(c, i18n.RetMsgDBErr, nil)
-		return
-	}
-	if record == nil || record.Status == constant.UserDevBanStatus {
-		response.ResOk(c, i18n.RetMsgSuccess)
-		return
-	}
-	global.MyLogger(c).Debug().Msgf("TUserDev: %+v", *record)
-
-	affect, err := dao.TUserDev.Ctx(c).Data(do.TUserDev{
-		Status:    constant.UserDevBanStatus,
-		UpdatedAt: gtime.Now(),
-	}).Where(do.TUserDev{
-		UserId: user.Id,
-		DevId:  param.DevId,
-	}).UpdateAndGetAffected()
-	if err != nil {
-		global.MyLogger(c).Err(err).Msgf("update userDev failed, email: %s", user.Email)
-		response.RespFail(c, i18n.RetMsgRemoveDevFailed, nil)
-		return
-	}
-	global.MyLogger(c).Debug().Msgf("update TUserDev status affect: %d", affect)
+	//var record *entity.TUserDev
+	//err = dao.TUserDev.Ctx(c).Where(do.TUserDev{
+	//	UserId: user.Id,
+	//	DevId:  param.DevId,
+	//}).Scan(&record)
+	//if err != nil {
+	//	global.MyLogger(c).Err(err).Msgf("get TUserDev failed, email: %s", user.Email)
+	//	response.RespFail(c, i18n.RetMsgDBErr, nil)
+	//	return
+	//}
+	//if record == nil || record.Status == constant.UserDevBanStatus {
+	//	response.ResOk(c, i18n.RetMsgSuccess)
+	//	return
+	//}
+	//global.MyLogger(c).Debug().Msgf("TUserDev: %+v", *record)
+	//
+	//affect, err := dao.TUserDev.Ctx(c).Data(do.TUserDev{
+	//	Status:    constant.UserDevBanStatus,
+	//	UpdatedAt: gtime.Now(),
+	//}).Where(do.TUserDev{
+	//	UserId: user.Id,
+	//	DevId:  param.DevId,
+	//}).UpdateAndGetAffected()
+	//if err != nil {
+	//	global.MyLogger(c).Err(err).Msgf("update userDev failed, email: %s", user.Email)
+	//	response.RespFail(c, i18n.RetMsgRemoveDevFailed, nil)
+	//	return
+	//}
+	//global.MyLogger(c).Debug().Msgf("update TUserDev status affect: %d", affect)
 	response.ResOk(c, i18n.RetMsgSuccess)
 }
 
@@ -1563,20 +1291,6 @@ func Connect(c *gin.Context) {
 	return
 }
 
-func CLoseConnect(c *gin.Context) {
-
-}
-
-func getDevIdFromHeader(c *gin.Context) int64 {
-	devId := c.Request.Header.Get("Dev-Id")
-	devIdInt, err := strconv.ParseInt(devId, 10, 64)
-	if err != nil {
-		global.MyLogger(c).Err(err).Msg("参数DevId错误")
-		return 0
-	}
-	return devIdInt
-}
-
 // ChangeNetwork 切换节点工作
 func ChangeNetwork(c *gin.Context) {
 	param := new(request.ChangeNetworkRequest)
@@ -1597,18 +1311,8 @@ func ChangeNetwork(c *gin.Context) {
 		response.RespFail(c, i18n.RetMsgAuthFailed, nil, response.CodeTokenExpired)
 		return
 	}
-	devId := c.Request.Header.Get("Dev-Id")
-	dId, err := strconv.ParseInt(devId, 10, 64)
-	if err != nil {
-		global.MyLogger(c).Err(err).Msgf("设备鉴权失败, email: %s", user.Email)
-		response.RespFail(c, i18n.RetMsgDeviceAuthFailed, nil)
-		return
-	}
-	if !service.CheckUserDev(int64(dId), user) {
-		global.MyLogger(c).Error().Msgf("设备鉴权失败, email: %s", user.Email)
-		response.RespFail(c, i18n.RetMsgDeviceAuthFailed, nil)
-		return
-	}
+	devId := ""
+	dId := 0
 
 	//判断VIP级别是否满足，并远程添加UUID
 
@@ -1744,45 +1448,9 @@ func JWTAuth() gin.HandlerFunc {
 			return
 		}
 		service.UpdateLoginInfo(c, claims.UserId)
-		err = service.AddLog(c, claims.UserId)
-		if err != nil {
-			global.MyLogger(c).Err(err).Msgf("AddLog failed, clientId: %s, userId: %d", getClientId(c), claims.UserId)
-			c.JSON(http.StatusOK, gin.H{
-				"code":    100,
-				"message": i18n.I18nTrans(c, i18n.RetMsgDevIdInvalid),
-			})
-			c.Abort()
-			return
-		}
-
-		//devId := c.Request.Header.Get("Dev-Id")
-		//if devId != "" {
-		//	var userDev model.TUserDev
-		//	has, err := global.Db.Where("user_id = ? and dev_id = ? and status = 2 ", claims.UserId, devId).Get(&userDev)
-		//	if err != nil {
-		//		global.MyLogger(c).Err(err).Msgf("get TUserDev failed, clientId: %s, userId: %d", getClientId(c), claims.UserId)
-		//		c.JSON(http.StatusOK, gin.H{
-		//			"code":    100,
-		//			"message": i18n.I18nTrans(c, i18n.RetMsgDevIdInvalid),
-		//		})
-		//		c.Abort()
-		//		return
-		//	}
-		//	if has {
-		//		global.MyLogger(c).Err(err).Msgf("授权已过期, clientId: %s, userId: %d, devId: %s", getClientId(c), claims.UserId, devId)
-		//		c.JSON(http.StatusOK, gin.H{
-		//			"code":    301,
-		//			"message": i18n.I18nTrans(c, i18n.RetMsgAuthExpired),
-		//		})
-		//		c.Abort()
-		//		return
-		//	}
-		//
-		//}
 		common.SaveDeviceID(c, claims.UserId)
 		c.Set("claims", claims)
 		//uu := c.MustGet("claims").(*service.CustomClaims)
-		//fmt.Println("claims...", uu.UserId)
 	}
 }
 

@@ -224,8 +224,8 @@ func RateMiddleware(limiter *Limiter) gin.HandlerFunc {
 			events = 200
 		}
 		if !limiter.Allow(c.ClientIP(), events, 2*time.Second) {
-			global.MyLogger(c).Error().Msgf("######### >>>>>>>> too many requests, Headers: %s",
-				global.SprintAllHeader(c))
+			global.MyLogger(c).Error().Msgf("######### >>>>>>>> %s too many requests, Headers: %s",
+				c.ClientIP(), global.SprintAllHeader(c))
 			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{
 				"code":    100,
 				"message": "too many requests",

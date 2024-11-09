@@ -6,14 +6,20 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	ErrLabelDB     = "[err-label][database]"
+	ErrLabelParams = "[err-label][input-params][invalid]"
+	ErrLabelHeader = "[err-label][header-key][empty]"
+)
+
 func I18nTrans(c *gin.Context, msg string) string {
 	lang := c.GetHeader("Lang")
 	if lang == "rus" {
 		lang = "ru"
 	}
 	claims, claimsExist := c.Get("claims")
-	global.MyLogger(c).Warn().Msgf("I18nTransPrintError: lang: %s, msg: %s, Client-Id: %+v, Dev-Id: %+v, claims: %+v, claimsExist: %+v",
-		lang, msg, c.GetHeader("Client-Id"), c.GetHeader("Dev-Id"), claims, claimsExist)
+	global.MyLogger(c).Warn().Msgf("I18nTransPrintError: lang: %s, msg: %s, Client-Id: %+v, claims: %+v, claimsExist: %+v",
+		lang, msg, c.GetHeader("Client-Id"), claims, claimsExist)
 	m, ok := ReturnMsgMap[msg]
 	if !ok {
 		return unknownError(lang)

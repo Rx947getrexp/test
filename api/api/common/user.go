@@ -58,23 +58,23 @@ func GetUserByEmail(ctx *gin.Context, email string) (userEntity *entity.TUser, e
 	return userEntity, nil
 }
 
-func CheckDevId(ctx *gin.Context, devId string) (devEntity *entity.TDev, err error) {
-	err = dao.TDev.Ctx(ctx).Where(do.TDev{
-		Id: devId,
-	}).Scan(&devEntity)
-	if err != nil {
-		global.MyLogger(ctx).Err(err).Msgf("devId %d 查询db失败", devId)
-		response.RespFail(ctx, i18n.RetMsgDBErr, nil)
-		return
-	}
-	if devEntity == nil {
-		err = fmt.Errorf("%s", i18n.RetMsgDevIdNotExitsErr)
-		global.MyLogger(ctx).Err(err).Msgf("devId %d 无效", devId)
-		response.RespFail(ctx, i18n.RetMsgDevIdNotExitsErr, nil)
-		return
-	}
-	return
-}
+//func CheckDevId(ctx *gin.Context, devId string) (devEntity *entity.TDev, err error) {
+//	err = dao.TDev.Ctx(ctx).Where(do.TDev{
+//		Id: devId,
+//	}).Scan(&devEntity)
+//	if err != nil {
+//		global.MyLogger(ctx).Err(err).Msgf("devId %d 查询db失败", devId)
+//		response.RespFail(ctx, i18n.RetMsgDBErr, nil)
+//		return
+//	}
+//	if devEntity == nil {
+//		err = fmt.Errorf("%s", i18n.RetMsgDevIdNotExitsErr)
+//		global.MyLogger(ctx).Err(err).Msgf("devId %d 无效", devId)
+//		response.RespFail(ctx, i18n.RetMsgDevIdNotExitsErr, nil)
+//		return
+//	}
+//	return
+//}
 
 func SaveDeviceID(ctx *gin.Context, uid int64) {
 	deviceID := global.GetClientId(ctx)
@@ -82,23 +82,38 @@ func SaveDeviceID(ctx *gin.Context, uid int64) {
 		global.MyLogger(ctx).Warn().Msgf("deviceID is empty, userId: %d", uid)
 		return
 	}
+
+	var row *entity.TUserDevice
+	err := dao.TUserDevice.Ctx(ctx).Where(do.TUserDevice{
+		UserId:   uid,
+		ClientId: deviceID,
+	}).Scan(&row)
+	if err != nil {
+		global.MyLogger(ctx).Err(err).Msgf("%s get TUserDevice failed, [%d]", i18n.ErrLabelDB, uid)
+		return
+	}
+	if row != nil {
+		return
+	}
+
 	userAgent := global.GetUserAgent(ctx)
 	ua := user_agent.New(userAgent)
 	os := ua.OS()
 	if os == "" {
 		os = userAgent
 	}
-
-	lastInsertId, err := dao.TUserDevice.Ctx(ctx).Data(do.TUserDevice{
+	var lastId int64
+	lastId, err = dao.TUserDevice.Ctx(ctx).Data(do.TUserDevice{
 		UserId:    uid,
 		ClientId:  deviceID,
 		Os:        os,
 		CreatedAt: gtime.Now(),
-	}).InsertIgnore()
+		UpdatedAt: gtime.NewFromStr("2020-01-01 00:00:00"),
+	}).InsertAndGetId()
 	if err != nil {
-		global.MyLogger(ctx).Err(err).Msgf("add TUserDevice failed")
+		global.MyLogger(ctx).Err(err).Msgf("%s add TUserDevice failed. [%d]", i18n.ErrLabelDB, uid)
 		return
 	}
-	global.MyLogger(ctx).Debug().Msgf("add TUserDevice success, lastInsertId: %d", lastInsertId)
+	global.MyLogger(ctx).Debug().Msgf("add TUserDevice success, lastId: %d, uid: %d, ClientId: %s", lastId, uid, deviceID)
 	return
 }

@@ -17,4 +17,5 @@ type TUserDevice struct {
 	ClientId  interface{} //
 	Os        interface{} // 客户端设备系统os
 	CreatedAt *gtime.Time // 创建时间
+	UpdatedAt *gtime.Time // 更新时间
 }
