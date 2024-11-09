@@ -1,6 +1,6 @@
 import sys
 import logging
-# import fcntl
+import fcntl
 import traceback
 from logging.handlers import RotatingFileHandler
 from util import get_previous_days
@@ -196,25 +196,24 @@ def process_daily_data(start_day):
         # 移动到下一天
         current_day += timedelta(days=1)
 if __name__ == '__main__':
-    start_day = get_previous_days(15)  # 获取当前日期的前两天
-    process_daily_data(start_day)
-    # lock_file = f"/tmp/{TASK_NAME}.lock"
-    # fp = open(lock_file, "w")
-    # try:
-    #     fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    # except IOError:
-    #     logging.error(f"已经有一个 {TASK_NAME} 进程在运行，本进程将退出")
-    #     sys.exit(1)
+    lock_file = f"/tmp/{TASK_NAME}.lock"
+    fp = open(lock_file, "w")
+    try:
+        fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except IOError:
+        logging.error(f"已经有一个 {TASK_NAME} 进程在运行，本进程将退出")
+        sys.exit(1)
 
-    # init_logging(f"/shell/report/log/{TASK_NAME}.log")
-    # logging.info(f"\n\n\n start {TASK_NAME}")
-    # try:
-    #     process_daily_data(start_day)
-    # except Exception as e:
-    #     logging.error(f"捕获到异常：{type(e).__name__}")
-    #     logging.error(f"异常信息：{str(e)}")
-    #     logging.error(traceback.format_exc())
-    # finally:
-    #     fp.close()
+    init_logging(f"/shell/report/log/{TASK_NAME}.log")
+    logging.info(f"\n\n\n start {TASK_NAME}")
+    try:
+        start_day = get_previous_days(15)  # 获取当前日期的前两天
+        process_daily_data(start_day)
+    except Exception as e:
+        logging.error(f"捕获到异常：{type(e).__name__}")
+        logging.error(f"异常信息：{str(e)}")
+        logging.error(traceback.format_exc())
+    finally:
+        fp.close()
 
-    # logging.info(f"end {TASK_NAME}")
+    logging.info(f"end {TASK_NAME}")
