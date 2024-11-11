@@ -316,7 +316,7 @@ class ReportUser:
             device = row["device"]
             total_cnt = self.db_speed_conn.count_total_device_user(device, self.end_time)
             new_cnt = self.db_speed_conn.count_device_user_by_create_time(device, self.start_time, self.end_time)
-            retained_cnt = self.db_speed_conn.count_device_user_online(device, self.date, self.end_time)
+            retained_cnt = self.db_speed_conn.count_device_user_online(device, self.date, self.start_time, self.end_time)
             equipped_total_cnt += total_cnt
             equipped_new_cnt += new_cnt
             equipped_retained_cnt += retained_cnt

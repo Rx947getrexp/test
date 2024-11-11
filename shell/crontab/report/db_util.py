@@ -330,7 +330,7 @@ class Speed:
         return total_recharge
 
     def query_device_list(self, et):
-        sql = """select distinct os as device from speed.t_dev where created_at <= '%s';""" % et
+        sql = """select distinct os as device from speed.t_user_device where created_at <= '%s';""" % et
         rows = mysql_query_db(self.conn, sql)
         return rows
 
@@ -351,9 +351,9 @@ class Speed:
             sys.exit(1)
         return rows[0]["cnt"]
 
-    def count_device_user_online(self, device, date, st,et):
+    def count_device_user_online(self, device, date, st, et):
         sql = """select count(distinct email) as cnt from speed_collector.t_v2ray_user_traffic where date = '%s' and email in (SELECT u.email FROM speed.t_user u JOIN speed.t_user_device d ON u.id = d.user_id WHERE d.os= '%s' AND u.created_at >= '%s' and u.created_at <= '%s');""" % (
-            date.replace("-", ""), device, st,et)
+            date.replace("-", ""), device, st, et)
         rows = mysql_query_db(self.conn, sql)
         if len(rows) != 1:
             logging.error("sql: %s, rows: %d != 1" % (sql, len(rows)))
@@ -798,7 +798,6 @@ class SpeedReport:
 
     def insert_into_report_monthly(self, stat_month, os, user_count, new_users, retained_users):
         stat_month_date = int(stat_month.replace('-', ''))
-        print(stat_month, os, user_count, new_users, retained_users)
         sql = """INSERT INTO t_user_report_monthly (stat_month, os, user_count, new_users, retained_users) VALUES (%s, '%s', %s, %s, %s);""" % (stat_month_date, os, user_count, new_users, retained_users)
         mysql_execute(self.conn, sql)
 
