@@ -95,8 +95,7 @@ class Speed:
 
     def count_user_online(self, channel_id, date, st, et):
         # sql = """select count(distinct email) as cnt from speed_collector.t_v2ray_user_traffic where date = '%s' and email in (select email from speed.t_user where channel_id='%d' and created_at <= '%s');""" % (date.replace("-", ""), channel_id, et)
-        sql = """SELECT COUNT(DISTINCT email) as cnt FROM (SELECT email FROM (SELECT email FROM speed_report.t_user_op_log WHERE (content LIKE '%点击连接%' OR content LIKE '%开始连接%') AND created_at >= '{}' AND result = 'success' AND created_at <= '{}' AND email IN (SELECT email FROM speed.t_user) UNION SELECT email FROM speed_collector.t_v2ray_user_traffic WHERE date = '{}' AND email IN (SELECT email FROM speed.t_user WHERE channel_id = {} AND created_at <= '{}')) AS combined_results) AS distinct_emails;""".format(
-            st, et, date.replace("-", ""), channel_id, et)
+        sql = """SELECT COUNT(DISTINCT email) as cnt FROM (SELECT email FROM (SELECT email FROM speed_report.t_user_op_log WHERE (content LIKE '%点击连接%' OR content LIKE '%开始连接%') AND created_at >= '{}' AND result = 'success' AND created_at <= '{}' AND email IN (SELECT email FROM speed.t_user) UNION SELECT email FROM speed_collector.t_v2ray_user_traffic WHERE date = '{}' AND email IN (SELECT email FROM speed.t_user WHERE channel_id = {} AND created_at <= '{}')) AS combined_results) AS distinct_emails;""".format(st, et, date.replace("-", ""), channel_id, et)
         rows = mysql_query_db(self.conn, sql)
         if len(rows) != 1:
             logging.error("sql: %s, rows: %d != 1" % (sql, len(rows)))
@@ -657,8 +656,7 @@ class SpeedReport:
                       "delete from speed_report.t_user_node_online_day where date=%s" % date.replace("-", ""))
         for item in items:
             ip_name = self.data_name.get(item["node"])
-            sql = """insert into speed_report.t_user_node_online_day set date='{}',email='{}',channel='{}',online_duration={},uplink={},downlink={},node='{}',register_date='{}',created_at=now();""".format(
-                date.replace("-", ""), item["email"], item["channel"], item["online_duration"], item["uplink"],
+            sql = """insert into speed_report.t_user_node_online_day set date='{}',email='{}',channel='{}',online_duration={},uplink={},downlink={},node='{}',register_date='{}',created_at=now();""".format(date.replace("-", ""), item["email"], item["channel"], item["online_duration"], item["uplink"],
                 item["downlink"], ip_name, item["register_date"])
             mysql_execute(self.conn, sql)
 
