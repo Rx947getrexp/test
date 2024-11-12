@@ -7,7 +7,7 @@ import db_util
 import util
 
 class ReportUser:
-    def __init__(self, date, start_time, end_time,month_start_time):
+    def __init__(self, date, start_time, end_time, month_start_time):
         logging.info("---> (%s) (%s) (%s) (%s)" % (date, start_time, end_time, month_start_time))
         self.date = date
         self.start_time = start_time
@@ -29,19 +29,23 @@ class ReportUser:
             self.device_recharge_behavior()
             self.device_recharges()
             self.report_daily_channel_recharge_by_month()
-            ##self.report_device_retaind() #旧的统计7日，15日留存
+            # self.report_device_retaind() #旧的统计7日，15日留存
             self.report_online_user()
-            self.report_daily_device_retaind() #新的按设备统计次日，7日，15日留存
-            self.report_monthly_device_retaind() #新的按设备统计次月留存
+            self.report_daily_device_retaind()  # 新的按设备统计次日，7日，15日留存
+            self.report_monthly_device_retaind()  # 新的按设备统计次月留存
         self.db_speed_conn.close_connection()
         self.db_report_conn.close_connection()
         self.db_collector_conn.close_connection()
 
     def check_collector(self):
         logging.info("*" * 20 + sys._getframe().f_code.co_name + "*" * 20)
-        while not self.db_collector_conn.check_task(self.date):
+        flag = self.db_collector_conn.check_task(self.date)
+        while not flag:
+            self.db_collector_conn.close_connection()
+            self.db_collector_conn = db_util.SpeedCollector()
+            flag = self.db_collector_conn.check_task(self.date)
             time.sleep(600)
-        return True  # 当检查到任务完成后返回 True
+        return True
 
     def report_daily_user_recharge(self):
         logging.info("*" * 20 + sys._getframe().f_code.co_name + "*" * 20)
@@ -54,7 +58,8 @@ class ReportUser:
             """ 套餐充值人数总量 """
             data[goods_id]["total_cnt"] = self.db_speed_conn.count_total_user_recharge(goods_id, self.end_time)
             """ 套餐新增用户数量 """
-            data[goods_id]["new_cnt"] = self.db_speed_conn.count_user_recharge_by_create_time(goods_id, self.start_time,self.end_time)
+            data[goods_id]["new_cnt"] = self.db_speed_conn.count_user_recharge_by_create_time(goods_id, self.start_time,
+                                                                                              self.end_time)
 
         self.db_report_conn.insert_daily_user_recharge(self.date, data)
 
@@ -67,7 +72,9 @@ class ReportUser:
             goods_id = row["id"]
             data[goods_id] = {}
             data[goods_id]["total_cnt"] = self.db_speed_conn.count_total_user_recharge_times(goods_id, self.end_time)
-            data[goods_id]["new_cnt"] = self.db_speed_conn.count_user_recharge_times_by_create_time(goods_id,self.start_time,self.end_time)
+            data[goods_id]["new_cnt"] = self.db_speed_conn.count_user_recharge_times_by_create_time(goods_id,
+                                                                                                    self.start_time,
+                                                                                                    self.end_time)
 
         self.db_report_conn.insert_daily_user_recharge_times(self.date, data)
 
@@ -88,10 +95,13 @@ class ReportUser:
                 for currencies in currency_list:
                     currency = currencies["currency"]
                     """按渠道套餐充值总次数"""
-                    total_cnt = self.db_speed_conn.count_recharge_total_channel_user(channel,goods_id,currency,self.end_time)
+                    total_cnt = self.db_speed_conn.count_recharge_total_channel_user(channel, goods_id, currency,
+                                                                                     self.end_time)
                     """按渠道套餐新增次数"""
-                    new_cnt = self.db_speed_conn.count_recharge_channel_user_by_create_time(channel, goods_id, currency,self.start_time,self.end_time)
-                    data[channel][goods_id][currency] = {"total_cnt": total_cnt,"new_cnt": new_cnt}
+                    new_cnt = self.db_speed_conn.count_recharge_channel_user_by_create_time(channel, goods_id, currency,
+                                                                                            self.start_time,
+                                                                                            self.end_time)
+                    data[channel][goods_id][currency] = {"total_cnt": total_cnt, "new_cnt": new_cnt}
 
         self.db_report_conn.insert_daily_channel_user_recharge(self.date, data)
 
@@ -108,7 +118,7 @@ class ReportUser:
             """ 新增用户数量 """
             data[ip]["new_cnt"] = self.db_speed_conn.count_node_by_create_time(ip, self.start_time, self.end_time)
             """ 节点使用留存 """
-            data[ip]["retained_cnt"] = self.db_speed_conn.count_node_online(ip, self.date,self.end_time)
+            data[ip]["retained_cnt"] = self.db_speed_conn.count_node_online(ip, self.date, self.end_time)
 
         self.db_report_conn.insert_daily_node(self.date, data)
 
@@ -126,11 +136,15 @@ class ReportUser:
             """ 用户总量 """
             data[channel_id]["total_cnt"] = self.db_speed_conn.count_total_user(channel_id, self.end_time)
             """ 新增用户数量 """
-            data[channel_id]["new_cnt"] = self.db_speed_conn.count_user_by_create_time(channel_id, self.start_time,self.end_time)
+            data[channel_id]["new_cnt"] = self.db_speed_conn.count_user_by_create_time(channel_id, self.start_time,
+                                                                                       self.end_time)
             """ 留存用户数量 """
-            data[channel_id]["retained_cnt"] = self.db_speed_conn.count_user_online(channel_id, self.date,self.start_time,self.end_time)
+            data[channel_id]["retained_cnt"] = self.db_speed_conn.count_user_online(channel_id, self.date,
+                                                                                    self.start_time, self.end_time)
             """月留存用户数量 """
-            data[channel_id]["month_retained_cnt"] = self.db_speed_conn.count_user_month_online(channel_id,self.month_start_time,self.end_time)
+            data[channel_id]["month_retained_cnt"] = self.db_speed_conn.count_user_month_online(channel_id,
+                                                                                                self.month_start_time,
+                                                                                                self.end_time)
         self.db_report_conn.insert_daily_user(self.date, data)
 
     def report_daily_channel_user(self):
@@ -146,10 +160,12 @@ class ReportUser:
             data[channel]["total_cnt"] = self.db_speed_conn.count_total_channel_user(channel, self.end_time)
 
             """新增推广渠道用户数量"""
-            data[channel]["new_cnt"] = self.db_speed_conn.count_channel_user_by_create_time(channel, self.start_time,self.end_time)
+            data[channel]["new_cnt"] = self.db_speed_conn.count_channel_user_by_create_time(channel, self.start_time,
+                                                                                            self.end_time)
 
             """推广渠道用户留存"""
-            data[channel]["retained_cnt"] = self.db_speed_conn.count_channel_user_online(channel, self.date,self.start_time,self.end_time)
+            data[channel]["retained_cnt"] = self.db_speed_conn.count_channel_user_online(channel, self.date,
+                                                                                         self.start_time, self.end_time)
 
             """ 充值总人数 """
             data[channel]["total_recharge"] = self.db_speed_conn.count_total_number_of_recharges(channel, self.end_time)
@@ -159,7 +175,9 @@ class ReportUser:
             data[channel]["total_recharge_amount"] = total_recharge_amount
 
             """ 新增充值金额 """
-            new_recharge_amount = self.db_speed_conn.count_total_recharge_amount_by_create_time(channel,self.start_time,self.end_time)
+            new_recharge_amount = self.db_speed_conn.count_total_recharge_amount_by_create_time(channel,
+                                                                                                self.start_time,
+                                                                                                self.end_time)
             data[channel]["new_recharge_amount"] = new_recharge_amount
 
         self.db_report_conn.insert_daily_channel_user(self.date, data)
@@ -302,7 +320,8 @@ class ReportUser:
         # 获取设备汇总数据: 总充值次数、总充值金额、新充值金额
         total_recharge = self.db_speed_conn.count_total_number_of_device_recharges(self.end_time)
         total_recharge_amount = self.db_speed_conn.count_total_device_recharge_amount(self.end_time)
-        new_recharge_amount = self.db_speed_conn.count_total_device_recharge_amount_by_create_time(self.start_time,self.end_time)
+        new_recharge_amount = self.db_speed_conn.count_total_device_recharge_amount_by_create_time(self.start_time,
+                                                                                                   self.end_time)
         for device in set(total_recharge) | set(total_recharge_amount) | set(new_recharge_amount):
             data[device] = {
                 "total_recharge": total_recharge.get(device, 0),
@@ -340,17 +359,25 @@ class ReportUser:
             """用户总量"""
             data[channel]["total_cnt"] = self.db_speed_conn.count_total_channel_user(channel, self.end_time)
             """月用户总量"""
-            data[channel]["month_retained_cnt"] = self.db_speed_conn.count_channel_user_by_create_time(channel,self.month_start_time,self.end_time)
+            data[channel]["month_retained_cnt"] = self.db_speed_conn.count_channel_user_by_create_time(channel,
+                                                                                                       self.month_start_time,
+                                                                                                       self.end_time)
             """月用户新增"""
-            data[channel]["month_new_cnt"] = self.db_speed_conn.count_channel_user_by_month(channel,self.month_start_time,self.end_time)
+            data[channel]["month_new_cnt"] = self.db_speed_conn.count_channel_user_by_month(channel,
+                                                                                            self.month_start_time,
+                                                                                            self.end_time)
             """总充值人数"""
-            data[channel]["total_recharge_cnt"] = self.db_speed_conn.count_total_number_of_recharges(channel, self.end_time)
+            data[channel]["total_recharge_cnt"] = self.db_speed_conn.count_total_number_of_recharges(channel,
+                                                                                                     self.end_time)
             """总充值金额"""
-            data[channel]["total_recharge_money_cnt"] = self.db_speed_conn.count_total_recharge_amount(channel, self.end_time)
+            data[channel]["total_recharge_money_cnt"] = self.db_speed_conn.count_total_recharge_amount(channel,
+                                                                                                       self.end_time)
             """月充值人数"""
-            data[channel]["month_recharge_cnt"] = self.db_speed_conn.count_total_number_of_recharges_by_create_time(channel, self.month_start_time,self.end_time)
+            data[channel]["month_recharge_cnt"] = self.db_speed_conn.count_total_number_of_recharges_by_create_time(
+                channel, self.month_start_time, self.end_time)
             """月充值金额"""
-            data[channel]["month_recharge_money_cnt"] = self.db_speed_conn.count_total_recharge_amount_by_create_time(channel, self.month_start_time,self.end_time)
+            data[channel]["month_recharge_money_cnt"] = self.db_speed_conn.count_total_recharge_amount_by_create_time(
+                channel, self.month_start_time, self.end_time)
         self.db_report_conn.insert_daily_channel_recharge_by_month(self.date, data)
 
     def report_device_retaind(self):
@@ -367,11 +394,14 @@ class ReportUser:
             # 获取新增用户数量
             new_cnt = self.db_speed_conn.count_device_user_by_create_time(device, self.start_time, self.end_time)
             # 获取次日留存
-            retained_cnt = self.db_speed_conn.count_device_user_online(device, self.date, self.start_time,self.end_time)
+            retained_cnt = self.db_speed_conn.count_device_user_online(device, self.date, self.start_time,
+                                                                       self.end_time)
             # 获取7日留存
-            day7_retained = self.db_speed_conn.count_device_retained(device, day7_date.strftime('%Y-%m-%d'),day7_start_time,self.end_time)
+            day7_retained = self.db_speed_conn.count_device_retained(device, day7_date.strftime('%Y-%m-%d'),
+                                                                     day7_start_time, self.end_time)
             # 获取15日留存
-            day15_retained = self.db_speed_conn.count_device_retained(device, day15_date.strftime('%Y-%m-%d'),day15_start_time,self.end_time)
+            day15_retained = self.db_speed_conn.count_device_retained(device, day15_date.strftime('%Y-%m-%d'),
+                                                                      day15_start_time, self.end_time)
             if device not in data:
                 data[device] = {}
             data[device].update({
@@ -391,7 +421,6 @@ class ReportUser:
 
         while current_day.strftime('%Y-%m-%d') <= end_day:
             day_str = current_day.strftime('%Y-%m-%d')
-            
             # 获取新用户统计信息
             new_users_results = self.db_speed_conn.query_registered_users_by_day(day_str)
 
@@ -401,13 +430,13 @@ class ReportUser:
            
             # 新用户按设备类型分组
             new_users_by_os = {os_type: 0 for os_type in util.os_types}
-            
+
             for row in new_users_results:
                 _, email, _ = row
                 original_os = registered_device_emails.get(email, 'Others')
                 categorized_os = util.categorize_os(original_os)
                 new_users_by_os[categorized_os] += 1
-            
+
             # 计算次日留存用户数
             next_day_retention_by_os = self.db_speed_conn.query_retention_of_next_days(day_str, 1)
             
@@ -420,22 +449,26 @@ class ReportUser:
             # 处理results并插入到t_user_device_retention数据表中
             if new_users_results:
                 stat_day = new_users_results[0][0]
+
                 #user_count = sum([row[2] for row in registered_results])
             else:
                 stat_day = day_str
                 #user_count = 0
+
             for os in util.os_types:
                 total_new_users = new_users_by_os.get(os, 0)
                 next_day_retention_count = len(next_day_retention_by_os.get(os, set()))
                 seven_days_retention_count = len(seven_days_retention_by_os.get(os, set()))
                 fifteen_days_retention_count = len(fifteen_days_retention_by_os.get(os, set()))
                 self.db_report_conn.insert_or_update_daily_device_report(stat_day, os, total_new_users, next_day_retention_count, seven_days_retention_count, fifteen_days_retention_count,)
+
             # 移动到下一天
             current_day += timedelta(days=1)
 
     def report_monthly_device_retaind(self):
         logging.info(f"{'*' * 20}{sys._getframe().f_code.co_name}{'*' * 20}")
         start_month = util.get_previous_months(2) #获取当前月份的前几个月
+
         current_month = datetime.strptime(start_month, '%Y-%m')
         end_month = datetime.now().strftime('%Y-%m')  # 终止于当前月份
 
@@ -451,7 +484,7 @@ class ReportUser:
             new_users_results = self.db_speed_conn.get_new_users_in_month(month_str)
             # 新用户按设备类型分组
             new_users_by_os = {os_type: 0 for os_type in util.os_types}
-            
+
             for row in new_users_results:
                 original_os, email, new_users = row
                 categorized_os = util.categorize_os(original_os)
@@ -461,6 +494,7 @@ class ReportUser:
             retained_users_by_os = self.db_speed_conn.calculate_retention_of_next_month(month_str)
 
              # 处理results并插入到t_user_report_monthly中
+
             if registered_results:
                 stat_month = registered_results[0][0]  # 获取正确的stat_month
                 user_count = sum([row[2] for row in registered_results])  # 计算总用户数
@@ -476,7 +510,7 @@ class ReportUser:
                 # total_device_count = device_os_counts.get(os, 0)
                 retained_users_count = len(retained_users_by_os.get(os, set()))
                 self.db_report_conn.insert_into_report_monthly(stat_month, os, user_count, total_new_users, retained_users_count)
-            
+
             # 移动到下一个月
             current_month += timedelta(days=32)
             current_month = current_month.replace(day=1)
