@@ -822,7 +822,8 @@ class SpeedReport:
         new = VALUES(new),
         retained = VALUES(retained),
         day7_retained = VALUES(day7_retained),
-        day15_retained = VALUES(day15_retained);
+        day15_retained = VALUES(day15_retained),
+        created_at = VALUES(created_at);
         """ % (date, device, new, retained, day7_retained, day15_retained, current_time)
         mysql_execute(self.conn, sql)
 
