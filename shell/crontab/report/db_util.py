@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
+from datetime import datetime, timedelta
 import logging
 import sys
-
 import pymysql
-
 from common import load_config
+import util
 
 
 def mysql_connect(db):
     """连接DB"""
-    return pymysql.connect(host=db["host"], port=db["port"], user=db["user"], passwd=db["pswd"], db=db["db"],charset=db["charset"])
+    return pymysql.connect(host=db["host"], port=db["port"], user=db["user"], passwd=db["pswd"], db=db["db"],
+                           charset=db["charset"])
 
 
 def mysql_query_db(_conn, sql):
@@ -38,7 +39,7 @@ class Speed:
         self.conn = mysql_connect(self.config["speed-db"])
         self.exchange_rate_usd = 90.23  # usdt汇率 1u=90.23rub
         self.exchange_rate_wmz = 65  # wmz汇率 1u=65rub
-        self.country = "193.233.48.70", "46.17.41.7", "45.147.201.21", "45.147.200.112", "46.17.44.132", "92.118.112.89", "38.55.136.95", "207.90.237.91", "91.149.218.194", "62.133.60.81", "62.133.63.237", "213.159.68.106", "103.198.203.11", "110.42.42.229", "185.39.207.20", "92.118.112.133", "212.18.104.23", "147.45.178.51", "185.39.207.104", "193.124.41.88"
+        self.country = "193.233.48.70", "46.17.41.7", "45.147.201.21", "45.147.200.112", "46.17.44.132", "92.118.112.89", "5.181.3.143", "207.90.237.91", "91.149.218.194", "62.133.60.81", "62.133.63.237", "213.159.68.106", "103.198.203.11", "110.42.42.229", "185.39.207.20", "92.118.112.133", "212.18.104.23", "147.45.178.51", "185.39.207.104", "193.124.41.88"
 
     def close_connection(self):
         if self.conn:
@@ -95,17 +96,20 @@ class Speed:
             sys.exit(1)
         return rows[0]["cnt"]
 
-    def count_user_online(self, channel_id, date,st, et):
+    def count_user_online(self, channel_id, date, st, et):
         # sql = """select count(distinct email) as cnt from speed_collector.t_v2ray_user_traffic where date = '%s' and email in (select email from speed.t_user where channel_id='%d' and created_at <= '%s');""" % (date.replace("-", ""), channel_id, et)
-        sql = """SELECT COUNT(DISTINCT email) as cnt FROM (SELECT email FROM (SELECT email FROM speed_report.t_user_op_log WHERE (content LIKE '%点击连接%' OR content LIKE '%开始连接%') AND created_at >= '{}' AND result = 'success' AND created_at <= '{}' AND email IN (SELECT email FROM speed.t_user) UNION SELECT email FROM speed_collector.t_v2ray_user_traffic WHERE date = '{}' AND email IN (SELECT email FROM speed.t_user WHERE channel_id = {} AND created_at <= '{}')) AS combined_results) AS distinct_emails;""".format(st, et, date.replace("-", ""), channel_id, et)
+        sql = """SELECT COUNT(DISTINCT email) as cnt FROM (SELECT email FROM (SELECT email FROM speed_report.t_user_op_log WHERE (content LIKE '%点击连接%' OR content LIKE '%开始连接%') AND created_at >= '{}' AND result = 'success' AND created_at <= '{}' AND email IN (SELECT email FROM speed.t_user) UNION SELECT email FROM speed_collector.t_v2ray_user_traffic WHERE date = '{}' AND email IN (SELECT email FROM speed.t_user WHERE channel_id = {} AND created_at <= '{}')) AS combined_results) AS distinct_emails;""".format(
+            st, et, date.replace("-", ""), channel_id, et)
         rows = mysql_query_db(self.conn, sql)
         if len(rows) != 1:
             logging.error("sql: %s, rows: %d != 1" % (sql, len(rows)))
             sys.exit(1)
         return rows[0]["cnt"]
+
     def count_user_month_online(self, channel_id, st, et):
         # sql = """select count(distinct email) as cnt from speed_collector.t_v2ray_user_traffic where email in (select email from speed.t_user where channel_id='%d' and created_at <= '%s') and created_at >= '%s' and created_at <= '%s';""" % (channel_id,et, st, et)
-        sql = """SELECT COUNT(DISTINCT email) as cnt FROM (SELECT email FROM (SELECT email FROM speed_report.t_user_op_log WHERE (content LIKE '%点击连接%' OR content LIKE '%开始连接%') AND created_at >= '{}' AND result = 'success' AND created_at <= '{}' AND email IN (SELECT email FROM speed.t_user) UNION SELECT email FROM speed_collector.t_v2ray_user_traffic WHERE email IN (SELECT email FROM speed.t_user WHERE channel_id = '{}' AND created_at <= '{}') AND created_at >= '{}' and created_at <= '{}') AS combined_results ) AS distinct_emails;""".format(st, et, channel_id, et,st,et)
+        sql = """SELECT COUNT(DISTINCT email) as cnt FROM (SELECT email FROM (SELECT email FROM speed_report.t_user_op_log WHERE (content LIKE '%点击连接%' OR content LIKE '%开始连接%') AND created_at >= '{}' AND result = 'success' AND created_at <= '{}' AND email IN (SELECT email FROM speed.t_user) UNION SELECT email FROM speed_collector.t_v2ray_user_traffic WHERE email IN (SELECT email FROM speed.t_user WHERE channel_id = '{}' AND created_at <= '{}') AND created_at >= '{}' and created_at <= '{}') AS combined_results ) AS distinct_emails;""".format(
+            st, et, channel_id, et, st, et)
         rows = mysql_query_db(self.conn, sql)
         if len(rows) != 1:
             logging.error("sql: %s, rows: %d != 1" % (sql, len(rows)))
@@ -155,11 +159,13 @@ class Speed:
         return rows
 
     def query_user_traffic_list(self, date):
-        sql = """select distinct email as email from speed_collector.t_v2ray_user_traffic where date=%s;""" % date.replace("-", "")
+        sql = """select distinct email as email from speed_collector.t_v2ray_user_traffic where date=%s;""" % date.replace(
+            "-", "")
         return mysql_query_db(self.conn, sql)
 
     def query_node_user_traffic_list(self, date):
-        sql = """select email as email,ip,uplink,downlink from speed_collector.t_v2ray_user_traffic where date=%s;""" % date.replace("-", "")
+        sql = """select email as email,ip,uplink,downlink from speed_collector.t_v2ray_user_traffic where date=%s;""" % date.replace(
+            "-", "")
         return mysql_query_db(self.conn, sql)
 
     def query_user_traffic_log_list(self, email, st, et):
@@ -173,7 +179,8 @@ class Speed:
         return rows
 
     def count_total_channel_user(self, channel, et):
-        sql = """select count(*) as cnt from speed.t_user where channel = '%s' and created_at <= '%s';""" % (channel, et)
+        sql = """select count(*) as cnt from speed.t_user where channel = '%s' and created_at <= '%s';""" % (
+        channel, et)
         rows = mysql_query_db(self.conn, sql)
         if len(rows) != 1:
             logging.error("sql: %s, rows: %d != 1" % (sql, len(rows)))
@@ -207,9 +214,10 @@ class Speed:
             sys.exit(1)
         return rows[0]["cnt"]
 
-    def count_channel_user_online(self, channel, date, st,et):
+    def count_channel_user_online(self, channel, date, st, et):
         # sql = """select count(distinct email) as cnt from speed_collector.t_v2ray_user_traffic where date = '%s' and email in (select email from speed.t_user where channel='%s' and created_at <= '%s');""" % (date.replace("-", ""), channel, et)
-        sql = "SELECT COUNT(DISTINCT email) as cnt FROM (SELECT email FROM (SELECT DISTINCT email FROM speed_report.t_user_op_log WHERE (content LIKE '%点击连接%' OR content LIKE '%开始连接%') AND created_at >= '{}' AND result = 'success' AND created_at <= '{}' AND email IN (SELECT email FROM speed.t_user WHERE channel='{}')) AS derived_table1 UNION SELECT email FROM (SELECT email FROM speed_collector.t_v2ray_user_traffic WHERE date = '{}' AND email IN (SELECT email FROM speed.t_user WHERE channel='{}' AND created_at <= '{}')) AS derived_table2) AS distinct_emails;".format(st, et, channel, date.replace("-", ""), channel, et)
+        sql = "SELECT COUNT(DISTINCT email) as cnt FROM (SELECT email FROM (SELECT DISTINCT email FROM speed_report.t_user_op_log WHERE (content LIKE '%点击连接%' OR content LIKE '%开始连接%') AND created_at >= '{}' AND result = 'success' AND created_at <= '{}' AND email IN (SELECT email FROM speed.t_user WHERE channel='{}')) AS derived_table1 UNION SELECT email FROM (SELECT email FROM speed_collector.t_v2ray_user_traffic WHERE date = '{}' AND email IN (SELECT email FROM speed.t_user WHERE channel='{}' AND created_at <= '{}')) AS derived_table2) AS distinct_emails;".format(
+            st, et, channel, date.replace("-", ""), channel, et)
         rows = mysql_query_db(self.conn, sql)
         if len(rows) != 1:
             logging.error("sql: %s, rows: %d != 1" % (sql, len(rows)))
@@ -217,7 +225,8 @@ class Speed:
         return rows[0]["cnt"]
 
     def count_channel_user_by_month(self, channel, st, et):
-        sql = """select count(distinct email) as cnt from speed_collector.t_v2ray_user_traffic where email in (select email from speed.t_user where channel='%s' and created_at >= '%s' and created_at <= '%s') and created_at >= '%s' and created_at <= '%s';""" % (channel, st, et,st, et)
+        sql = """select count(distinct email) as cnt from speed_collector.t_v2ray_user_traffic where email in (select email from speed.t_user where channel='%s' and created_at >= '%s' and created_at <= '%s') and created_at >= '%s' and created_at <= '%s';""" % (
+        channel, st, et, st, et)
         rows = mysql_query_db(self.conn, sql)
         if len(rows) != 1:
             logging.error("sql: %s, rows: %d != 1" % (sql, len(rows)))
@@ -274,7 +283,8 @@ class Speed:
         '''
         充值总人数
         '''
-        sql = """select count(*) as cnt FROM speed.t_pay_order t1 JOIN speed.t_user t2 on t1.email=t2.email  WHERE t2.channel = '%s' and ((t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') OR (t1.currency IN ('USD', 'WMZ','RUB') AND t1.status = 'paid')) and t1.created_at <= '%s';""" % (channel, et)
+        sql = """select count(*) as cnt FROM speed.t_pay_order t1 JOIN speed.t_user t2 on t1.email=t2.email  WHERE t2.channel = '%s' and ((t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') OR (t1.currency IN ('USD', 'WMZ','RUB') AND t1.status = 'paid')) and t1.created_at <= '%s';""" % (
+        channel, et)
         rows = mysql_query_db(self.conn, sql)
         if len(rows) != 1:
             logging.error("sql: %s, rows: %d != 1" % (sql, len(rows)))
@@ -282,7 +292,8 @@ class Speed:
         return rows[0]["cnt"]
 
     def count_total_number_of_recharges_by_create_time(self, channel, st, et):
-        sql = """select count(*) as cnt FROM speed.t_pay_order t1 JOIN speed.t_user t2 on t1.email=t2.email  WHERE t2.channel = '%s' and ((t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') OR (t1.currency IN ('USD', 'WMZ','RUB') AND t1.status = 'paid')) and t1.created_at >= '%s' and t1.created_at <= '%s';""" % (channel,st, et)
+        sql = """select count(*) as cnt FROM speed.t_pay_order t1 JOIN speed.t_user t2 on t1.email=t2.email  WHERE t2.channel = '%s' and ((t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') OR (t1.currency IN ('USD', 'WMZ','RUB') AND t1.status = 'paid')) and t1.created_at >= '%s' and t1.created_at <= '%s';""" % (
+        channel, st, et)
         rows = mysql_query_db(self.conn, sql)
         if len(rows) != 1:
             logging.error("sql: %s, rows: %d != 1" % (sql, len(rows)))
@@ -337,7 +348,8 @@ class Speed:
         return rows
 
     def count_total_device_user(self, device, et):
-        sql = """SELECT count(DISTINCT u.id) as cnt FROM speed.t_user u JOIN speed.t_user_device d ON u.id = d.user_id WHERE d.os= '%s' and u.created_at <= '%s';""" % (device, et)
+        sql = """SELECT count(DISTINCT u.id) as cnt FROM speed.t_user u JOIN speed.t_user_device d ON u.id = d.user_id WHERE d.os= '%s' and u.created_at <= '%s';""" % (
+        device, et)
         rows = mysql_query_db(self.conn, sql)
         if len(rows) != 1:
             logging.error("sql: %s, rows: %d != 1" % (sql, len(rows)))
@@ -353,29 +365,33 @@ class Speed:
             sys.exit(1)
         return rows[0]["cnt"]
 
-    def count_device_user_online(self, device, date, st,et):
+    def count_device_user_online(self, device, date, st, et):
         sql = """select count(distinct email) as cnt from speed_collector.t_v2ray_user_traffic where date = '%s' and email in (SELECT u.email FROM speed.t_user u JOIN speed.t_user_device d ON u.id = d.user_id WHERE d.os= '%s' AND u.created_at >= '%s' and u.created_at <= '%s');""" % (
-            date.replace("-", ""), device, st,et)
+            date.replace("-", ""), device, st, et)
         rows = mysql_query_db(self.conn, sql)
         if len(rows) != 1:
             logging.error("sql: %s, rows: %d != 1" % (sql, len(rows)))
             sys.exit(1)
         return rows[0]["cnt"]
-    def count_device_retained(self, device, date, st,et):
+
+    def count_device_retained(self, device, date, st, et):
         sql = """select count(distinct email) as cnt from speed_collector.t_v2ray_user_traffic where date >= '%s' and email in (SELECT u.email FROM speed.t_user u JOIN speed.t_user_device d ON u.id = d.user_id WHERE d.os= '%s' and u.created_at >= '%s' and u.created_at <= '%s');""" % (
-            date.replace("-", ""), device,st, et)
+            date.replace("-", ""), device, st, et)
         rows = mysql_query_db(self.conn, sql)
         if len(rows) != 1:
             logging.error("sql: %s, rows: %d != 1" % (sql, len(rows)))
             sys.exit(1)
         return rows[0]["cnt"]
+
     def count_total_number_of_device_recharges(self, et):
-        sql = """SELECT COALESCE(t1.device_type, 'unknown') AS device_type,COUNT(t1.user_id) AS cnt FROM speed.t_pay_order t1 JOIN speed.t_user t2 ON t1.user_id = t2.id WHERE ((t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') OR (t1.currency IN ('USD', 'WMZ', 'RUB') AND t1.status = 'paid')) and t1.created_at <= '%s' GROUP BY t1.device_type;""" % (et)
+        sql = """SELECT COALESCE(t1.device_type, 'unknown') AS device_type,COUNT(t1.user_id) AS cnt FROM speed.t_pay_order t1 JOIN speed.t_user t2 ON t1.user_id = t2.id WHERE ((t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') OR (t1.currency IN ('USD', 'WMZ', 'RUB') AND t1.status = 'paid')) and t1.created_at <= '%s' GROUP BY t1.device_type;""" % (
+            et)
         rows = mysql_query_db(self.conn, sql)
         return {row["device_type"]: row["cnt"] for row in rows}
 
     def count_total_device_recharge_amount(self, et):
-        sql = """SELECT COALESCE(t1.device_type, 'unknown') AS device_type,t1.currency, t1.order_reality_amount,t1.status FROM speed.t_pay_order t1 JOIN speed.t_user t2 ON t1.user_id = t2.id WHERE ((t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') OR (t1.currency IN ('USD', 'WMZ', 'RUB') AND t1.status = 'paid')) and t1.created_at <= '%s';""" % (et)
+        sql = """SELECT COALESCE(t1.device_type, 'unknown') AS device_type,t1.currency, t1.order_reality_amount,t1.status FROM speed.t_pay_order t1 JOIN speed.t_user t2 ON t1.user_id = t2.id WHERE ((t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') OR (t1.currency IN ('USD', 'WMZ', 'RUB') AND t1.status = 'paid')) and t1.created_at <= '%s';""" % (
+            et)
         rows = mysql_query_db(self.conn, sql)
         device_recharge_totals = {}
         for row in rows:
@@ -396,7 +412,8 @@ class Speed:
         return device_recharge_totals
 
     def count_total_device_recharge_amount_by_create_time(self, st, et):
-        sql = """SELECT COALESCE(t1.device_type, 'unknown') AS device_type,t1.currency, t1.order_reality_amount,t1.status FROM speed.t_pay_order t1 JOIN speed.t_user t2 ON t1.user_id = t2.id WHERE ((t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') OR (t1.currency IN ('USD', 'WMZ', 'RUB') AND t1.status = 'paid')) and t1.created_at >= '%s' and t1.created_at <= '%s';""" % (st, et)
+        sql = """SELECT COALESCE(t1.device_type, 'unknown') AS device_type,t1.currency, t1.order_reality_amount,t1.status FROM speed.t_pay_order t1 JOIN speed.t_user t2 ON t1.user_id = t2.id WHERE ((t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') OR (t1.currency IN ('USD', 'WMZ', 'RUB') AND t1.status = 'paid')) and t1.created_at >= '%s' and t1.created_at <= '%s';""" % (
+        st, et)
         rows = mysql_query_db(self.conn, sql)
         device_recharge_totals = {}
         for row in rows:
@@ -415,6 +432,114 @@ class Speed:
             device_recharge_totals[device_type] += amount_in_rub
         # 返回各个设备类型的总金额
         return device_recharge_totals
+
+    ################################
+    def query_registered_users_by_day(self, day_str):
+        sql = """SELECT DATE_FORMAT(tu.created_at, '%%Y-%%m-%%d') AS stat_day, tu.email, COUNT(*) AS user_count FROM speed.t_user tu WHERE DATE_FORMAT(tu.created_at, '%%Y-%%m-%%d') = '%s' GROUP BY tu.email, stat_day;""" % (
+            day_str)
+        rows = mysql_query_db(self.conn, sql)
+        return [(row['stat_day'], row['email'], row['user_count']) for row in rows]
+
+    def query_registered_emails_by_day(self, day_str):
+        sql = """SELECT tu.email FROM speed.t_user tu WHERE DATE_FORMAT(tu.created_at, '%%Y-%%m-%%d') = '%s'""" % (
+            day_str)
+        results = mysql_query_db(self.conn, sql)
+        return [row['email'] for row in results]
+
+    def query_registered_device_emails(self, registered_emails):
+        if not registered_emails:
+            return {}
+        # 将 registered_emails 转换为元组，并将其转换为逗号分隔的字符串
+        email_list_str = ', '.join([f"'{email}'" for email in registered_emails])
+        sql = f"""SELECT tud.os, tu.email FROM t_user_device tud JOIN t_user tu ON tud.user_id = tu.id WHERE tu.email IN ({email_list_str});"""
+        results = mysql_query_db(self.conn, sql)
+        return {item['email']: item['os'] for item in results}
+
+    def query_active_emails_in_next_days(self, date, days):
+        date_obj = datetime.strptime(date, '%Y-%m-%d')
+        start_date = date_obj + timedelta(days=1)
+        end_date = (date_obj + timedelta(days=days + 1)) - timedelta(seconds=1)
+        sql = """SELECT tut.email FROM speed_collector.t_v2ray_user_traffic tut WHERE tut.date >= %s AND tut.date <= %s""" % (
+        int(start_date.strftime('%Y%m%d')), int(end_date.strftime('%Y%m%d')))
+        results = mysql_query_db(self.conn, sql)
+        return [row['email'] for row in results]
+
+    def query_retention_of_next_days(self, day_str, days):
+        registered_emails = self.query_registered_emails_by_day(day_str)
+        active_emails = set(self.query_active_emails_in_next_days(day_str, days))
+        if not registered_emails:
+            return {os_type: set() for os_type in util.os_types}
+        registered_device_emails = self.query_registered_device_emails(registered_emails)
+        retained_users_by_os = {os_type: set() for os_type in util.os_types}
+        for email in registered_emails:
+            if email in active_emails:
+                original_os = registered_device_emails.get(email, 'Others')
+                categorized_os = util.categorize_os(original_os)
+                retained_users_by_os[categorized_os].add(email)
+        return retained_users_by_os
+
+    ################################
+    def get_registered_users_by_month(self, month):
+        sql = """SELECT DATE_FORMAT(tu.created_at, '%%Y-%%m') AS stat_month, tu.email, COUNT(*) AS user_count FROM speed.t_user tu WHERE DATE_FORMAT(tu.created_at, '%%Y-%%m') = '%s' GROUP BY tu.email, stat_month;""" % (
+            month)
+        rows = mysql_query_db(self.conn, sql)
+        return [(row['stat_month'], row['email'], row['user_count']) for row in rows]
+
+    def get_device_types_and_counts(self, month):
+        query = """SELECT tud.os AS os, COUNT(*) AS device_count FROM speed.t_user_device tud JOIN t_user tu ON tud.user_id = tu.id WHERE DATE_FORMAT(tu.created_at, '%%Y-%%m') = '%s' GROUP BY tud.os;""" % (
+        month,)
+        res = mysql_query_db(self.conn, query)
+        results = [(row['os'], row['device_count']) for row in res]
+        categorized_counts = {os_type: 0 for os_type in util.device_mapping.keys()}
+        for row in results:
+            original_os = row[0]
+            categorized_os = util.categorize_os(original_os)
+            categorized_counts[categorized_os] += row[1]
+        return [(os_type, count) for os_type, count in categorized_counts.items()]
+
+    def get_new_users_in_month(self, month):
+        sql = """SELECT tud.os, tu.email, COUNT(*) AS new_users FROM speed.t_user tu JOIN speed.t_user_device tud ON tu.id = tud.user_id WHERE DATE_FORMAT(tu.created_at, '%%Y-%%m') = '%s' GROUP BY tud.os, tu.email;""" % (
+        month,)
+        rows = mysql_query_db(self.conn, sql)
+        return [(row['os'], row['email'], row['new_users']) for row in rows]
+
+    def get_registered_emails_by_month(self, month):
+        sql = """SELECT tu.email FROM speed.t_user tu WHERE DATE_FORMAT(tu.created_at, '%%Y-%%m') = '%s'""" % (month,)
+        results = mysql_query_db(self.conn, sql)
+        return [row['email'] for row in results]
+
+    def get_active_emails_in_next_month(self, month):
+        month_date = datetime.strptime(month, '%Y-%m')
+        next_month_date = month_date + timedelta(days=32)
+        # next_month = next_month_date.strftime('%Y-%m')
+        next_month_start = next_month_date.replace(day=1)
+        next_month_end = (next_month_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+        sql = """SELECT tut.email FROM speed_collector.t_v2ray_user_traffic tut WHERE tut.date >= %s AND tut.date <= %s""" % (
+        int(next_month_start.strftime('%Y%m%d')), int(next_month_end.strftime('%Y%m%d')))
+        results = mysql_query_db(self.conn, sql)
+        return [row['email'] for row in results]
+
+    def calculate_retention_of_next_month(self, month):
+        registered_emails = self.get_registered_emails_by_month(month)
+        active_emails = set(self.get_active_emails_in_next_month(month))  # 转换成集合
+        if not registered_emails:
+            return {os_type: set() for os_type in util.os_types}  # 如果没有注册用户，直接返回空结果
+        registered_device_emails = {}
+        # 将 registered_emails 转换为元组，并将其转换为逗号分隔的字符串
+        in_registered_emails = ', '.join([f"'{email}'" for email in registered_emails])
+        sql = f"""SELECT tud.os, tu.email FROM speed.t_user_device tud JOIN speed.t_user tu ON tud.user_id = tu.id WHERE tu.email IN ({in_registered_emails});"""
+        res = mysql_query_db(self.conn, sql)
+        results = [(row['os'], row['email']) for row in res]
+        registered_device_emails = {email: os for os, email in results}
+        retained_users_by_os = {os_type: set() for os_type in util.os_types}
+        for email in registered_emails:  # 直接遍历列表中的每个邮箱地址
+            if email in active_emails:
+                original_os = registered_device_emails.get(email, 'Others')
+                categorized_os = util.categorize_os(original_os)
+                retained_users_by_os[categorized_os].add(email)
+        return retained_users_by_os
+
+
 class SpeedReport:
     def __init__(self):
         self.config = load_config("/shell/report/config.yaml")
@@ -426,7 +551,7 @@ class SpeedReport:
             "45.147.200.112": "俄罗斯4",
             "46.17.44.132": "俄罗斯5",
             "92.118.112.89": "美国1",
-            "38.55.136.95": "美国2",
+            "5.181.3.143": "美国2",
             "207.90.237.91": "美国3",
             "92.118.112.133": "美国4",
             "212.18.104.23": "美国5",
@@ -504,7 +629,9 @@ class SpeedReport:
         mysql_execute(self.conn, "delete from speed_report.t_user_report_day where date=%s" % date.replace("-", ""))
         for channel_id in data.keys():
             user = data[channel_id]
-            sql = """insert into t_user_report_day set date=%s, channel_id=%d, total=%d, new=%d, retained=%d,month_retained=%d, created_at=now();""" % (date.replace("-", ""), channel_id, user["total_cnt"], user["new_cnt"], user["retained_cnt"], user["month_retained_cnt"])
+            sql = """insert into t_user_report_day set date=%s, channel_id=%d, total=%d, new=%d, retained=%d,month_retained=%d, created_at=now();""" % (
+            date.replace("-", ""), channel_id, user["total_cnt"], user["new_cnt"], user["retained_cnt"],
+            user["month_retained_cnt"])
             mysql_execute(self.conn, sql)
 
     def insert_online_user_day(self, date, items):
@@ -536,7 +663,8 @@ class SpeedReport:
                 mysql_execute(self.conn, sql)
 
     def insert_online_user_node_day(self, date, items):
-        mysql_execute(self.conn, "delete from speed_report.t_user_node_online_day where date=%s" % date.replace("-", ""))
+        mysql_execute(self.conn,
+                      "delete from speed_report.t_user_node_online_day where date=%s" % date.replace("-", ""))
         for item in items:
             ip_name = self.data_name.get(item["node"])
             sql = """insert into speed_report.t_user_node_online_day set date='{}',email='{}',channel='{}',online_duration={},uplink={},downlink={},node='{}',register_date='{}',created_at=now();""".format(
@@ -546,7 +674,8 @@ class SpeedReport:
 
     def insert_daily_user_recharge(self, date, data):
         logging.info(data)
-        mysql_execute(self.conn, "delete from speed_report.t_user_recharge_report_day where date=%s" % date.replace("-", ""))
+        mysql_execute(self.conn,
+                      "delete from speed_report.t_user_recharge_report_day where date=%s" % date.replace("-", ""))
         for goods_id in data.keys():
             user = data[goods_id]
             sql = """insert into speed_report.t_user_recharge_report_day set date=%s, goods_id=%d, total=%d, new=%d,created_at=now();""" % (
@@ -555,7 +684,8 @@ class SpeedReport:
 
     def insert_daily_user_recharge_times(self, date, data):
         logging.info(data)
-        mysql_execute(self.conn, "delete from speed_report.t_user_recharge_times_report_day where date=%s" % date.replace("-", ""))
+        mysql_execute(self.conn,
+                      "delete from speed_report.t_user_recharge_times_report_day where date=%s" % date.replace("-", ""))
         for goods_id in data.keys():
             user = data[goods_id]
             sql = """insert into speed_report.t_user_recharge_times_report_day set date=%s, goods_id=%d, total=%d, new=%d,created_at=now();""" % (
@@ -573,7 +703,8 @@ class SpeedReport:
             7: "铂金会员180天",
             8: "铂金会员365天"
         }
-        mysql_execute(self.conn, "delete from speed_report.t_user_channel_recharge_day where date=%s" % date.replace("-", ""))
+        mysql_execute(self.conn,
+                      "delete from speed_report.t_user_channel_recharge_day where date=%s" % date.replace("-", ""))
         for channel, user_data in data.items():
             for goods_id, recharge_data in user_data.items():
                 goods_name = goods_name_dic.get(goods_id, "未知套餐")
@@ -587,7 +718,8 @@ class SpeedReport:
                 mysql_execute(self.conn, sql)
 
     def insert_daily_device_action(self, date, data):
-        mysql_execute(self.conn, "delete from speed_report.t_user_device_action_day where date=%s" % date.replace("-", ""))
+        mysql_execute(self.conn,
+                      "delete from speed_report.t_user_device_action_day where date=%s" % date.replace("-", ""))
         for device_type in data.keys():
             device = data[device_type]
             sql = """insert into speed_report.t_user_device_action_day set date='%s', device='%s', total_clicks=%d, yesterday_day_clicks=%d, weekly_clicks=%d,total_users_clicked=%d,yesterday_day_users_clicked=%d,weekly_users_clicked=%d,created_at=now();""" % (
@@ -598,9 +730,13 @@ class SpeedReport:
 
     def insert_daily_device_user(self, date, data):
         # 设备类型映射表
-        device_map = {'android': ['android'],'ios': ['iphone'],'mac': ['mac'],'win': ['win']}
-        device_totals = {key: {'total_cnt': 0, 'new_cnt': 0, 'retained_cnt': 0, 'total_recharge': 0, 'total_recharge_amount': 0,'new_recharge_amount': 0} for key in device_map.keys()}
-        device_totals['other_device'] = {'total_cnt': 0, 'new_cnt': 0, 'retained_cnt': 0, 'total_recharge': 0,'total_recharge_amount': 0, 'new_recharge_amount': 0}
+        device_map = {'android': ['android'], 'ios': ['iphone'], 'mac': ['mac'], 'win': ['win']}
+        device_totals = {
+            key: {'total_cnt': 0, 'new_cnt': 0, 'retained_cnt': 0, 'total_recharge': 0, 'total_recharge_amount': 0,
+                  'new_recharge_amount': 0} for key in device_map.keys()}
+        device_totals['other_device'] = {'total_cnt': 0, 'new_cnt': 0, 'retained_cnt': 0, 'total_recharge': 0,
+                                         'total_recharge_amount': 0, 'new_recharge_amount': 0}
+
         def update_device_totals(device_type, user_data):
             device_totals[device_type]['total_cnt'] += user_data.get("total_cnt", 0)
             device_totals[device_type]['new_cnt'] += user_data.get("new_cnt", 0)
@@ -608,6 +744,7 @@ class SpeedReport:
             device_totals[device_type]['total_recharge'] += user_data.get("total_recharge", 0)
             device_totals[device_type]['total_recharge_amount'] += user_data.get("total_recharge_amount", 0)
             device_totals[device_type]['new_recharge_amount'] += user_data.get("new_recharge_amount", 0)
+
         # 遍历数据，统计每种设备类型的数据
         for device, user in data.items():
             device_lower = device.lower()
@@ -643,17 +780,24 @@ class SpeedReport:
         for channel in data.keys():
             user = data[channel]
             channel = channel if channel else '官网'
-            sql = """insert into speed_report.t_user_channel_month set date='{}', channel='{}', total={}, month_total={},month_new={},total_recharge={},total_recharge_money={},month_total_recharge={},month_recharge_money={},created_at=now();""".format(date.replace("-", ""), channel, user["total_cnt"], user["month_retained_cnt"], user["month_new_cnt"],user["total_recharge_cnt"], user["total_recharge_money_cnt"], user["month_recharge_cnt"], user["month_recharge_money_cnt"])
+            sql = """insert into speed_report.t_user_channel_month set date='{}', channel='{}', total={}, month_total={},month_new={},total_recharge={},total_recharge_money={},month_total_recharge={},month_recharge_money={},created_at=now();""".format(
+                date.replace("-", ""), channel, user["total_cnt"], user["month_retained_cnt"], user["month_new_cnt"],
+                user["total_recharge_cnt"], user["total_recharge_money_cnt"], user["month_recharge_cnt"],
+                user["month_recharge_money_cnt"])
             mysql_execute(self.conn, sql)
+
     def insert_daily_device_retention(self, date, data):
-        device_map = {'android': ['android'],'ios': ['iphone'],'mac': ['mac'],'win': ['win']}
-        device_totals = {key: {'new_cnt': 0, 'retained_cnt': 0, 'day7_retained': 0, 'day15_retained': 0} for key in device_map.keys()}
+        device_map = {'android': ['android'], 'ios': ['iphone'], 'mac': ['mac'], 'win': ['win']}
+        device_totals = {key: {'new_cnt': 0, 'retained_cnt': 0, 'day7_retained': 0, 'day15_retained': 0} for key in
+                         device_map.keys()}
         device_totals['other_device'] = {'new_cnt': 0, 'retained_cnt': 0, 'day7_retained': 0, 'day15_retained': 0}
+
         def update_device_totals(device_type, user_data):
             device_totals[device_type]['new_cnt'] += user_data.get("new_cnt", 0)
             device_totals[device_type]['retained_cnt'] += user_data.get("retained_cnt", 0)
             device_totals[device_type]['day7_retained'] += user_data.get("day7_retained", 0)
             device_totals[device_type]['day15_retained'] += user_data.get("day15_retained", 0)
+
         for device, user in data.items():
             device_lower = device.lower()
             matched = False
@@ -679,15 +823,44 @@ class SpeedReport:
             insert_queries.append(insert_sql)
         for query in insert_queries:
             mysql_execute(self.conn, query)
+
+    def insert_or_update_daily_device_report(self, date, device, new, retained, day7_retained, day15_retained):
+        date = int(date.replace('-', ''))
+        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        sql = """
+        INSERT INTO speed_report.t_user_device_retention (date, device, new, retained, day7_retained, day15_retained, created_at)
+        VALUES (%s, '%s', %s, %s, %s, %s,'%s')
+        ON DUPLICATE KEY UPDATE
+        new = VALUES(new),
+        retained = VALUES(retained),
+        day7_retained = VALUES(day7_retained),
+        day15_retained = VALUES(day15_retained);
+        """ % (date, device, new, retained, day7_retained, day15_retained, current_time)
+        mysql_execute(self.conn, sql)
+
+    def clear_t_user_report_monthly(self):
+        sql = """TRUNCATE TABLE t_user_report_monthly;"""
+        mysql_execute(self.conn, sql)
+
+    def insert_into_report_monthly(self, stat_month, os, user_count, new_users, retained_users):
+        stat_month_date = int(stat_month.replace('-', ''))
+        print(stat_month, os, user_count, new_users, retained_users)
+        sql = """INSERT INTO t_user_report_monthly (stat_month, os, user_count, new_users, retained_users) VALUES (%s, '%s', %s, %s, %s);""" % (
+        stat_month_date, os, user_count, new_users, retained_users)
+        mysql_execute(self.conn, sql)
+
+
 class SpeedCollector:
     def __init__(self):
         self.config = load_config("/shell/report/config.yaml")
         self.conn = mysql_connect(self.config["collector-speed-db"])
+
     def close_connection(self):
         if self.conn:
             self.conn.close()
+
     def check_task(self, date):
-        sql = f"SELECT COUNT(*) as cnt FROM t_task WHERE ip='node-all' AND date='{date.replace('-','')}' AND type='node-user'"
+        sql = f"SELECT COUNT(*) as cnt FROM t_task WHERE ip='node-all' AND date='{date.replace('-', '')}' AND type='node-user'"
         rows = mysql_query_db(self.conn, sql)
         if rows[0]["cnt"] > 0:
             return True  # 代表执行成功

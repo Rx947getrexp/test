@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 import geoip2.database
 
 
@@ -29,10 +30,50 @@ def get_yesterday_date():
     #DATE=input("请输入：")
     #return DATE
     #return "2024-09-10"
+def get_previous_months(months_back):
+    """
+    获取当前日期之前的指定月数的月份，格式为 "YYYY-MM"。
+    :param months_back: int, 要回溯的月数
+    :return: str, 指定月数之前的月份，格式为 "YYYY-MM"
+    """
+    # 计算过去的月份
+    previous_month = datetime.now() - relativedelta(months=months_back)
+    # 格式化输出为 "YYYY-MM"
+    formatted_date = previous_month.strftime("%Y-%m")
+    return formatted_date
 
+def get_previous_days(days=15):
+    # 获取今天的日期
+    today = datetime.now()
+    # 计算多少天前的日期
+    previous_day = today - timedelta(days)
+    # 将多少天前的日期格式化为 "2024-01-01" 格式
+    return previous_day.strftime('%Y-%m-%d')
 
 def time_format(s):
     return datetime.strptime(s, "%Y-%m-%d %H:%M:%S")
+
+# 设备型号映射表
+device_mapping = {
+    'Android': ['Android'],
+    'iPhone': ['iPhone', 'iOS'],
+    'Mac': ['Mac', 'macOS', 'Mac OS'],
+    'Windows': ['Windows'],
+    'Others': []  # 任何未匹配的都归为 Others
+}
+os_types = list(device_mapping.keys())
+def categorize_os(original_os):
+    if 'Mac OS' in original_os:
+        if 'iPhone' in original_os:
+            return 'iPhone'
+        else:
+            return 'Mac'
+    elif 'Android' in original_os:
+        return 'Android'
+    elif 'Windows' in original_os:
+        return 'Windows'
+    else:
+        return 'Others'
 
 
 class Time:
