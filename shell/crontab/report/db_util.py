@@ -776,8 +776,7 @@ class SpeedReport:
 
     def insert_daily_device_retention(self, date, data):
         device_map = {'android': ['android'], 'ios': ['iphone'], 'mac': ['mac'], 'win': ['win']}
-        device_totals = {key: {'new_cnt': 0, 'retained_cnt': 0, 'day7_retained': 0, 'day15_retained': 0} for key in
-                         device_map.keys()}
+        device_totals = {key: {'new_cnt': 0, 'retained_cnt': 0, 'day7_retained': 0, 'day15_retained': 0} for key in device_map.keys()}
         device_totals['other_device'] = {'new_cnt': 0, 'retained_cnt': 0, 'day7_retained': 0, 'day15_retained': 0}
 
         def update_device_totals(device_type, user_data):
