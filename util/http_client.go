@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 func HttpClientPost(url string, bodyParam interface{}, response interface{}) error {
@@ -67,7 +68,10 @@ func HttpClientPostV2(url string, headerParam map[string]string, bodyParam inter
 		httpReq.Header.Add(k, v)
 	}
 	httpReq.Close = true
-	respData, err := http.DefaultClient.Do(httpReq)
+	client := http.Client{
+		Timeout: time.Second * 60,
+	}
+	respData, err := client.Do(httpReq)
 	if err != nil {
 		global.Logger.Err(err).Msg("发送http请求失败")
 		return err

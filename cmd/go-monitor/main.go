@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"go-speed/util"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -15,7 +16,6 @@ import (
 
 	"go-speed/global"
 	"go-speed/initialize"
-	"go-speed/model/response"
 	"go-speed/service"
 	"go-speed/service/email"
 )
@@ -29,6 +29,10 @@ const (
 
 var errCounterAPIServerDNS = make(map[string]uint64)
 var errCounterNodeServerDNS = make(map[string]uint64)
+var alarmReceiver = []string{
+	"pmm73219@gmail.com",
+	"hs.alarm@outlook.com",
+}
 
 func getConfig(c string) (out []string) {
 	for _, v := range strings.Split(c, ",") {
@@ -45,8 +49,8 @@ func main() {
 	initialize.InitComponentsV2()
 
 	var (
-		apiServerDNSList  = getConfig(global.Config.System.APIServerDNSList)
-		nodeServerDNSList = getConfig(global.Config.System.NodeServerDNSList)
+		apiServerDNSList  = util.MustReadFile("./api_server_dns.list")
+		nodeServerDNSList = util.MustReadFile("./node_server_dns.list")
 	)
 
 	if len(apiServerDNSList) == 0 || len(nodeServerDNSList) == 0 {
@@ -128,14 +132,19 @@ func sendEmail(emailSubject, emailBody string) (err error) {
 	ctx, _ := gin.CreateTestContext(httptest.NewRecorder())
 	defer ctx.Done()
 	var (
-		fromAccount   = "heronetwork@herovpn.live"
-		fromPasswd    = "pingguoqm23"
-		fromHost      = "smtpout.secureserver.net:465"
-		alarmReceiver = []string{
-			"pmm73219@gmail.com",
-			"hs.alarm@outlook.com",
-		}
+		fromAccount = "heronetwork@herovpn.live"
+		fromPasswd  = "pingguoqm23"
+		fromHost    = "smtpout.secureserver.net:465"
 	)
+
+	if emails, e := util.ReadFile("./alarm_receiver_email.list"); e == nil {
+		for _, em := range emails {
+			if !util.IsInArrayIgnoreCase(em, alarmReceiver) {
+				alarmReceiver = append(alarmReceiver, em)
+			}
+		}
+	}
+
 	email.SetSendAccount(fromAccount, fromPasswd, fromHost)
 	for i := 0; i < 10; i++ {
 		err = email.SendEmailTLS(ctx, emailSubject, emailBody, alarmReceiver)
@@ -258,19 +267,18 @@ func doDialNodeServer(dnsList []string) {
 		ctx, _     = gin.CreateTestContext(httptest.NewRecorder())
 		err        error
 		failedFlag = false
-		rsp        *response.GetV2raySysStatsResponse
 	)
 	defer ctx.Done()
 
 	for _, dns := range dnsList {
-		rsp, err = service.GetSysStatsByIp(ctx, dns)
+		_, err = service.GetSysStatsByIp(ctx, dns)
 		if err != nil {
 			failedFlag = true
 			errCounterNodeServerDNS[dns]++
 		} else {
 			errCounterNodeServerDNS[dns] = 0
 		}
-		global.Logger.Info().Msgf("dns: %s, errCounterNodeServerDNS: %d, rsp: %+v", dns, errCounterNodeServerDNS[dns], rsp)
+		global.Logger.Info().Msgf("@@@@@@@@@@@@@@@@@@@@@@@ dns: %s, errCounterNodeServerDNS: %d", dns, errCounterNodeServerDNS[dns])
 
 		if errCounterNodeServerDNS[dns] > 5 {
 			if e := sendAlarm(DialTypeNode, dns, err); e == nil {
@@ -278,6 +286,12 @@ func doDialNodeServer(dnsList []string) {
 			}
 		}
 	}
+	for k, v := range errCounterNodeServerDNS {
+		if v > 0 {
+			global.Logger.Err(nil).Msgf(">>>>>>>>>>>>>> node(%s), dial failed times(%d)", k, v)
+		}
+	}
+
 	if !failedFlag {
 		dialNodeSuccessTimes++
 	}
@@ -287,3 +301,5 @@ func doDialNodeServer(dnsList []string) {
 	global.Logger.Info().Msgf("--------------- doDialNodeServer [dialNodeTimes: %d, dialNodeSuccessTimes: %d] end --------------", dialNodeTimes, dialNodeSuccessTimes)
 	global.Logger.Info().Msgf("################################################################################")
 }
+
+// ps -ef | grep go-monitor | grep -v 'grep' | awk '{print $2}' | xargs kill && cd /wwwroot/go/go-monitor/ && cp -rf backup/go-monitor ./ && ./restart.sh

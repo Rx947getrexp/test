@@ -13,7 +13,7 @@ import (
 
 var nodeIPs map[string]struct{}
 
-func init() {
+func Init() {
 	nodeIPs = make(map[string]struct{})
 
 	var nodes []entity.TNode
