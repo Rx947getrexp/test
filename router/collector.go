@@ -8,6 +8,7 @@ import (
 )
 
 func CollectorRoute(group *gin.RouterGroup) {
+	report.Init()
 	group.GET("get_user_op_log_list", administrator.GetUserOpLogList)
 	group.GET("list_node_for_report", node.ListNodeForReport)          //获取节点ip列表，上报ping结果
 	group.GET("get_client_ip", report.GetClientIP)                     //获取客户端IP

@@ -16,7 +16,7 @@ import (
 
 const (
 	leaderLockKeySyncOrderStatus       = "hs-fly-SyncPayOrderStatus-leader-lock"
-	electionIntervalSyncPayOrderStatus = 20 * time.Second
+	electionIntervalSyncPayOrderStatus = 30 * time.Second
 	lockTimeoutSyncPayOrderStatus      = electionIntervalSyncPayOrderStatus + 20*time.Second
 )
 
@@ -60,8 +60,8 @@ func doSyncPayOrderStatus() {
 			Status: []string{constant.ParOrderStatusInit, constant.ParOrderStatusUnpaid},
 		}).
 		//Where(do.TPayOrder{OrderNo: "100701092254247"}).
-		WhereGTE(dao.TPayOrder.Columns().CreatedAt, gtime.Now().Add(-2*time.Hour)).
-		Order(dao.TPayOrder.Columns().Id, "DESC").Limit(1000).
+		WhereGTE(dao.TPayOrder.Columns().CreatedAt, gtime.Now().Add(-30*time.Minute)).
+		Order(dao.TPayOrder.Columns().Id, "DESC").Limit(5000).
 		Scan(&items)
 	if err != nil {
 		global.Logger.Err(err).Msg("query TPayOrder failed")
