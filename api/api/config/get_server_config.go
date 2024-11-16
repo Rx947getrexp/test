@@ -100,6 +100,13 @@ func chooseCountryForUser(ctx *gin.Context, userId uint64, countryName string) (
 	if err != nil {
 		return
 	}
+
+	if service.IsVIPExpired(userEntity) {
+		global.MyLogger(ctx).Info().Msgf("######## (%s) expired #######", userEntity.Email)
+		response.RespFail(ctx, i18n.RetMsgAccountExpiredV2, nil)
+		return
+	}
+
 	where := do.TServingCountry{Status: 1}
 
 	// 过期用户只能选择免费节点

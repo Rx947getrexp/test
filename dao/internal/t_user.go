@@ -40,6 +40,8 @@ type TUserColumns struct {
 	LastLoginCountry string // 最近一次登录的国家
 	PreferredCountry string // 用户选择的国家（国家名称）
 	Version          string // 数据版本号
+	Kicked           string // 被踢标记，0: 未被踢, 1: 已经被踢
+	LastKickedAt     string // 最近一次踢出时间
 }
 
 // tUserColumns holds the columns for table t_user.
@@ -64,6 +66,8 @@ var tUserColumns = TUserColumns{
 	LastLoginCountry: "last_login_country",
 	PreferredCountry: "preferred_country",
 	Version:          "version",
+	Kicked:           "kicked",
+	LastKickedAt:     "last_kicked_at",
 }
 
 // NewTUserDao creates and returns a new DAO object for table data access.

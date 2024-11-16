@@ -4,6 +4,7 @@ import (
 	apiPath "go-speed/api"
 	"go-speed/api/admin/official_docs"
 	"go-speed/api/api"
+	"go-speed/api/api/ad"
 	"go-speed/api/api/config"
 	"go-speed/api/api/country"
 	"go-speed/api/api/goods"
@@ -94,5 +95,9 @@ func ApiRoute(group *gin.RouterGroup) {
 		group.POST("cancel_order", order.CancelOrder)
 		group.POST("order_list", order.GetOrderList)
 		group.POST("query_order", order.QueryOrder)
+
+		// 广告
+		group.POST("ad_list", ad.ADList)
+		group.POST("ad_completion_notify", ad.ADCompletionNotify)
 	}
 }

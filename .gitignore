@@ -20,6 +20,7 @@ manifest/geo/.DS_Store
 cmd/go-api/go-api
 cmd/go-api/go-api-mac
 cmd/go-admin/go-admin
+cmd/go-admin/go-admin-mac
 cmd/go-api/go-api-mac
 cmd/go-job/go-job
 cmd/go-job/go-job-mac

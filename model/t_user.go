@@ -21,4 +21,5 @@ type TUser struct {
 	UpdatedAt   time.Time `xorm:"comment('更新时间') TIMESTAMP"`
 	Comment     string    `xorm:"comment('备注信息') VARCHAR(255)"`
 	ClientId    string    `xorm:"comment('clientID') VARCHAR(128)"`
+	Kicked      int       `xorm:"comment('kicked') tinyint(1)"`
 }

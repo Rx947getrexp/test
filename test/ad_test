@@ -1,0 +1,52 @@
+
+
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13001/advertisement/slot_create -d '{
+    "location":"ad-location-1", "name":"广告位置1", "desc":"广告位置1，首页第一个广告位置", "status":1}'
+
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13001/advertisement/slot_list
+
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13001/advertisement/slot_modify -d '{
+    "location":"ad-location-1", "name":"广告位置1-a", "desc":"广告位置1a，首页第一个广告位置", "status":2}'
+
+
+type ADCreateReq struct {
+	Advertiser    string             `form:"advertiser" json:"advertiser" dc:"广告主，客户名称"`
+	Name          string             `form:"name" binding:"required" json:"name" dc:"广告名称-要求唯一"`
+	Type          string             `form:"type" json:"type" dc:"广告类型. enum: text,image,video"`
+	Url           string             `form:"url" json:"url" dc:"广告内容地址"`
+	Logo          string             `form:"logo" json:"logo" dc:"logo地址"`
+	SlotLocations []SlotLocationItem `form:"slot_locations" json:"slot_locations" dc:"广告位的位置以及在广告位中的排序"`
+	TargetUrls    []TargetUrlItem    `form:"target_url" json:"target_url" dc:"跳转地址，包括：pc,ios,android"`
+	Devices       []string           `form:"devices" json:"devices" dc:"投放设备"`
+	Labels        []string           `form:"labels" json:"labels" dc:"广告标签"`
+	ExposureTime  int                `form:"exposure_time" json:"exposure_time" dc:"单次曝光时间，单位秒"`
+	GiftDuration  uint               `form:"gift_duration" json:"gift_duration" dc:"观看广告后赠送时间，单位秒"`
+	UserLevels    []int              `form:"user_levels" json:"user_levels" dc:"用户等级"`
+	StartTime     string             `form:"start_time" json:"start_time" dc:"广告生效时间"`
+	EndTime       string             `form:"end_time" json:"end_time" dc:"广告失效时间"`
+	Status        int                `form:"status" json:"status" dc:"状态:1-上架；2-下架"`
+}
+
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13001/advertisement/create -d '{
+    "advertiser":"客户1","name":"第一个广告","type":"image","url":"http://123.com/image/10001.mv","logo":"http://123.com/logo/10001.logo",
+    "slot_locations":[{"location":"ad-location-1","sort":1},{"location":"ad-location-1","sort":2}],"target_url":[{"channel":"pc","url":"http://hello.com/pc/1"},{"channel":"android","url":"http://hello.com/android/1"}],
+    "devices":["android","pc"],"labels":["娱乐","美食"],"exposure_time":10,"gift_duration":3600,"user_levels":[0,1],
+    "start_time":"2024-11-17 00:00:00","end_time":"2024-12-17 00:00:00","status":1}'
+
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13001/advertisement/list
+
+
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13001/advertisement/modify -d '{
+    "advertiser":"客户2","name":"第一个广告","type":"image","url":"http://123.com/image/10001-1.mv","logo":"http://123.com/logo/10001-1.logo",
+    "slot_locations":[{"location":"ad-location-1","sort":3},{"location":"ad-location-1","sort":4}],"target_url":[{"channel":"pc","url":"http://hello.com/pc/1-1"},{"channel":"android","url":"http://hello.com/android/1-1"}],
+    "devices":["android-1","pc-1"],"labels":["娱乐-1","美食-1"],"exposure_time":101,"gift_duration":36001,"user_levels":[0,1,2],
+    "start_time":"2024-11-17 01:00:00","end_time":"2024-12-17 01:00:00","status":2}'
+
+
+
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13001/ad_list
+
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13001/ad_completion_notify -d '{"name":"第一个广告"}'
+
+
+

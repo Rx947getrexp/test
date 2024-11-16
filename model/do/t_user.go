@@ -32,4 +32,6 @@ type TUser struct {
 	LastLoginCountry interface{} // 最近一次登录的国家
 	PreferredCountry interface{} // 用户选择的国家（国家名称）
 	Version          interface{} // 数据版本号
+	Kicked           interface{} // 被踢标记，0: 未被踢, 1: 已经被踢
+	LastKickedAt     *gtime.Time // 最近一次踢出时间
 }

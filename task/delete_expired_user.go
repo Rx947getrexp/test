@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gogf/gf/v2/encoding/gjson"
+	"github.com/gogf/gf/v2/os/gtime"
+	types_api "go-speed/api/types/api"
 	"go-speed/constant"
 	"go-speed/dao"
 	"go-speed/global"
@@ -13,9 +15,11 @@ import (
 	"go-speed/model/entity"
 	"go-speed/model/request"
 	"go-speed/model/response"
+	"go-speed/service/api/speed_api"
 	"go-speed/util"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -50,40 +54,104 @@ func DeleteExpiredUser() {
 
 func DoDeleteExpiredUser() {
 	var (
-		err  error
-		list []*model.TUser
+		err   error
+		items []entity.TUser
 	)
 	ctx, _ := gin.CreateTestContext(httptest.NewRecorder())
 	defer ctx.Done()
 
-	//whiteList := []string{"zzz@qq.com"}
-	// TODO：后续要注意时区
-	nowTime := time.Now().Unix() // 过期30分钟后才执行踢人
-	err = global.Db.Where("email != 'zzz@qq.com' and status = 0 and expired_time <= ? and expired_time > ?", nowTime, nowTime-3*24*60*60).OrderBy("expired_time asc").Find(&list)
+	err = dao.TUser.Ctx(ctx).
+		WhereLTE(dao.TUser.Columns().ExpiredTime, time.Now().Add(time.Minute*1).Unix()).
+		Where(do.TUser{Kicked: 0}).
+		Scan(&items)
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msg("get expired users failed")
-		time.Sleep(time.Second * 10)
 		return
 	}
-
-	if len(list) == 0 {
+	if len(items) == 0 {
 		global.MyLogger(ctx).Info().Msg("no expired user")
-		time.Sleep(time.Minute)
 		return
 	}
 
-	for _, user := range list {
-		if err = DeleteUser(ctx, user); err != nil {
-			global.MyLogger(ctx).Err(err).Msg("delete expired users from v2ray failed")
-			continue
+	for _, item := range items {
+		err = kickUser(ctx, &item)
+		if err != nil {
+			global.MyLogger(ctx).Err(err).Msgf("kickUser failed, user: %d/%s", item.Id, item.Email)
 		}
-		global.MyLogger(ctx).Err(err).Msgf("delete expired(%d) user(%s) from v2ray success", user.ExpiredTime, user.Email)
-
-		//if err = UpdateUserStatus(user); err != nil {
-		//	global.Logger.Err(err).Msg("update user status failed")
-		//}
-		//global.Logger.Err(err).Msgf("update expired(%d) user(%s) status success", user.ExpiredTime, user.Email)
 	}
+
+	////whiteList := []string{"zzz@qq.com"}
+	//// TODO：后续要注意时区
+	//nowTime := time.Now().Unix() // 过期30分钟后才执行踢人
+	//
+	//err = global.Db.Where("email != 'zzz@qq.com' and status = 0 and expired_time <= ? and expired_time > ?", nowTime, nowTime-3*24*60*60).OrderBy("expired_time asc").Find(&list)
+	//if err != nil {
+	//	global.MyLogger(ctx).Err(err).Msg("get expired users failed")
+	//	time.Sleep(time.Second * 10)
+	//	return
+	//}
+	//
+	//if len(list) == 0 {
+	//	global.MyLogger(ctx).Info().Msg("no expired user")
+	//	time.Sleep(time.Minute)
+	//	return
+	//}
+	//
+	//for _, user := range list {
+	//	if err = DeleteUser(ctx, user); err != nil {
+	//		global.MyLogger(ctx).Err(err).Msg("delete expired users from v2ray failed")
+	//		continue
+	//	}
+	//	global.MyLogger(ctx).Err(err).Msgf("delete expired(%d) user(%s) from v2ray success", user.ExpiredTime, user.Email)
+	//
+	//	//if err = UpdateUserStatus(user); err != nil {
+	//	//	global.Logger.Err(err).Msg("update user status failed")
+	//	//}
+	//	//global.Logger.Err(err).Msgf("update expired(%d) user(%s) status success", user.ExpiredTime, user.Email)
+	//}
+}
+
+func kickUser(ctx *gin.Context, user *entity.TUser) (err error) {
+	for _, ip := range strings.Split(global.Config.System.APIServerIPs, ",") {
+		err = speed_api.DeleteCancelledUser(ctx, ip, &types_api.DeleteCancelledUserReq{
+			Email:         user.Email,
+			UUID:          user.V2RayUuid,
+			OnlyLocalFile: true,
+		})
+		if err != nil {
+			global.MyLogger(ctx).Err(err).Msgf("DeleteCancelledUser failed, email: %s", user.Email)
+			return
+		}
+	}
+
+	// 删除所有节点上的配置
+	err = DeleteUserV2rayConfig(ctx, user.Email, user.V2RayUuid, user.Level)
+	if err != nil {
+		global.MyLogger(ctx).Err(err).Msgf("DeleteUser failed, email: %s", user.Email)
+		return
+	}
+	var affected int64
+	affected, err = dao.TUser.Ctx(ctx).
+		Where(do.TUser{
+			Id:      user.Id,
+			Email:   user.Email,
+			Version: user.Version,
+		}).
+		Data(do.TUser{
+			Kicked:       1,
+			LastKickedAt: gtime.Now(),
+			Version:      user.Version + 1,
+		}).UpdateAndGetAffected()
+	if err != nil {
+		global.MyLogger(ctx).Err(err).Msgf("Kick user update Kicked flag failed, email: %s", user.Email)
+		return
+	}
+	if affected == 1 {
+		global.MyLogger(ctx).Info().Msgf("Kick user success, (%d/%s) ", user.Id, user.Email)
+	} else {
+		global.MyLogger(ctx).Info().Msgf("Kick user not success, (%d/%s), affected=%d, but not 1", user.Id, user.Email, affected)
+	}
+	return nil
 }
 
 func DeleteUser(ctx *gin.Context, user *model.TUser) error {
@@ -144,11 +212,11 @@ func DeleteUser(ctx *gin.Context, user *model.TUser) error {
 	return nil
 }
 
-func DeleteUserV2rayConfig(ctx *gin.Context, user *model.TUser) error {
+func DeleteUserV2rayConfig(ctx *gin.Context, email, v2rayUuid string, userLevel int) error {
 	req := &request.NodeAddSubRequest{
-		Email: user.Email,
-		Uuid:  user.V2rayUuid,
-		Level: fmt.Sprintf("%d", user.Level),
+		Email: email,
+		Uuid:  v2rayUuid,
+		Level: fmt.Sprintf("%d", userLevel),
 		Tag:   "2", // TODO：删除用户
 	}
 	global.Logger.Info().Msgf("delete-user-req, req: %s", gjson.MustEncode(req))

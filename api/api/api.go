@@ -780,6 +780,7 @@ func ReceiveFree(c *gin.Context) {
 		}
 		user.ExpiredTime = newExpiredTime
 		user.UpdatedAt = time.Now()
+		user.Kicked = 0
 		rows, err = sess.Cols("expired_time", "updated_at").Where("id = ?", user.Id).Update(user)
 		if err != nil || rows > 1 {
 			global.MyLogger(c).Err(fmt.Errorf("err:%+v", err)).Msgf(
@@ -1511,7 +1512,7 @@ func CancelAccount(c *gin.Context) {
 	//}
 
 	// 删除所有节点上的配置
-	err = task.DeleteUserV2rayConfig(c, user)
+	err = task.DeleteUserV2rayConfig(c, user.Email, user.V2rayUuid, user.Level)
 	if err != nil {
 		global.MyLogger(c).Err(err).Msgf("DeleteUser failed, email: %s", user.Email)
 		response.RespFail(c, i18n.RetMsgLogoutFailed, nil)
