@@ -502,12 +502,10 @@ class Speed:
     def get_active_emails_in_next_month(self, month):
         month_date = datetime.strptime(month, '%Y-%m')
         next_month_date = month_date + timedelta(days=32)
+        #next_month = next_month_date.strftime('%Y-%m')
         next_month_start = next_month_date.replace(day=1)
         next_month_end = (next_month_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
-        st = int(next_month_start.strftime('%Y%m%d'))
-        et = int(next_month_end.strftime('%Y%m%d'))
-        # sql = """SELECT DISTINCT tut.email FROM speed_collector.t_v2ray_user_traffic tut WHERE tut.date >= %s AND tut.date <= %s""" % (st, et)
-        sql = """SELECT DISTINCT email FROM (SELECT email FROM (SELECT email FROM speed_report.t_user_op_log WHERE (content LIKE '%点击连接%' OR content LIKE '%开始连接%') AND created_at >= '{}' AND result = 'success' AND created_at <= '{}' AND email IN (SELECT email FROM speed.t_user) UNION SELECT email FROM speed_collector.t_v2ray_user_traffic WHERE email IN (SELECT email FROM speed.t_user) AND created_at >= '{}' AND created_at <= '{}') AS combined_results) AS distinct_emails""".format(st, et, st, et)
+        sql = """SELECT tut.email FROM speed_collector.t_v2ray_user_traffic tut WHERE tut.date >= %s AND tut.date <= %s""" % (int(next_month_start.strftime('%Y%m%d')), int(next_month_end.strftime('%Y%m%d')))
         results = mysql_query_db(self.conn, sql)
         return [row['email'] for row in results]
     
