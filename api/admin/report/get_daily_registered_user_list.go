@@ -5,8 +5,9 @@ import (
 	"go-speed/dao"
 	"go-speed/global"
 	"go-speed/i18n"
+	"go-speed/model/entity"
 	"go-speed/model/response"
-	"go-speed/service/orm/model/entity"
+	"log"
 	"strconv"
 	"time"
 
@@ -23,9 +24,9 @@ type DailyRegisteredUserRequest struct {
 }
 
 type UserReportDay struct {
-	Date      uint   `description:"数据日期, 20230101"`
-	New       uint   `description:"新增用户"`
-	CreatedAt string `json:"created_at" dc:"记录创建时间"`
+	Date uint `description:"数据日期, 20230101"`
+	New  uint `description:"新增用户"`
+	// CreatedAt string `json:"created_at" dc:"记录创建时间"`
 }
 
 type UserReportDayResponse struct {
@@ -33,8 +34,16 @@ type UserReportDayResponse struct {
 	Items []UserReportDay `json:"items" dc:"数据明细"`
 }
 
+func getFormatDate(t time.Time) int {
+	formattedTime := t.Format("20060102")
+	log.Println("formattedTime1:", formattedTime)
+	formattedDate, _ := strconv.Atoi(formattedTime)
+	log.Println("formattedTime2:", formattedDate)
+	return formattedDate
+}
+
 func GetDailyRegisteredUser(ctx *gin.Context) {
-	// TUserReportDay
+	// 依赖表
 	var (
 		err error
 		req = new(DailyRegisteredUserRequest)
@@ -53,17 +62,17 @@ func GetDailyRegisteredUser(ctx *gin.Context) {
 		// 获取当前时间
 		currentTime := time.Now()
 		if req.StartDate <= 0 {
-			// 计算前第15天的日期
-			fifteenDaysAgo := currentTime.AddDate(0, 0, -15)
-			formattedTime := fifteenDaysAgo.Format("20060102")
-			formattedStartTime, _ := strconv.Atoi(formattedTime)
-			req.StartDate = formattedStartTime
+			// 计算前第20天的日期
+			DaysAgo := currentTime.AddDate(0, 0, -20)
+			req.StartDate = getFormatDate(DaysAgo)
 		}
 		if req.EndDate <= 0 {
-			formattedTime := currentTime.Format("20060102")
-			formattedEndTime, _ := strconv.Atoi(formattedTime)
-			req.StartDate = formattedEndTime
+			req.EndDate = getFormatDate(currentTime)
 		}
+	}
+
+	if req.StartDate > req.EndDate {
+		req.StartDate, req.EndDate = req.EndDate, req.StartDate
 	}
 
 	size := req.Size
@@ -75,7 +84,7 @@ func GetDailyRegisteredUser(ctx *gin.Context) {
 		offset = (req.Page - 1) * size
 	}
 
-	model := dao.TUserReportMonthly.Ctx(ctx).WhereBetween("date", req.StartDate, req.EndDate)
+	model := dao.TUserReportDay.Ctx(ctx).WhereBetween("date", req.StartDate, req.EndDate)
 	total, err = model.Count()
 
 	if err != nil {
@@ -97,6 +106,7 @@ func GetDailyRegisteredUser(ctx *gin.Context) {
 		items = append(items, UserReportDay{
 			Date: item.Date,
 			New:  item.New,
+			// CreatedAt: item.CreatedAt.Format(constant.TimeFormat),
 		})
 	}
 
