@@ -8,13 +8,12 @@ import (
 	"go-speed/model/entity"
 	"go-speed/model/response"
 	"log"
-	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-type DailyRegisteredUserRequest struct {
+type DailyRechargeRequest struct {
 	StartDate int    `form:"start_date" json:"start_date" dc:"数据日期, 20230101"`
 	EndDate   int    `form:"end_date" json:"end_date" dc:"数据日期, 20230101"`
 	OrderBy   string `form:"order_by" json:"order_by" dc:"排序字段，eg: id|created_time"`
@@ -23,32 +22,24 @@ type DailyRegisteredUserRequest struct {
 	Size      int    `form:"size" json:"size" dc:"分页查询size, 最大1000"`
 }
 
-type UserReportDay struct {
-	Date uint `description:"数据日期, 20230101"`
-	New  uint `description:"新增用户"`
-	// CreatedAt string `json:"created_at" dc:"记录创建时间"`
+type DailyRechargeList struct {
+	Date    uint `description:"数据日期, 20230101"`
+	GoodsId uint `description:"商品套餐id"`
+	New     uint `description:"新增用户充值数量"`
 }
 
-type UserReportDayResponse struct {
-	Total int             `json:"total" dc:"数据总条数"`
-	Items []UserReportDay `json:"items" dc:"数据明细"`
+type DailyRechargeResponse struct {
+	Total int                 `json:"total" dc:"数据总条数"`
+	Items []DailyRechargeList `json:"items" dc:"数据明细"`
 }
 
-func getFormatDateToInt(t time.Time) int {
-	formattedTime := t.Format("20060102")
-	log.Println("formattedTime1:", formattedTime)
-	formattedDate, _ := strconv.Atoi(formattedTime)
-	log.Println("formattedTime2:", formattedDate)
-	return formattedDate
-}
-
-func GetDailyRegisteredUser(ctx *gin.Context) {
-	// 依赖表
+func GetDailyRechargeList(ctx *gin.Context) {
+	log.Println("GetDailyRechargeList")
 	var (
 		err error
-		req = new(DailyRegisteredUserRequest)
+		req = new(DailyRechargeRequest)
 		// doWhere  do.TUserReportDay
-		entities []entity.TUserReportDay
+		entities []entity.TUserRechargeReportDay
 		total    int
 	)
 
@@ -84,11 +75,11 @@ func GetDailyRegisteredUser(ctx *gin.Context) {
 		offset = (req.Page - 1) * size
 	}
 
-	model := dao.TUserReportDay.Ctx(ctx).WhereBetween("date", req.StartDate, req.EndDate)
+	model := dao.TUserRechargeReportDay.Ctx(ctx).WhereBetween("date", req.StartDate, req.EndDate)
 	total, err = model.Count()
 
 	if err != nil {
-		global.MyLogger(ctx).Err(err).Msgf("count daily registered users failed")
+		global.MyLogger(ctx).Err(err).Msgf("count user monthly retention failed")
 		response.ResFail(ctx, err.Error())
 		return
 	}
@@ -96,21 +87,21 @@ func GetDailyRegisteredUser(ctx *gin.Context) {
 	err = model.Order(req.OrderBy, req.OrderType).Offset(offset).Limit(size).Scan(&entities)
 
 	if err != nil {
-		global.MyLogger(ctx).Err(err).Msgf("get daily registered users failed")
+		global.MyLogger(ctx).Err(err).Msgf("get user monthly retention failed")
 		response.ResFail(ctx, err.Error())
 		return
 	}
 
-	items := make([]UserReportDay, 0)
+	items := make([]DailyRechargeList, 0)
 	for _, item := range entities {
-		items = append(items, UserReportDay{
-			Date: item.Date,
-			New:  item.New,
-			// CreatedAt: item.CreatedAt.Format(constant.TimeFormat),
+		items = append(items, DailyRechargeList{
+			Date:    item.Date,
+			GoodsId: item.GoodsId,
+			New:     item.New,
 		})
 	}
 
-	response.RespOk(ctx, i18n.RetMsgSuccess, UserReportDayResponse{
+	response.RespOk(ctx, i18n.RetMsgSuccess, DailyRechargeResponse{
 		Total: total,
 		Items: items,
 	})

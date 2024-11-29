@@ -57,6 +57,7 @@ func AdminRoute(group *gin.RouterGroup) {
 
 		group.GET("get_user_monthly_retention_list", report.GetUserMonthlyRetention) //获取最近前两个月的月留存数据
 		group.GET("get_daily_registered_user_list", report.GetDailyRegisteredUser)   //获取每日注册用户统计数据
+		group.GET("get_daily_recharge_list", report.GetDailyRechargeList)            //获取每日充值统计数据
 
 		//系统管理
 		sysGroup := group.Group("sys")
