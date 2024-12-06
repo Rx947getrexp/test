@@ -1,12 +1,16 @@
 package service
 
 import (
-	"github.com/gin-gonic/gin"
+	"fmt"
 	"go-speed/api/api/official_docs"
 	"go-speed/constant"
 	"go-speed/dao"
 	"go-speed/global"
+	"go-speed/i18n"
 	"go-speed/model/entity"
+	"go-speed/model/response"
+
+	"github.com/gin-gonic/gin"
 )
 
 func OfficialDocsList(ctx *gin.Context) (resp *official_docs.OfficialDocsListRes, err error) {
@@ -32,4 +36,30 @@ func OfficialDocsList(ctx *gin.Context) (resp *official_docs.OfficialDocsListRes
 	return &official_docs.OfficialDocsListRes{
 		Items: docs,
 	}, nil
+}
+
+func OfficialDoc(ctx *gin.Context) (docEntity *entity.TDoc, err error) {
+	id := ctx.Query("Id")
+
+	if id == "" {
+		global.MyLogger(ctx).Err(err).Msg("Doc id is required")
+		response.RespFail(ctx, i18n.RetMsgParamInputInvalid, nil)
+		return nil, fmt.Errorf("doc id is required")
+	}
+
+	err = dao.TDoc.Ctx(ctx).Where("id", id).Scan(&docEntity)
+
+	if err != nil {
+		global.MyLogger(ctx).Err(err).Msgf("doc %s 查询db失败", id)
+		response.RespFail(ctx, i18n.RetMsgDBErr, nil)
+		return nil, fmt.Errorf("query doc %s failed", id)
+	}
+
+	if docEntity == nil {
+		err = fmt.Errorf("doc id无效 %s", id)
+		global.MyLogger(ctx).Warn().Msgf("doc id无效 %s", id)
+		response.RespFail(ctx, i18n.RetMsgOperateFailed, nil)
+		return nil, err
+	}
+	return docEntity, nil
 }
