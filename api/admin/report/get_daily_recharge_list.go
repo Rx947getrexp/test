@@ -68,11 +68,19 @@ func GetDailyRechargeList(ctx *gin.Context) {
 
 	size := req.Size
 	if size < 1 || size > constant.MaxPageSize {
-		size = 20
+		size = 8
 	}
 	offset := 0
 	if req.Page > 1 {
 		offset = (req.Page - 1) * size
+	}
+
+	if req.OrderBy == "" {
+		req.OrderBy = "date" // 默认按数据日期排序
+	}
+
+	if req.OrderType == "" {
+		req.OrderType = "desc"
 	}
 
 	// 获取所有商品的价格信息并创建映射
