@@ -38,7 +38,7 @@ func OfficialDocsList(ctx *gin.Context) (resp *official_docs.OfficialDocsListRes
 	}, nil
 }
 
-func OfficialDoc(ctx *gin.Context) (docEntity *entity.TDoc, err error) {
+func OfficialDoc(ctx *gin.Context) (doc *official_docs.DocItem, err error) {
 	id := ctx.Query("Id")
 
 	if id == "" {
@@ -47,7 +47,7 @@ func OfficialDoc(ctx *gin.Context) (docEntity *entity.TDoc, err error) {
 		return nil, fmt.Errorf("doc id is required")
 	}
 
-	err = dao.TDoc.Ctx(ctx).Where("id", id).Scan(&docEntity)
+	err = dao.TDoc.Ctx(ctx).Where("id", id).Scan(&doc)
 
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("doc %s 查询db失败", id)
@@ -55,11 +55,23 @@ func OfficialDoc(ctx *gin.Context) (docEntity *entity.TDoc, err error) {
 		return nil, fmt.Errorf("query doc %s failed", id)
 	}
 
-	if docEntity == nil {
+	if doc == nil {
 		err = fmt.Errorf("doc id无效 %s", id)
 		global.MyLogger(ctx).Warn().Msgf("doc id无效 %s", id)
 		response.RespFail(ctx, i18n.RetMsgOperateFailed, nil)
 		return nil, err
 	}
-	return docEntity, nil
+
+	// 返回一个DTO
+	docResponse := &official_docs.DocItem{
+		Id:        doc.Id,
+		Type:      doc.Type,
+		Name:      doc.Name,
+		Desc:      doc.Desc,
+		Content:   doc.Content,
+		CreatedAt: doc.CreatedAt,
+		UpdatedAt: doc.UpdatedAt,
+	}
+
+	return docResponse, nil
 }
