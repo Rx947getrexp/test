@@ -7,6 +7,7 @@ import (
 	"go-speed/i18n"
 	"go-speed/model/entity"
 	"go-speed/model/response"
+	"sort"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -28,27 +29,28 @@ type DailyRechargeList struct {
 	TotalAmount float64 `description:"总充值金额"`
 }
 
-type DailyRechargeResponse struct {
-	Total int                 `json:"total" dc:"数据总条数"`
-	Items []DailyRechargeList `json:"items" dc:"数据明细"`
+// 每日充值汇总信息
+type DailyRechargeSummary struct {
+	Date        uint    `json:"date"`
+	New         uint    `json:"new"`
+	TotalAmount float64 `json:"total_amount"`
 }
 
 func GetDailyRechargeList(ctx *gin.Context) {
-	// log.Println("GetDailyRechargeList")
 	var (
-		err error
-		req = new(DailyRechargeRequest)
-		// doWhere  do.TUserReportDay
+		err      error
+		req      = new(DailyRechargeRequest)
 		entities []entity.TUserRechargeReportDay
-		total    int
 	)
 
+	// 绑定请求参数
 	if err = ctx.ShouldBind(req); err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("绑定参数失败")
 		response.ResFail(ctx, err.Error())
 		return
 	}
 
+	// 如果未指定起始日期和结束日期，则使用默认日期
 	if req.StartDate <= 0 || req.EndDate <= 0 {
 		// 获取当前时间
 		currentTime := time.Now()
@@ -62,23 +64,25 @@ func GetDailyRechargeList(ctx *gin.Context) {
 		}
 	}
 
+	// 调整日期顺序，确保 StartDate 小于 EndDate
 	if req.StartDate > req.EndDate {
 		req.StartDate, req.EndDate = req.EndDate, req.StartDate
 	}
 
+	// 设置分页大小，默认 8，最大 1000
 	size := req.Size
 	if size < 1 || size > constant.MaxPageSize {
-		size = 8
+		size = constant.MaxPageSize
 	}
 	offset := 0
 	if req.Page > 1 {
 		offset = (req.Page - 1) * size
 	}
 
+	// 设置排序字段和排序方式
 	if req.OrderBy == "" {
 		req.OrderBy = "date" // 默认按数据日期排序
 	}
-
 	if req.OrderType == "" {
 		req.OrderType = "desc"
 	}
@@ -86,48 +90,74 @@ func GetDailyRechargeList(ctx *gin.Context) {
 	// 获取所有商品的价格信息并创建映射
 	priceMap, err := getAllGoodsPrices(ctx)
 	if err != nil {
-		global.MyLogger(ctx).Err(err).Msgf("get all goods prices failed")
+		global.MyLogger(ctx).Err(err).Msgf("获取商品价格失败")
 		response.ResFail(ctx, err.Error())
 		return
 	}
 
+	// 查询数据
 	model := dao.TUserRechargeReportDay.Ctx(ctx).WhereBetween("date", req.StartDate, req.EndDate)
-	total, err = model.Count()
-
-	if err != nil {
-		global.MyLogger(ctx).Err(err).Msgf("count user monthly retention failed")
-		response.ResFail(ctx, err.Error())
-		return
-	}
 
 	err = model.Order(req.OrderBy, req.OrderType).Offset(offset).Limit(size).Scan(&entities)
-
 	if err != nil {
-		global.MyLogger(ctx).Err(err).Msgf("get user monthly retention failed")
+		global.MyLogger(ctx).Err(err).Msgf("获取用户月度充值记录失败")
 		response.ResFail(ctx, err.Error())
 		return
 	}
 
-	items := make([]DailyRechargeList, 0)
+	// 按日期分组并计算每个日期的总计
+	dateGroupedData := make(map[uint]DailyRechargeList)
+
 	for _, item := range entities {
 		priceRub, exists := priceMap[item.GoodsId]
 		if !exists {
-			global.MyLogger(ctx).Warn().Msgf("price for GoodsId %d not found", item.GoodsId)
+			global.MyLogger(ctx).Warn().Msgf("商品ID %d 的价格未找到", item.GoodsId)
 			continue // 如果找不到价格，则跳过该条目
 		}
+
 		// 计算总金额
 		totalAmount := float64(item.New) * priceRub
-		items = append(items, DailyRechargeList{
+
+		// 尝试获取已存在的记录，如果不存在则创建新记录
+		dailyStat, ok := dateGroupedData[item.Date]
+		if !ok {
+			dailyStat = DailyRechargeList{
+				Date: item.Date,
+			}
+		}
+
+		// 累加 New 和 TotalAmount
+		dailyStat.New += item.New
+		dailyStat.TotalAmount += totalAmount
+
+		// 更新分组数据
+		dateGroupedData[item.Date] = dailyStat
+	}
+
+	// 构造按日期分组的响应数据
+	groupedItems := make([]DailyRechargeSummary, 0)
+
+	// 按日期顺序遍历分组
+	for _, item := range dateGroupedData {
+		groupedItems = append(groupedItems, DailyRechargeSummary{
 			Date:        item.Date,
-			GoodsId:     item.GoodsId,
 			New:         item.New,
-			TotalAmount: totalAmount,
+			TotalAmount: item.TotalAmount,
 		})
 	}
 
-	response.RespOk(ctx, i18n.RetMsgSuccess, DailyRechargeResponse{
-		Total: total,
-		Items: items,
+	// 对最终的结果按照日期排序（假设是升序）
+	sort.Slice(groupedItems, func(i, j int) bool {
+		return groupedItems[i].Date < groupedItems[j].Date
+	})
+
+	// 使用groupedItems的长度作为total值
+	total := len(groupedItems)
+
+	// 返回成功响应
+	response.RespOk(ctx, i18n.RetMsgSuccess, map[string]interface{}{
+		"total": total,
+		"items": groupedItems,
 	})
 }
 
