@@ -56,6 +56,7 @@ func ApiRoute(group *gin.RouterGroup) {
 	}
 	group.GET("pay_notify", order.PayNotify)
 	group.POST("get_official_docs", official_docs.OfficialDocsList)
+	group.POST("get_official_docs_by_id", official_docs.OfficialDocById)
 	group.Use(api.JWTAuth())
 	{
 		group.POST("change_passwd", api.ChangePasswd)

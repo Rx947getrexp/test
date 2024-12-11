@@ -33,3 +33,16 @@ func OfficialDocsList(ctx *gin.Context) {
 	}
 	response.RespOk(ctx, i18n.RetMsgSuccess, *resp)
 }
+
+// OfficialDocsById 通过文档id获取文档
+func OfficialDocById(ctx *gin.Context) {
+	// 调用 service.OfficialDoc 并解构返回值
+	doc, err := service.OfficialDoc(ctx)
+	if err != nil {
+		// 如果有错误，这里已经由 OfficialDoc 函数处理过了，无需重复处理
+		return
+	}
+
+	// 正常情况下返回成功响应
+	response.RespOk(ctx, i18n.RetMsgSuccess, doc)
+}
