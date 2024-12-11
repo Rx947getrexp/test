@@ -5,12 +5,13 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"go-speed/global"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 type CreateOrderReq struct {
@@ -54,7 +55,7 @@ func createOrder(ctx *gin.Context, mapData map[string]interface{}) (res *OrderRe
 		return
 	}
 
-	req.Header.Set("Content-Type", "text/xml")
+	req.Header.Set("Content-Type", "application/json")
 	client := &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
 	resp, err := client.Do(req)
 	if err != nil {

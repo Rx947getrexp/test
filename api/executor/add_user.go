@@ -52,6 +52,11 @@ func addUserToV2rayConfig(conf V2rayConfig, email, password string) error {
 
 // trojan
 func addUserOperation(conf V2rayConfig, email, password string, level uint32) error {
+	// 在添加用户之前，检查该用户是否已经存在
+	if conf.IsClientExist(V2rayProtocolTrojan, email) {
+		global.Logger.Warn().Msgf("User %s already exists, skipping AddUser operation.", email)
+		return nil // 如果用户已存在，直接返回，不再添加
+	}
 	// 准备新客户端的信息
 	req := command.AlterInboundRequest{
 		Tag: conf.GetTagByProtocol(V2rayProtocolTrojan), // TODO：写死 trojan
@@ -66,7 +71,6 @@ func addUserOperation(conf V2rayConfig, email, password string, level uint32) er
 				},
 			}),
 	}
-
 	// "127.0.0.1:10088"
 	conn, err := grpc.Dial(global.Config.System.V2rayApiAddress, grpc.WithInsecure())
 	if err != nil {
@@ -75,7 +79,6 @@ func addUserOperation(conf V2rayConfig, email, password string, level uint32) er
 	}
 	defer conn.Close()
 	global.Logger.Info().Msgf("addUser req: Tag: %s, Operation: %s", req.Tag, req.Operation.String())
-
 	resp, err := command.NewHandlerServiceClient(conn).AlterInbound(context.Background(), &req)
 	if err != nil {
 		global.Logger.Err(err).Msg("AlterInbound failed, err: " + err.Error())
