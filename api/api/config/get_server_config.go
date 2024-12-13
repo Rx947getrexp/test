@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go-speed/api/api/common"
@@ -101,17 +102,23 @@ func chooseCountryForUser(ctx *gin.Context, userId uint64, countryName string) (
 		return
 	}
 
-	if service.IsVIPExpired(userEntity) {
-		global.MyLogger(ctx).Info().Msgf("######## (%s) expired #######", userEntity.Email)
-		response.RespFail(ctx, i18n.RetMsgAccountExpiredV2, nil)
-		return
+	if len(global.GetClientVersion(ctx)) > 0 {
+		global.MyLogger(ctx).Info().Msgf("######## %s clientVersion (%s) #######", userEntity.Email, global.GetClientVersion(ctx))
+		if service.IsVIPExpired(userEntity) {
+			err = errors.New(i18n.RetMsgAccountExpiredV2)
+			global.MyLogger(ctx).Info().Msgf("######## %s expired #######", userEntity.Email)
+			response.RespFail(ctx, i18n.RetMsgAccountExpiredV2, nil)
+			return
+		}
+	} else {
+		global.MyLogger(ctx).Info().Msgf("######## %s clientVersion is empty #######", userEntity.Email)
 	}
 
 	where := do.TServingCountry{Status: 1}
 
 	// 过期用户只能选择免费节点
 	if service.IsVIPExpired(userEntity) {
-		global.MyLogger(ctx).Info().Msgf("######## (%s) expired, choose free site #######", userEntity.Email)
+		global.MyLogger(ctx).Info().Msgf("######## %s expired, choose free site #######", userEntity.Email)
 		where.IsFree = constant.IsFreeSiteYes
 	}
 
@@ -133,6 +140,7 @@ func chooseCountryForUser(ctx *gin.Context, userId uint64, countryName string) (
 		}
 	}
 	if service.IsVIPExpired(userEntity) && !match {
+		err = errors.New(i18n.RetMsgAccountExpired)
 		global.MyLogger(ctx).Warn().Msgf(">>>>>>>>> 过期 user: %s, ExpiredTime: %d, 用户选择的不是免费站点",
 			userEntity.Uname, userEntity.ExpiredTime)
 		response.RespFail(ctx, i18n.RetMsgAccountExpired, nil)

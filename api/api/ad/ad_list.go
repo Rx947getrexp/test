@@ -6,10 +6,12 @@ import (
 	"go-speed/api/types"
 	"go-speed/constant"
 	"go-speed/dao"
+	"go-speed/global"
 	"go-speed/i18n"
 	"go-speed/model/do"
 	"go-speed/model/entity"
 	"go-speed/model/response"
+	"go-speed/util"
 	"time"
 )
 
@@ -17,7 +19,10 @@ const (
 	ADStatusOnline = 1
 )
 
-type ADListReq struct{}
+type ADListReq struct {
+	Locations []string `form:"locations" json:"locations" dc:"广告位的位置，相当于ID"`
+	Devices   []string `form:"devices" json:"devices" dc:"投放设备"`
+}
 
 type ADListRes struct {
 	Items []ADItem `json:"items" dc:"广告列表"`
@@ -42,8 +47,15 @@ type ADItem struct {
 func ADList(ctx *gin.Context) {
 	var (
 		err error
+		req = new(ADListReq)
 		ads []entity.TAd
 	)
+	if err = ctx.ShouldBind(req); err != nil {
+		global.MyLogger(ctx).Err(err).Msgf("绑定参数失败")
+		response.RespFail(ctx, i18n.RetMsgParamParseErr, nil)
+		return
+	}
+	global.MyLogger(ctx).Info().Msgf("req: %+v", *req)
 
 	err = dao.TAd.Ctx(ctx).
 		Where(do.TAd{Status: ADStatusOnline}).
@@ -54,8 +66,12 @@ func ADList(ctx *gin.Context) {
 		response.ResFail(ctx, err.Error())
 		return
 	}
+
 	items := make([]ADItem, 0)
 	for _, item := range ads {
+		if !isPicked(req, item) {
+			continue
+		}
 		items = append(items, ADItem{
 			Name:          item.Name,
 			Type:          item.Type,
@@ -72,4 +88,40 @@ func ADList(ctx *gin.Context) {
 		})
 	}
 	response.RespOk(ctx, i18n.RetMsgSuccess, ADListRes{Items: items})
+}
+
+func isPicked(req *ADListReq, item entity.TAd) bool {
+	if len(req.Locations) > 0 {
+		flag := false
+		var locations []string
+		for _, i := range builder.BuildSlotLocations(item.SlotLocations) {
+			locations = append(locations, i.Location)
+		}
+
+		for _, l := range req.Locations {
+			if util.IsInArrayIgnoreCase(l, locations) {
+				flag = true
+				break
+			}
+		}
+		if !flag {
+			return false
+		}
+	}
+
+	if len(req.Devices) > 0 {
+		flag := false
+		devices := builder.BuildStringArray(item.Devices)
+
+		for _, d := range req.Devices {
+			if util.IsInArrayIgnoreCase(d, devices) {
+				flag = true
+				break
+			}
+		}
+		if !flag {
+			return false
+		}
+	}
+	return true
 }

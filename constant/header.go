@@ -1,12 +1,14 @@
 package constant
 
 const (
-	HeaderKeyLang      = "Lang"
-	HeaderKeyTraceId   = "Trace-Id"
-	HeaderKeyClientId  = "Client-Id"
-	HeaderKeyUserAgent = "User-Agent"
-	HeaderKeyChannel   = "Channel"
-	HeaderKeyClaims    = "claims"
+	HeaderKeyLang          = "Lang"
+	HeaderKeyTraceId       = "Trace-Id"
+	HeaderKeyClientId      = "Client-Id"
+	HeaderKeyUserAgent     = "User-Agent"
+	HeaderKeyChannel       = "Channel"
+	HeaderKeyClaims        = "claims"
+	HeaderKeyDeviceType    = "xx-device-type"
+	HeaderKeyClientVersion = "XXX-Client-Version"
 )
 
 var HeaderKeys = []string{
@@ -16,4 +18,6 @@ var HeaderKeys = []string{
 	HeaderKeyUserAgent,
 	HeaderKeyChannel,
 	HeaderKeyClaims,
+	HeaderKeyDeviceType,
+	HeaderKeyClientVersion,
 }
