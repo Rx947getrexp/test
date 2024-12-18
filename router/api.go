@@ -55,6 +55,7 @@ func ApiRoute(group *gin.RouterGroup) {
 		switchStateGroup.POST("machine_states_witching", api.ServerStateSwitching) //踢机器的接口
 	}
 	group.GET("pay_notify", order.PayNotify)
+	group.POST("russpay_callback", order.RussPayCallback)
 	group.POST("get_official_docs", official_docs.OfficialDocsList)
 	group.POST("get_official_docs_by_id", official_docs.OfficialDocById)
 	group.Use(api.JWTAuth())

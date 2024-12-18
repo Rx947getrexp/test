@@ -18,6 +18,7 @@ import (
 )
 
 type PaymentChannelListReq struct {
+	AllChannel int `form:"all_channel" json:"all_channel" dc:"是否需要返回全部的"`
 }
 
 type PaymentChannelListRes struct {
@@ -57,8 +58,17 @@ type CustomerServiceInfo struct {
 func PaymentChannelList(ctx *gin.Context) {
 	var (
 		err         error
+		req         = new(PaymentChannelListReq)
 		entityItems []entity.TPaymentChannel
 	)
+	// 绑定请求参数
+	if err = ctx.ShouldBind(req); err != nil {
+		global.MyLogger(ctx).Err(err).Msgf("绑定参数失败")
+		response.RespFail(ctx, i18n.RetMsgParamParseErr, nil)
+		return
+	}
+	global.MyLogger(ctx).Info().Msgf("AllChannel: %d", req.AllChannel)
+
 	//user, err := common.ValidateClaims(ctx)
 	//if err != nil {
 	//	return
@@ -73,6 +83,12 @@ func PaymentChannelList(ctx *gin.Context) {
 		return
 	}
 
+	newChannelIds := []string{
+		constant.PayChannelRussPayBankCard,
+		constant.PayChannelRussPaySBP,
+		constant.PayChannelRussPaySBER,
+	}
+
 	items := make([]PaymentChannel, 0)
 	for _, item := range entityItems {
 		//if !inWhitelist(ctx, user.Email) &&
@@ -85,6 +101,9 @@ func PaymentChannelList(ctx *gin.Context) {
 		//	continue
 		//}
 		if item.ChannelId == constant.PayChannelApplePay {
+			continue
+		}
+		if req.AllChannel == 0 && util.IsInArrayIgnoreCase(item.ChannelId, newChannelIds) {
 			continue
 		}
 
