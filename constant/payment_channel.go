@@ -15,4 +15,8 @@ const (
 	PayChannelFreekassa_43 = "freekassa-43"
 	PayChannelFreekassa_44 = "freekassa-44"
 	PayChannelApplePay     = "applepay"
+
+	PayChannelRussPayBankCard = "russpay-bankcard"
+	PayChannelRussPaySBP      = "russpay-sbp"
+	PayChannelRussPaySBER     = "russpay-sber"
 )

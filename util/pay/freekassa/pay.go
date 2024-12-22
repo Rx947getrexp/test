@@ -8,13 +8,14 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"go-speed/global"
 	"io/ioutil"
 	"net/http"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 type OrderListRequest struct {
@@ -129,7 +130,7 @@ func getOrderList(ctx *gin.Context, mapData map[string]interface{}) (response *O
 		return
 	}
 
-	req.Header.Set("Content-Type", "text/xml")
+	req.Header.Set("Content-Type", "application/json")
 	client := &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
 	resp, err := client.Do(req)
 	if err != nil {

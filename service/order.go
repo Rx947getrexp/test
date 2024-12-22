@@ -14,6 +14,7 @@ import (
 	"go-speed/util/pay/applepay"
 	"go-speed/util/pay/freekassa"
 	"go-speed/util/pay/pnsafepay"
+	"go-speed/util/pay/russpay"
 	"go-speed/util/pay/upay"
 	"go-speed/util/pay/webmoney"
 	"golang.org/x/exp/rand"
@@ -138,7 +139,7 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string, notifyData interface{}) (
 		}
 
 		if resp.OperType == "0" {
-			pass, err := checkAmount(ctx, resp.Amount, payOrder.OrderAmount)
+			pass, err := CheckAmount(ctx, resp.Amount, payOrder.OrderAmount)
 			if err != nil {
 				return constant.ReturnStatusWaiting, err
 			}
@@ -189,7 +190,7 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string, notifyData interface{}) (
 			orderRealityAmount = payOrder.OrderAmount
 		} else {
 			notifyReq := notifyData.(*PayNotifyReq)
-			pass, err = checkAmount(ctx, notifyReq.Amount, payOrder.OrderAmount)
+			pass, err = CheckAmount(ctx, notifyReq.Amount, payOrder.OrderAmount)
 			if err != nil {
 				return constant.ReturnStatusWaiting, err
 			}
@@ -217,6 +218,26 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string, notifyData interface{}) (
 		}
 		paymentProof = applePayReq.TransactionId
 		resultStatus = constant.ReturnStatusSuccess
+	case constant.PayChannelRussPayBankCard, constant.PayChannelRussPaySBP, constant.PayChannelRussPaySBER:
+		if payOrder.OrderData == "" {
+			global.MyLogger(ctx).Info().Msgf("russpay OrderData is nil")
+			return constant.ReturnStatusWaiting, nil
+		}
+		var resp *russpay.QueryOrderResponse
+		resp, err = russpay.QueryOrder(ctx, russpay.QueryOrderReq{BillingNumber: payOrder.OrderData})
+		if err != nil {
+			global.MyLogger(ctx).Err(err).Msgf("russpay failed")
+			return constant.ReturnStatusWaiting, err
+		}
+
+		if resp != nil &&
+			strings.ToLower(resp.PaymentStatus) == strings.ToLower("SUCCESSFUL") &&
+			resp.BillingNumber == payOrder.OrderData {
+			resultStatus = constant.ReturnStatusSuccess
+			orderRealityAmount = payOrder.OrderAmount
+		} else {
+			return constant.ReturnStatusWaiting, nil
+		}
 	}
 
 	// 查询用户信息
@@ -467,7 +488,7 @@ func randomGiftDay(min, max int) int {
 	return randomNumber
 }
 
-func checkAmount(ctx *gin.Context, amount, orderAmount string) (bool, error) {
+func CheckAmount(ctx *gin.Context, amount, orderAmount string) (bool, error) {
 	global.MyLogger(ctx).Info().Msgf("response amount: (%s), order amount: (%s)", amount, orderAmount)
 	if amount == orderAmount {
 		return true, nil

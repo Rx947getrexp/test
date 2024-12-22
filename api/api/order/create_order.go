@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go-speed/api/api/common"
 	"go-speed/util/pay/freekassa"
+	"go-speed/util/pay/russpay"
 	"math/rand"
 	"strconv"
 	"time"
@@ -33,9 +34,10 @@ const (
 )
 
 type CreateOrderReq struct {
-	ChannelId  string `form:"channel_id" json:"channel_id" binding:"required" dc:"支付渠道ID"`
-	GoodsId    int64  `form:"goods_id" json:"goods_id" binding:"required" dc:"套餐ID"`
-	DeviceType string `form:"device_type" json:"device_type" dc:"客户端设备系统os"`
+	ChannelId   string `form:"channel_id" json:"channel_id" binding:"required" dc:"支付渠道ID"`
+	GoodsId     int64  `form:"goods_id" json:"goods_id" binding:"required" dc:"套餐ID"`
+	DeviceType  string `form:"device_type" json:"device_type" dc:"客户端设备系统os"`
+	RedirectURL string `form:"redirect_url" json:"redirect_url" dc:"支付页面完成以后，跳转到的结果页地址"`
 }
 
 type CreateOrderRes struct {
@@ -218,6 +220,25 @@ func CreateOrder(ctx *gin.Context) {
 		res.Status = constant.ReturnStatusSuccess
 		payOrderUpdate.ReturnStatus = constant.ReturnStatusSuccess
 		payOrderUpdate.StatusMes = "apple-pay"
+
+	case constant.PayChannelRussPayBankCard, constant.PayChannelRussPaySBP, constant.PayChannelRussPaySBER:
+		resp, err := russpay.CreateOrder(ctx, russpay.CreateOrderReq{
+			ChannelId:   req.ChannelId,
+			Amount:      amountString,
+			OrderNumber: res.OrderNo,
+			CompanyPage: req.RedirectURL,
+			DeviceType:  req.DeviceType,
+		})
+		if err != nil && resp == nil {
+			global.MyLogger(ctx).Err(err).Msgf("russpay CreateOrder failed")
+			response.RespFail(ctx, i18n.RetMsgCreatePayOrderFailed, nil)
+			return
+		}
+		res.Status = constant.ReturnStatusSuccess
+		res.OrderUrl = resp.PayUrl
+		payOrderUpdate.ReturnStatus = constant.ReturnStatusSuccess
+		payOrderUpdate.StatusMes = resp.PayUrl
+		payOrderUpdate.OrderData = resp.BillingNumber
 
 	default:
 		err = fmt.Errorf("ChannelId %s 无效", req.ChannelId)
@@ -563,7 +584,8 @@ func genPayAmount(goodsEntity *entity.TGoods, paymentEntity *entity.TPaymentChan
 	case constant.PayChannelPnSafePay,
 		constant.PayChannelFreekassa_12, constant.PayChannelFreekassa_36,
 		constant.PayChannelFreekassa_43, constant.PayChannelFreekassa_44,
-		constant.PayChannelApplePay:
+		constant.PayChannelApplePay,
+		constant.PayChannelRussPayBankCard, constant.PayChannelRussPaySBP, constant.PayChannelRussPaySBER:
 		return goodsEntity.PriceRub, paymentEntity.Commission, fmt.Sprintf("%.2f", goodsEntity.PriceRub), CurrencyRUB, nil
 
 	case constant.PayChannelWebMoneyPay:
