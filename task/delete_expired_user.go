@@ -112,6 +112,24 @@ func DoDeleteExpiredUser() {
 }
 
 func kickUser(ctx *gin.Context, user *entity.TUser) (err error) {
+	var affected int64
+	affected, err = dao.TUser.Ctx(ctx).
+		Where(do.TUser{
+			Id:      user.Id,
+			Email:   user.Email,
+			Version: user.Version,
+		}).
+		Data(do.TUser{Level: 0}).UpdateAndGetAffected()
+	if err != nil {
+		global.MyLogger(ctx).Err(err).Msgf("Kick user update Kicked flag failed, email: %s", user.Email)
+		return
+	}
+	if affected == 1 {
+		global.MyLogger(ctx).Info().Msgf("userLevel update success, (%d/%s) ", user.Id, user.Email)
+	} else {
+		global.MyLogger(ctx).Info().Msgf("userLevel update not success, (%d/%s), affected=%d, but not 1", user.Id, user.Email, affected)
+	}
+
 	for _, ip := range strings.Split(global.Config.System.APIServerIPs, ",") {
 		err = speed_api.DeleteCancelledUser(ctx, ip, &types_api.DeleteCancelledUserReq{
 			Email:         user.Email,
@@ -130,7 +148,6 @@ func kickUser(ctx *gin.Context, user *entity.TUser) (err error) {
 		global.MyLogger(ctx).Err(err).Msgf("DeleteUser failed, email: %s", user.Email)
 		return
 	}
-	var affected int64
 	affected, err = dao.TUser.Ctx(ctx).
 		Where(do.TUser{
 			Id:      user.Id,
@@ -138,6 +155,7 @@ func kickUser(ctx *gin.Context, user *entity.TUser) (err error) {
 			Version: user.Version,
 		}).
 		Data(do.TUser{
+			Level:        0,
 			Kicked:       1,
 			LastKickedAt: gtime.Now(),
 			Version:      user.Version + 1,

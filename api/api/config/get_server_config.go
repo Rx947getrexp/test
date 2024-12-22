@@ -95,6 +95,7 @@ func chooseCountryForUser(ctx *gin.Context, userId uint64, countryName string) (
 		weightCountry    string
 		winCountry       string
 		weight           int = -1
+		isADVersion          = len(global.GetClientVersion(ctx)) > 0
 	)
 
 	userEntity, err = common.CheckUserByUserId(ctx, userId)
@@ -102,7 +103,8 @@ func chooseCountryForUser(ctx *gin.Context, userId uint64, countryName string) (
 		return
 	}
 
-	if len(global.GetClientVersion(ctx)) > 0 {
+	where := do.TServingCountry{Status: 1}
+	if isADVersion {
 		global.MyLogger(ctx).Info().Msgf("######## %s clientVersion (%s) #######", userEntity.Email, global.GetClientVersion(ctx))
 		if service.IsVIPExpired(userEntity) {
 			err = errors.New(i18n.RetMsgAccountExpiredV2)
@@ -112,14 +114,12 @@ func chooseCountryForUser(ctx *gin.Context, userId uint64, countryName string) (
 		}
 	} else {
 		global.MyLogger(ctx).Info().Msgf("######## %s clientVersion is empty #######", userEntity.Email)
-	}
 
-	where := do.TServingCountry{Status: 1}
-
-	// 过期用户只能选择免费节点
-	if service.IsVIPExpired(userEntity) {
-		global.MyLogger(ctx).Info().Msgf("######## %s expired, choose free site #######", userEntity.Email)
-		where.IsFree = constant.IsFreeSiteYes
+		// 过期用户只能选择免费节点
+		if service.IsVIPExpired(userEntity) {
+			global.MyLogger(ctx).Info().Msgf("######## %s expired, choose free site #######", userEntity.Email)
+			where.IsFree = constant.IsFreeSiteYes
+		}
 	}
 
 	err = dao.TServingCountry.Ctx(ctx).
@@ -148,6 +148,11 @@ func chooseCountryForUser(ctx *gin.Context, userId uint64, countryName string) (
 	}
 
 	for _, country := range countryEntities {
+		if isADVersion && country.Level > userEntity.Level {
+			global.MyLogger(ctx).Info().Msgf("skip country(%s), countryLevel: %d, userLevel: %d", country.Name, country.Level, userEntity.Level)
+			continue
+		}
+
 		// 优先选择用户指定的国家
 		if country.Name == countryName {
 			chooseCountry = country.Name

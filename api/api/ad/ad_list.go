@@ -12,16 +12,20 @@ import (
 	"go-speed/model/entity"
 	"go-speed/model/response"
 	"go-speed/util"
+	"math/rand"
 	"time"
 )
 
 const (
 	ADStatusOnline = 1
+
+	QueryTypeWeightRand = "weight-rand"
 )
 
 type ADListReq struct {
 	Locations []string `form:"locations" json:"locations" dc:"广告位的位置，相当于ID"`
 	Devices   []string `form:"devices" json:"devices" dc:"投放设备"`
+	QueryType string   `form:"query_type" json:"query_type" dc:"查询类型。weight-rand: 按权重随机"`
 }
 
 type ADListRes struct {
@@ -57,6 +61,12 @@ func ADList(ctx *gin.Context) {
 	}
 	global.MyLogger(ctx).Info().Msgf("req: %+v", *req)
 
+	if req.QueryType == QueryTypeWeightRand && len(req.Locations) != 1 {
+		global.MyLogger(ctx).Err(err).Msgf("QueryType: %s, len(Locations) = %d not 1", req.QueryType, len(req.Locations))
+		response.RespFail(ctx, i18n.RetMsgParamInvalid, nil)
+		return
+	}
+
 	err = dao.TAd.Ctx(ctx).
 		Where(do.TAd{Status: ADStatusOnline}).
 		WhereLTE(dao.TAd.Columns().StartTime, time.Now().Format(time.DateTime)).
@@ -87,7 +97,48 @@ func ADList(ctx *gin.Context) {
 			EndTime:       item.EndTime.Format(constant.TimeFormat),
 		})
 	}
+
+	if req.QueryType == QueryTypeWeightRand {
+		var (
+			location = req.Locations[0]
+			sorts    []int
+		)
+		for _, item := range items {
+			for _, v := range item.SlotLocations {
+				if location == v.Location {
+					sorts = append(sorts, v.Sort)
+				}
+			}
+		}
+		index := weightedRand(ctx, sorts)
+		items = []ADItem{items[index]}
+	}
+
 	response.RespOk(ctx, i18n.RetMsgSuccess, ADListRes{Items: items})
+}
+
+func weightedRand(ctx *gin.Context, weights []int) int {
+	global.MyLogger(ctx).Debug().Msgf("weights: %+v", weights)
+	sum := 0
+	for _, weight := range weights {
+		sum += weight
+	}
+
+	rand.Seed(time.Now().UnixNano())
+	randNum := 0
+	if sum > 0 {
+		randNum = rand.Intn(sum)
+	}
+	global.MyLogger(ctx).Debug().Msgf("randNum: %d", randNum)
+	for i, weight := range weights {
+		randNum -= weight
+		if randNum < 0 {
+			global.MyLogger(ctx).Debug().Msgf("i: %d", i)
+			return i
+		}
+	}
+	global.MyLogger(ctx).Debug().Msgf("i -> 0")
+	return 0
 }
 
 func isPicked(req *ADListReq, item entity.TAd) bool {

@@ -87,22 +87,20 @@ func ADCompletionNotify(ctx *gin.Context) {
 	}
 
 	// 加时长
-	var newExpiredTime int64
-	if service.IsVIPExpired(user) {
-		newExpiredTime = time.Now().Unix() + int64(adInfo.GiftDuration)
-	} else {
-		newExpiredTime = user.ExpiredTime + int64(adInfo.GiftDuration)
-	}
-
 	var (
 		userUpdate = do.TUser{
-			ExpiredTime: newExpiredTime,
-			UpdatedAt:   gtime.Now(),
-			Version:     user.Version + 1,
+			Kicked:    0,
+			UpdatedAt: gtime.Now(),
+			Version:   user.Version + 1,
 		}
 		_ctx     = ctx
 		affected int64
 	)
+	if service.IsVIPExpired(user) {
+		userUpdate.ExpiredTime = time.Now().Unix() + int64(adInfo.GiftDuration)
+	} else {
+		userUpdate.ExpiredTime = user.ExpiredTime + int64(adInfo.GiftDuration)
+	}
 	err = dao.TPayOrder.Ctx(ctx).Transaction(ctx, func(ctx context.Context, tx gdb.TX) error {
 		affected, err = dao.TUser.Ctx(ctx).Data(userUpdate).Where(do.TUser{
 			Id:      user.Id,
