@@ -24,8 +24,10 @@ type DailyRegisteredUserRequest struct {
 }
 
 type UserReportDay struct {
-	Date uint `description:"数据日期, 20230101"`
-	New  uint `description:"新增用户"`
+	Date          uint `description:"数据日期, 20230101"`
+	New           uint `description:"新增用户"`
+	Retained      uint `description:"日留存"`
+	MonthRetained uint `description:"月留存"`
 	// CreatedAt string `json:"created_at" dc:"记录创建时间"`
 }
 
@@ -104,8 +106,10 @@ func GetDailyRegisteredUser(ctx *gin.Context) {
 	items := make([]UserReportDay, 0)
 	for _, item := range entities {
 		items = append(items, UserReportDay{
-			Date: item.Date,
-			New:  item.New,
+			Date:          item.Date,
+			New:           item.New,
+			Retained:      item.Retained,
+			MonthRetained: item.MonthRetained,
 			// CreatedAt: item.CreatedAt.Format(constant.TimeFormat),
 		})
 	}
