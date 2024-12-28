@@ -48,5 +48,29 @@ curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:
 
 curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13001/ad_completion_notify -d '{"name":"第一个广告"}'
 
+type ReportUserADLogReq struct {
+	UserId     uint64 `form:"user_id" json:"user_id" dc:"用户ID"`
+	ADLocation string `form:"ad_location" json:"ad_location" dc:"广告位"`
+	ADName     string `form:"ad_name" json:"ad_name" dc:"广告名称"`
+	DeviceType string `form:"device_type" json:"device_type" dc:"设备类型"`
+	APPVersion string `form:"app_version" json:"app_version" dc:"前端版本"`
+	Type       string `form:"type" json:"type" dc:"前端自定义"`
+	Content    string `form:"content" json:"content" dc:"前端自定义"`
+	Result     string `form:"result" json:"result" dc:"前端自定义"`
+	ReportTime string `form:"report_time" json:"report_time" dc:"上报时间"`
+}
+
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13002/report_user_ad_log -d '{
+    "user_id": 219122692,
+    "ad_location": "ad-12344",
+    "ad_name": "ad-ad_name",
+    "device_type": "ios",
+    "app_version": "v1.59.1",
+    "type": "type1",
+    "content": "content1",
+    "result": "success",
+    "report_time": "2024-01-01 00:00:01"
+}'
+
 
 

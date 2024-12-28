@@ -52,3 +52,23 @@ ALTER TABLE `t_user`
 
 ALTER TABLE `t_user`
     ADD COLUMN `last_kicked_at` timestamp NULL DEFAULT NULL COMMENT '最近一次踢出时间';
+
+
+
+CREATE TABLE `speed_report`.`t_user_ad_log`
+(
+    `id`    bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增id',
+    `user_id` bigint UNSIGNED DEFAULT NULL COMMENT '用户id',
+    `ad_location` varchar(255) DEFAULT NULL COMMENT '广告位的位置',
+    `ad_name` varchar(128) DEFAULT NULL COMMENT '广告名称',
+    `device_type` varchar(64) DEFAULT NULL COMMENT '设备类型',
+    `app_version` varchar(16) DEFAULT NULL COMMENT 'APP版本',
+    `client_id` varchar(128) DEFAULT NULL COMMENT '设备号',
+    `type` varchar(128) DEFAULT NULL,
+    `content` text DEFAULT NULL,
+    `result` varchar(128) DEFAULT NULL,
+    `report_time` varchar(64) DEFAULT NULL COMMENT '提交时间',
+    `created_at` timestamp NULL DEFAULT NULL COMMENT '记录创建时间',
+    PRIMARY KEY (`id`) USING BTREE,
+    KEY `key1` (`created_at`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='用户广告观看上报日志';
