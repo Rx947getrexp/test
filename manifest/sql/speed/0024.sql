@@ -1,4 +1,4 @@
-CREATE TABLE `t_ad_slot` (
+CREATE TABLE `speed`.`t_ad_slot` (
     `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '自增id',
     `location` varchar(255) NOT NULL COMMENT '广告位的位置，相当于ID',
     `name` varchar(255) NOT NULL COMMENT '广告位名称',
@@ -10,7 +10,7 @@ CREATE TABLE `t_ad_slot` (
     UNIQUE INDEX uiq_l (`location`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='广告位置表';
 
-CREATE TABLE `t_ad` (
+CREATE TABLE `speed`.`t_ad` (
     `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '自增id',
     `advertiser` varchar(128) DEFAULT NULL COMMENT '广告主，客户名称',
     `name` varchar(128) NOT NULL COMMENT '广告名称',
@@ -34,7 +34,7 @@ CREATE TABLE `t_ad` (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='广告表';
 
 
-CREATE TABLE `t_ad_gift` (
+CREATE TABLE `speed`.`t_ad_gift` (
   `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '自增id',
   `user_id` bigint UNSIGNED NOT NULL COMMENT '用户id',
   `ad_id` bigint UNSIGNED NOT NULL COMMENT '广告ID',
@@ -47,10 +47,10 @@ CREATE TABLE `t_ad_gift` (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='观看广告赠送记录';
 
 
-ALTER TABLE `t_user`
+ALTER TABLE `speed`.`t_user`
     ADD COLUMN kicked tinyint(1)  NOT NULL DEFAULT 0 COMMENT '被踢标记，0: 未被踢, 1: 已经被踢';
 
-ALTER TABLE `t_user`
+ALTER TABLE `speed`.`t_user`
     ADD COLUMN `last_kicked_at` timestamp NULL DEFAULT NULL COMMENT '最近一次踢出时间';
 
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go-speed/api/api/common"
+	"go-speed/config"
 	"go-speed/constant"
 	"go-speed/dao"
 	"go-speed/global"
@@ -104,7 +105,7 @@ func chooseCountryForUser(ctx *gin.Context, userId uint64, countryName string) (
 	}
 
 	where := do.TServingCountry{Status: 1}
-	if isADVersion {
+	if isADVersion && global.Config.ADConfig.KickExpiredUser == config.KickExpiredUserYes {
 		global.MyLogger(ctx).Info().Msgf("######## %s clientVersion (%s) #######", userEntity.Email, global.GetClientVersion(ctx))
 		if service.IsVIPExpired(userEntity) {
 			err = errors.New(i18n.RetMsgAccountExpiredV2)
