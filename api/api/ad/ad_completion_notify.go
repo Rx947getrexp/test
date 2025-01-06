@@ -79,8 +79,8 @@ func ADCompletionNotify(ctx *gin.Context) {
 	}
 	now := gtime.Now()
 	if lastADGift != nil && lastADGift.CreatedAt.Add(time.Duration(adInfo.ExposureTime)*time.Second).After(now) {
-		err = gerror.Newf(`last ad gift at "%s" + "%d"s is after now(%s), that is limited`,
-			lastADGift.CreatedAt.Format(time.DateTime), adInfo.ExposureTime, now.Format(time.DateTime))
+		err = gerror.Newf(`last ad gift at "%s" + "%d"s is after now(%s), that is limited, userId: %d`,
+			lastADGift.CreatedAt.String(), adInfo.ExposureTime, now.String(), user.Id)
 		global.MyLogger(ctx).Err(err).Msgf("query ad gift failed")
 		response.RespFail(ctx, i18n.RetMsgInternalErr, nil)
 		return
@@ -136,6 +136,6 @@ func ADCompletionNotify(ctx *gin.Context) {
 		response.RespFail(ctx, i18n.RetMsgDBErr, nil)
 		return
 	}
-	global.MyLogger(ctx).Info().Msgf("ADName: %s, notify success", req.Name)
+	global.MyLogger(ctx).Info().Msgf("ADName: %s, notify success, userId: %d", req.Name, user.Id)
 	response.RespOk(ctx, i18n.RetMsgSuccess, ADCompletionNotifyRes{})
 }
