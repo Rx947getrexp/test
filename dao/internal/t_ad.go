@@ -20,36 +20,46 @@ type TAdDao struct {
 
 // TAdColumns defines and stores column names for table t_ad.
 type TAdColumns struct {
-	Id        string // 自增id
-	Status    string // 状态:1-上架；2-下架
-	Sort      string // 排序
-	Name      string // 广告名称
-	Logo      string // 广告logo
-	Link      string // 广告链接
-	AdType    string // 广告分类：1-社交；2-游戏；3-漫画；4-视频...
-	Tag       string // 标签标题
-	Content   string // 正文介绍
-	Author    string // 作者
-	CreatedAt string // 创建时间
-	UpdatedAt string // 更新时间
-	Comment   string // 备注信息
+	Id            string // 自增id
+	Advertiser    string // 广告主，客户名称
+	Name          string // 广告名称
+	Type          string // 广告类型. enum: text,image,video
+	Url           string // 广告内容地址
+	Logo          string // logo
+	SlotLocations string // 广告位的位置，包括权重
+	Devices       string // 广告位的位置，包括权重
+	TargetUrls    string // 跳转地址，包括：pc,ios,android
+	Labels        string // 标签
+	ExposureTime  string // 单次曝光时间，单位秒
+	UserLevels    string // 用户等级
+	StartTime     string // 广告生效时间
+	EndTime       string // 广告失效时间
+	Status        string // 状态:1-上架；2-下架
+	GiftDuration  string // 赠送时间
+	CreatedAt     string // 创建时间
+	UpdatedAt     string // 更新时间
 }
 
 // tAdColumns holds the columns for table t_ad.
 var tAdColumns = TAdColumns{
-	Id:        "id",
-	Status:    "status",
-	Sort:      "sort",
-	Name:      "name",
-	Logo:      "logo",
-	Link:      "link",
-	AdType:    "ad_type",
-	Tag:       "tag",
-	Content:   "content",
-	Author:    "author",
-	CreatedAt: "created_at",
-	UpdatedAt: "updated_at",
-	Comment:   "comment",
+	Id:            "id",
+	Advertiser:    "advertiser",
+	Name:          "name",
+	Type:          "type",
+	Url:           "url",
+	Logo:          "logo",
+	SlotLocations: "slot_locations",
+	Devices:       "devices",
+	TargetUrls:    "target_urls",
+	Labels:        "labels",
+	ExposureTime:  "exposure_time",
+	UserLevels:    "user_levels",
+	StartTime:     "start_time",
+	EndTime:       "end_time",
+	Status:        "status",
+	GiftDuration:  "gift_duration",
+	CreatedAt:     "created_at",
+	UpdatedAt:     "updated_at",
 }
 
 // NewTAdDao creates and returns a new DAO object for table data access.

@@ -306,6 +306,7 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string, notifyData interface{}) (
 				ExpiredTime: newExpiredTime,
 				UpdatedAt:   gtime.Now(),
 				Version:     userEntity.Version + 1,
+				Kicked:      0,
 			}
 			// 加用户等级
 			// 过期充值时，按套餐的等级来
@@ -360,6 +361,7 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string, notifyData interface{}) (
 					ExpiredTime: directNewExpiredTime,
 					UpdatedAt:   gtime.Now(),
 					Version:     directUserEntity.Version + 1,
+					Kicked:      0,
 				}).Where(do.TUser{
 					Id:      directUserEntity.Id,
 					Version: directUserEntity.Version,

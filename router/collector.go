@@ -14,4 +14,5 @@ func CollectorRoute(group *gin.RouterGroup) {
 	group.GET("get_client_ip", report.GetClientIP)                     //获取客户端IP
 	group.POST("report_node_ping_result", report.ReportNodePingResult) //上报ping结果
 	group.POST("report_user_op_log", report.ReportUserOpLog)           // 连接代理
+	group.POST("report_user_ad_log", report.ReportUserADLog)
 }

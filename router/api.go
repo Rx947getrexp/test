@@ -4,11 +4,13 @@ import (
 	apiPath "go-speed/api"
 	"go-speed/api/admin/official_docs"
 	"go-speed/api/api"
+	"go-speed/api/api/ad"
 	"go-speed/api/api/config"
 	"go-speed/api/api/country"
 	"go-speed/api/api/goods"
 	"go-speed/api/api/node"
 	"go-speed/api/api/order"
+	"go-speed/api/api/report"
 	"go-speed/api/api/user"
 
 	"github.com/gin-gonic/gin"
@@ -43,7 +45,8 @@ func ApiRoute(group *gin.RouterGroup) {
 	group.GET("list_node_for_report", node.ListNodeForReport)    //获取节点ip列表，上报ping结果
 	group.POST("report_node_ping_result", apiPath.APIDeprecated) // 前端上报日志，已经迁移到 collector服务
 	group.POST("report_user_op_log", apiPath.APIDeprecated)      // 前端上报日志, 已经迁移到 collector服务
-	group.GET("get_rules", config.GetRules)                      // 获取ip和域名列表
+	group.POST("report_user_ad_log", report.ReportUserADLog)
+	group.GET("get_rules", config.GetRules) // 获取ip和域名列表
 	group.POST("pay_notify", order.PayNotify)
 	group.POST("goods_list", goods.GoodsList)
 	group.POST("payment_channel_list", order.PaymentChannelList)
@@ -96,5 +99,9 @@ func ApiRoute(group *gin.RouterGroup) {
 		group.POST("cancel_order", order.CancelOrder)
 		group.POST("order_list", order.GetOrderList)
 		group.POST("query_order", order.QueryOrder)
+
+		// 广告
+		group.POST("ad_list", ad.ADList)
+		group.POST("ad_completion_notify", ad.ADCompletionNotify)
 	}
 }

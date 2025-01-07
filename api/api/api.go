@@ -126,6 +126,7 @@ func Reg(c *gin.Context) {
 
 	channel := c.GetHeader("Channel")
 	var sendSec int64 = 0
+	level := constant.UserLevelNormal
 	//查询库中是否有Client-Id
 	clientId := getClientId(c)
 	if clientId != "" {
@@ -151,15 +152,17 @@ func Reg(c *gin.Context) {
 		global.MyLogger(c).Info().Msgf("userFlag:%d, userCancelledFlag: %d", userFlag, userCancelledFlag)
 		if userFlag == 0 && userCancelledFlag == 0 {
 			sendSec = 2 * 60 * 60 // 统一赠送15天 (之前没有送过的)
+			level = constant.UserLevelVIP1
 		}
 	} else if channel != "" {
 		sendSec = 2 * 60 * 60 // 统一赠送15天 (通过渠道推广来的)，TODO: 目前没办法校验渠道的有效性
+		level = constant.UserLevelVIP1
 	}
-	level := 0
+
 	disablePayment := geo.IsNeedDisablePaymentFeature(c, param.Account)
 	if disablePayment {
 		sendSec = 24 * 60 * 60 * 365 * 10 // 英国、美国 ip赠送 10年时长
-		level = 2
+		level = constant.UserLevelVIP2
 	}
 
 	global.MyLogger(c).Info().Msgf("Email(%s) gifted time(%d)", param.Account, sendSec)
@@ -780,6 +783,7 @@ func ReceiveFree(c *gin.Context) {
 		}
 		user.ExpiredTime = newExpiredTime
 		user.UpdatedAt = time.Now()
+		user.Kicked = 0
 		rows, err = sess.Cols("expired_time", "updated_at").Where("id = ?", user.Id).Update(user)
 		if err != nil || rows > 1 {
 			global.MyLogger(c).Err(fmt.Errorf("err:%+v", err)).Msgf(
@@ -1511,7 +1515,7 @@ func CancelAccount(c *gin.Context) {
 	//}
 
 	// 删除所有节点上的配置
-	err = task.DeleteUserV2rayConfig(c, user)
+	err = task.DeleteUserV2rayConfig(c, user.Email, user.V2rayUuid, user.Level)
 	if err != nil {
 		global.MyLogger(c).Err(err).Msgf("DeleteUser failed, email: %s", user.Email)
 		response.RespFail(c, i18n.RetMsgLogoutFailed, nil)

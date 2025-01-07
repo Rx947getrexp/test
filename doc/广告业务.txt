@@ -1,0 +1,275 @@
+1. 管理后台
+
+1.1. 广告位管理
+
+1.1.1. 新建广告位
+
+入参：
+type ADSlotCreateReq struct {
+	Location string `form:"location" binding:"required" json:"location" dc:"广告位的位置，相当于ID"`
+	Name     string `form:"name" binding:"required" json:"name" dc:"广告位名称"`
+	Desc     string `form:"desc" binding:"required" json:"desc" dc:"广告位描述"`
+	Status   int    `form:"status" json:"status" dc:"状态:1-上架；2-下架（默认值）"`
+}
+
+接口: advertisement/slot_create
+方法: POST
+请求示例:
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13001/advertisement/slot_create -d '{
+    "location":"ad-location-1",
+    "name":"广告位置1",
+    "desc":"广告位置1，首页第一个广告位置",
+    "status":1
+}'
+
+1.1.2. 修改广告位
+
+入参：
+type ADSlotModifyReq struct {
+	Location string `form:"location" binding:"required" json:"location" dc:"广告位的位置，相当于ID"`
+	Name     string `form:"name" binding:"required" json:"name" dc:"广告位名称"`
+	Desc     string `form:"desc" binding:"required" json:"desc" dc:"广告位描述"`
+	Status   int    `form:"status" json:"status" dc:"状态:1-上架；2-下架（默认值）"`
+}
+
+接口: advertisement/slot_modify
+方法: POST
+请求示例:
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13001/advertisement/slot_modify -d '{
+    "location":"ad-location-1",
+    "name":"广告位置1-a",
+    "desc":"广告位置1a，首页第一个广告位置",
+    "status":2
+}'
+
+1.1.3. 查询广告位列表
+
+入参：
+type ADSlotListReq struct{}
+
+返回参数:
+type ADSlotListRes struct {
+	Items []ADSlotItem `json:"items" dc:"广告位列表"`
+}
+
+type ADSlotItem struct {
+	Location  string `json:"location" dc:"广告位的位置，相当于ID"`
+	Name      string `json:"name" dc:"广告位名称"`
+	Desc      string `json:"desc" dc:"广告位描述"`
+	Status    int    `json:"status" dc:"状态:1-上架；2-下架"`
+	CreatedAt string `json:"created_at" dc:"创建时间"`
+	UpdatedAt string `json:"updated_at" dc:"更新时间"`
+}
+
+接口: advertisement/slot_list
+方法: POST
+请求示例:
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13001/advertisement/slot_list
+
+
+1.2. 广告管理
+
+1.2.1. 新建广告
+
+入参：
+
+type ADCreateReq struct {
+	Advertiser    string             `form:"advertiser" json:"advertiser" dc:"广告主，客户名称"`
+	Name          string             `form:"name" binding:"required" json:"name" dc:"广告名称-要求唯一"`
+	Type          string             `form:"type" json:"type" dc:"广告类型. enum: text,image,video"`
+	Url           string             `form:"url" json:"url" dc:"广告内容地址"`
+	Logo          string             `form:"logo" json:"logo" dc:"logo地址"`
+	SlotLocations []SlotLocationItem `form:"slot_locations" json:"slot_locations" dc:"广告位的位置以及在广告位中的排序"`
+	TargetUrls    []TargetUrlItem    `form:"target_url" json:"target_url" dc:"跳转地址，包括：pc,ios,android"`
+	Devices       []string           `form:"devices" json:"devices" dc:"投放设备"`
+	Labels        []string           `form:"labels" json:"labels" dc:"广告标签"`
+	ExposureTime  int                `form:"exposure_time" json:"exposure_time" dc:"单次曝光时间，单位秒"`
+	GiftDuration  uint               `form:"gift_duration" json:"gift_duration" dc:"观看广告后赠送时间，单位秒"`
+	UserLevels    []int              `form:"user_levels" json:"user_levels" dc:"用户等级"`
+	StartTime     string             `form:"start_time" json:"start_time" dc:"广告生效时间"`
+	EndTime       string             `form:"end_time" json:"end_time" dc:"广告失效时间"`
+	Status        int                `form:"status" json:"status" dc:"状态:1-上架；2-下架"`
+}
+
+type SlotLocationItem struct {
+	Location string `form:"location" json:"location" dc:"广告位的位置"`
+	Sort     int    `form:"sort" json:"sort" dc:"在广告位置中的排序"`
+}
+
+type TargetUrlItem struct {
+	Channel string `form:"channel" json:"channel" dc:"渠道，enum: pc, android, ios"`
+	Url     string `form:"url" json:"url" dc:"跳转地址"`
+}
+
+接口: advertisement/create
+方法: POST
+请求示例:
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13001/advertisement/create -d '{
+    "advertiser":"客户1",
+    "name":"第一个广告",
+    "type":"image",
+    "url":"http://123.com/image/10001.mv",
+    "logo":"http://123.com/logo/10001.logo",
+    "slot_locations":[{"location":"ad-location-1","sort":1},{"location":"ad-location-1","sort":2}],
+    "target_url":[{"channel":"pc","url":"http://hello.com/pc/1"},{"channel":"android","url":"http://hello.com/android/1"}],
+    "devices":["android","pc"],
+    "labels":["娱乐","美食"],
+    "exposure_time":10,
+    "gift_duration":3600,
+    "user_levels":[0,1],
+    "start_time":"2024-11-15 00:00:00",
+    "end_time":"2024-12-17 00:00:00",
+    "status":1
+}'
+
+
+1.2.2. 修改广告
+
+入参：
+
+type ADModifyReq struct {
+	Name          string              `form:"name" binding:"required" json:"name" dc:"广告名称-要求唯一"`
+	Advertiser    *string             `form:"advertiser" json:"advertiser" dc:"广告主，客户名称"`
+	Type          *string             `form:"type" json:"type" dc:"广告类型. enum: text,image,video"`
+	Url           *string             `form:"url" json:"url" dc:"广告内容地址"`
+	Logo          *string             `form:"logo" json:"logo" dc:"logo地址"`
+	SlotLocations *[]SlotLocationItem `form:"slot_locations" json:"slot_locations" dc:"广告位的位置以及在广告位中的排序"`
+	TargetUrls    *[]TargetUrlItem    `form:"target_url" json:"target_url" dc:"跳转地址，包括：pc,ios,android"`
+	Devices       *[]string           `form:"devices" json:"devices" dc:"投放设备"`
+	Labels        *[]string           `form:"labels" json:"labels" dc:"广告标签"`
+	ExposureTime  *uint               `form:"exposure_time" json:"exposure_time" dc:"单次曝光时间，单位秒"`
+	GiftDuration  *uint               `form:"gift_duration" json:"gift_duration" dc:"观看广告后赠送时间，单位秒"`
+	UserLevels    *[]int              `form:"user_levels" json:"user_levels" dc:"用户等级"`
+	StartTime     *gtime.Time         `form:"start_time" json:"start_time" dc:"广告生效时间"`
+	EndTime       *gtime.Time         `form:"end_time" json:"end_time" dc:"广告失效时间"`
+	Status        *int                `form:"status" json:"status" dc:"状态:1-上架；2-下架"`
+}
+
+接口: advertisement/modify
+方法: POST
+请求示例:
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13001/advertisement/modify -d '{
+    "advertiser":"客户2",
+    "name":"第一个广告",
+    "type":"image",
+    "url":"http://123.com/image/10001-1.mv",
+    "logo":"http://123.com/logo/10001-1.logo",
+    "slot_locations":[{"location":"ad-location-1","sort":3},{"location":"ad-location-1","sort":4}],
+    "target_url":[{"channel":"pc","url":"http://hello.com/pc/1-1"},
+    {"channel":"android","url":"http://hello.com/android/1-1"}],
+    "devices":["android-1","pc-1"],
+    "labels":["娱乐-1","美食-1"],
+    "exposure_time":101,
+    "gift_duration":36001,
+    "user_levels":[0,1,2],
+    "start_time":"2024-11-10 01:00:00",
+    "end_time":"2024-12-17 01:00:00",
+    "status":2
+}'
+
+
+1.2.3. 查询广告列表
+
+入参：
+
+type ADListReq struct{}
+
+返回参数:
+type ADListRes struct {
+	Items []ADItem `json:"items" dc:"广告列表"`
+}
+
+type ADItem struct {
+	Advertiser    string                   `json:"advertiser" dc:"广告主，客户名称"`
+	Name          string                   `json:"name" dc:"广告名称-要求唯一"`
+	Type          string                   `json:"type" dc:"广告类型. enum: text,image,video"`
+	Url           string                   `json:"url" dc:"广告内容地址"`
+	Logo          string                   `json:"logo" dc:"logo地址"`
+	SlotLocations []SlotLocationItem       `json:"slot_locations" dc:"广告位的位置以及在广告位中的排序"`
+	TargetUrls    []TargetUrlItem          `json:"target_url" dc:"跳转地址，包括：pc,ios,android"`
+	Devices       []string                 `json:"devices" dc:"投放设备"`
+	Labels        []string                 `json:"labels" dc:"广告标签"`
+	ExposureTime  int                      `json:"exposure_time" dc:"单次曝光时间，单位秒"`
+	GiftDuration  int                      `json:"gift_duration" dc:"观看本条广告赠送时长，单位秒"`
+	UserLevels    []int                    `json:"user_levels" dc:"用户等级"`
+	StartTime     string                   `json:"start_time" dc:"广告生效时间"`
+	EndTime       string                   `json:"end_time" dc:"广告失效时间"`
+	Status        int                      `json:"status" dc:"状态:1-上架；2-下架"`
+	CreatedAt     string                   `json:"created_at" dc:"创建时间"`
+	UpdatedAt     string                   `json:"updated_at" dc:"更新时间"`
+}
+
+type SlotLocationItem struct {
+	Location string `json:"location" dc:"广告位的位置"`
+	Sort     int    `json:"sort" dc:"在广告位置中的排序"`
+}
+
+type TargetUrlItem struct {
+	Channel string `json:"channel" dc:"渠道，enum: pc, android, ios"`
+	Url     string `json:"url" dc:"跳转地址"`
+}
+
+接口: advertisement/list
+方法: POST
+请求示例:
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13001/advertisement/list
+
+
+
+
+2. 应用服务
+
+2.1. 广告列表查询
+
+
+入参：
+
+
+type ADListReq struct{}
+
+
+返回参数:
+
+type ADListRes struct {
+	Items []ADItem `json:"items" dc:"广告列表"`
+}
+
+type ADItem struct {
+	Name          string                   `json:"name" dc:"广告名称-要求唯一"`
+	Type          string                   `json:"type" dc:"广告类型. enum: text,image,video"`
+	Url           string                   `json:"url" dc:"广告内容地址"`
+	Logo          string                   `json:"logo" dc:"logo地址"`
+	SlotLocations []SlotLocationItem       `json:"slot_locations" dc:"广告位的位置以及在广告位中的排序"`
+	TargetUrls    []TargetUrlItem          `json:"target_url" dc:"跳转地址，包括：pc,ios,android"`
+	Devices       []string                 `json:"devices" dc:"投放设备"`
+	Labels        []string                 `json:"labels" dc:"广告标签"`
+	ExposureTime  int                      `json:"exposure_time" dc:"单次曝光时间，单位秒"`
+	UserLevels    []int                    `json:"user_levels" dc:"用户等级"`
+	StartTime     string                   `json:"start_time" dc:"广告生效时间"`
+	EndTime       string                   `json:"end_time" dc:"广告失效时间"`
+}
+
+type SlotLocationItem struct {
+	Location string `json:"location" dc:"广告位的位置"`
+	Sort     int    `json:"sort" dc:"在广告位置中的排序"`
+}
+
+type TargetUrlItem struct {
+	Channel string `json:"channel" dc:"渠道，enum: pc, android, ios"`
+	Url     string `json:"url" dc:"跳转地址"`
+}
+
+接口: ad_list
+方法: POST
+
+2.2. 广告观看完成通知
+
+type ADCompletionNotifyReq struct {
+	Name string `form:"name" binding:"required" json:"name" dc:"广告名称"`
+}
+
+type ADCompletionNotifyRes struct{}
+
+接口: ad_completion_notify
+方法: POST
+

@@ -53,7 +53,7 @@ type DevListRequest struct {
 }
 
 type BanDevRequest struct {
-	DevId  int64 `form:"dev_id" binding:"required" json:"dev_id"`
+	//DevId  int64 `form:"dev_id" binding:"required" json:"dev_id"`
 	NodeId int64 `form:"node_id" json:"node_id"`
 }
 

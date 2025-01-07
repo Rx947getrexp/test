@@ -105,11 +105,17 @@ const (
 	RetMsgOpLimitedCurrentUserLevel = "您当前操作被限制，可升级会员等级后重试或者联系客服处理。"
 	RetMesEmailSendLimit            = "邮件已发送，请5分钟后再试，若未找到邮件，可能被误标记为垃圾邮件，请检查邮箱内的垃圾邮件。"
 	RetMsgGetV2rayConfigFailed      = "获取配置失败，请稍后重试或者联系客服人员处理。"
+	RetMsgAccountExpiredV2          = "您的帐户已过期。请购买会员或者观看广告获取免费使用时间。"
 )
 
 func Init() {
 	initCode()
 	ReturnMsgMap = make(I18nMsgMap)
+	ReturnMsgMap[RetMsgAccountExpiredV2] = map[string]string{
+		LangEN: "Your account has expired. Please purchase a membership or watch ads to get free usage time.",
+		LangRU: "Ваш аккаунт истек. Пожалуйста, приобретите членство или смотрите рекламу, чтобы получить бесплатное время использования.",
+	}
+
 	ReturnMsgMap[RetMsgInternalErr] = map[string]string{
 		LangEN: "ErrCode500, please contact customer service for assistance.",
 		LangRU: "ErrCode500, пожалуйста, обратитесь к службе поддержки.",

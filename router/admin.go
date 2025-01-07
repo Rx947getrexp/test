@@ -3,6 +3,7 @@ package router
 import (
 	"go-speed/api"
 	"go-speed/api/admin"
+	"go-speed/api/admin/ad"
 	"go-speed/api/admin/country"
 	"go-speed/api/admin/node"
 	"go-speed/api/admin/official_docs"
@@ -206,5 +207,14 @@ func AdminRoute(group *gin.RouterGroup) {
 		promotionGroup.POST("add_promotion", promotion.AddPromotion)
 		promotionGroup.POST("edit_promotion", promotion.EditPromotion)
 		promotionGroup.POST("delete_promotion", promotion.DeletePromotion)
+
+		// 广告系统
+		advertisementGroup := group.Group("advertisement")
+		advertisementGroup.POST("slot_create", ad.ADSlotCreate)
+		advertisementGroup.POST("slot_modify", ad.ADSlotModify)
+		advertisementGroup.POST("slot_list", ad.ADSlotList)
+		advertisementGroup.POST("create", ad.ADCreate)
+		advertisementGroup.POST("modify", ad.ADModify)
+		advertisementGroup.POST("list", ad.ADList)
 	}
 }

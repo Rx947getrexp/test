@@ -27,6 +27,10 @@ func GetClientIdKV(c *gin.Context) string {
 	return fmt.Sprintf(`{"%s":"%s"}"`, constant.HeaderKeyClientId, c.GetHeader(constant.HeaderKeyClientId))
 }
 
+func GetClientVersion(c *gin.Context) string {
+	return strings.TrimSpace(c.GetHeader(constant.HeaderKeyClientVersion))
+}
+
 func GetUserAgent(c *gin.Context) string {
 	return c.GetHeader(constant.HeaderKeyUserAgent)
 }
@@ -97,11 +101,11 @@ func TraceIdMiddleware() gin.HandlerFunc {
 		if traceId == "" {
 			_traceId := uuid.New().String()
 			c.Set(LoggerTraceIdKey, _traceId)
-			MyLogger(c).Warn().Msgf("____START____ <Trace-Id: empty> <newTraceId: %s> <Headers: %+v>", _traceId, SprintAllHeader(c))
+			MyLogger(c).Warn().Msgf("____START____ <Trace-Id: empty> <newTraceId: %s> <Headers: %s>", _traceId, SprintAllHeader(c))
 			c.Header(constant.HeaderKeyTraceId, _traceId)
 		} else {
 			c.Set(LoggerTraceIdKey, traceId)
-			MyLogger(c).Info().Msgf("____START____ <Trace-Id: %s> <Headers: %+v>", GetTraceId(c), SprintAllHeader(c))
+			MyLogger(c).Info().Msgf("____START____ <Trace-Id: %s> <Headers: %s>", GetTraceId(c), SprintAllHeader(c))
 			c.Header(constant.HeaderKeyTraceId, traceId)
 		}
 
