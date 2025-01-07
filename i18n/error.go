@@ -351,6 +351,7 @@ func initCode() {
 		RetMsgAuthFailed:                301,  // = "用户鉴权失败，请重新登陆！"
 		RetMsgActivity3TimesLimits:      5003, // = "每天参与活动限制3次。"
 		RetMsgAccountExpired:            5004, // = "您的帐户已过期。请续订您的订阅或手动选择免费服务器。"
+		RetMsgAccountExpiredV2:          5005,
 		RetMsgAuthExpired:               301,  // = "授权已过期，请重新登陆！"
 		RetMsgMemberExpirationReminder:  5006, // = "会员还有三天即将到期，请及时续费！"
 		RetMsgOrderUnpaidLimit:          5007, // = "您还有订单未支付且未支付订单数量超过平台限制，请先支付或者取消后再继续创建新的订单。"
