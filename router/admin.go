@@ -211,9 +211,11 @@ func AdminRoute(group *gin.RouterGroup) {
 		// 广告系统
 		advertisementGroup := group.Group("advertisement")
 		advertisementGroup.POST("slot_create", ad.ADSlotCreate)
+		advertisementGroup.POST("slot_delete", ad.ADSlotDelete)
 		advertisementGroup.POST("slot_modify", ad.ADSlotModify)
 		advertisementGroup.POST("slot_list", ad.ADSlotList)
 		advertisementGroup.POST("create", ad.ADCreate)
+		advertisementGroup.POST("delete", ad.ADDelete)
 		advertisementGroup.POST("modify", ad.ADModify)
 		advertisementGroup.POST("list", ad.ADList)
 	}
