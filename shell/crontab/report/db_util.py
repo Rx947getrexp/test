@@ -530,6 +530,38 @@ class Speed:
                 categorized_os = util.categorize_os(original_os)
                 retained_users_by_os[categorized_os].add(email)
         return retained_users_by_os
+    
+    ################################
+    #广告start
+    # 获取广告列表
+    def get_ad_list(self):
+        """获取广告列表"""
+        sql = """SELECT * FROM speed.t_ad"""
+        rows = mysql_query_db(self.conn, sql)
+        return rows
+    
+    # 获取广告位列表
+    def get_ad_slot(self):
+        """获取广告位列表"""
+        sql = """SELECT * FROM speed.t_ad_slot"""
+        rows = mysql_query_db(self.conn, sql)
+        return rows
+    
+    # 获取指定日期的广告看完后的赠送时长的用户数量
+    def get_ad_gift_user(self, date):
+        """获取指定日期的广告看完后的赠送时长的用户数量"""
+        sql = """SELECT ad_name, COUNT(*) AS total_count FROM speed.t_ad_gift WHERE DATE(created_at) = '{}' GROUP BY ad_name;""".format(date)
+        rows = mysql_query_db(self.conn, sql)
+        return rows
+    
+    # 获取指定日期的广告曝光、点击统计数据
+    def get_ad_exposure_statistics(self, date, type):
+        """获取指定日期的广告曝光、点击统计数据"""
+        sql = """SELECT ad_name, COUNT(*) AS ad_count FROM speed_report.t_user_ad_log WHERE DATE(created_at) = '{}' AND type = '{}' GROUP BY ad_name;""".format(date, type)
+        rows = mysql_query_db(self.conn, sql)
+        return rows
+    #广告end
+    ################################
 
 class SpeedReport:
     def __init__(self):
@@ -835,6 +867,19 @@ class SpeedReport:
     def insert_into_report_monthly(self, stat_month, os, user_count, new_users, retained_users):
         stat_month_date = int(stat_month.replace('-', ''))
         sql = """INSERT INTO t_user_report_monthly (stat_month, os, user_count, new_users, retained_users) VALUES (%s, '%s', %s, %s, %s);""" % (stat_month_date, os, user_count, new_users, retained_users)
+        mysql_execute(self.conn, sql)
+
+    def insert_into_report_ad_daily(self, ad_id, ad_name, date, exposure, clicks, rewards):
+        """将每日广告统计数据插入到数据库"""
+        sql = """
+        INSERT INTO speed_report.t_daily_ad_statistics (ad_id, ad_name, date, exposure, clicks, rewards)
+        VALUES (%s, '%s', %s, %s, %s, %s)
+        ON DUPLICATE KEY UPDATE
+            exposure=VALUES(exposure),
+            clicks=VALUES(clicks),
+            rewards=VALUES(rewards),
+            updated_at=CURRENT_TIMESTAMP;
+        """ % (ad_id, ad_name, date, exposure, clicks, rewards)
         mysql_execute(self.conn, sql)
 
 class SpeedCollector:

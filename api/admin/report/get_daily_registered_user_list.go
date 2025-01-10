@@ -7,7 +7,6 @@ import (
 	"go-speed/i18n"
 	"go-speed/model/entity"
 	"go-speed/model/response"
-	"log"
 	"strconv"
 	"time"
 
@@ -38,9 +37,9 @@ type UserReportDayResponse struct {
 
 func getFormatDateToInt(t time.Time) int {
 	formattedTime := t.Format("20060102")
-	log.Println("formattedTime1:", formattedTime)
+	// log.Println("formattedTime1:", formattedTime)
 	formattedDate, _ := strconv.Atoi(formattedTime)
-	log.Println("formattedTime2:", formattedDate)
+	// log.Println("formattedTime2:", formattedDate)
 	return formattedDate
 }
 

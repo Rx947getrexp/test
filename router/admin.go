@@ -54,11 +54,11 @@ func AdminRoute(group *gin.RouterGroup) {
 		group.GET("user_info", admin.UserInfo)
 		group.GET("reset_cache", admin.ResetCache) //刷新缓存
 
-		//首页
-
+		// 后台系统管理报表
 		group.GET("get_user_monthly_retention_list", report.GetUserMonthlyRetention) //获取最近前两个月的月留存数据
 		group.GET("get_daily_registered_user_list", report.GetDailyRegisteredUser)   //获取每日注册用户统计数据
 		group.GET("get_daily_recharge_list", report.GetDailyRechargeList)            //获取每日充值统计数据
+		group.GET("get_daily_ad_statistics_list", report.GetDailyAdStatisticsList)   //获取每日广告统计数据
 
 		//系统管理
 		sysGroup := group.Group("sys")

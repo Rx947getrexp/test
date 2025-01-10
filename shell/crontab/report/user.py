@@ -33,6 +33,7 @@ class ReportUser:
             self.report_online_user()
             self.report_daily_device_retaind()  # 新的按设备统计次日，7日，15日留存
             self.report_monthly_device_retaind()  # 新的按设备统计次月留存
+            self.report_ad_daily() #按日统计广告曝光量和点击量
         self.db_speed_conn.close_connection()
         self.db_report_conn.close_connection()
         self.db_collector_conn.close_connection()
@@ -484,3 +485,36 @@ class ReportUser:
             # 移动到下一个月
             current_month += timedelta(days=32)
             current_month = current_month.replace(day=1)
+
+    def report_ad_daily(self):
+        logging.info(f"{'*' * 20}{sys._getframe().f_code.co_name}{'*' * 20}")
+        # print(self.date) #昨天的日期
+        # 获取广告列表
+        ad_list_data = self.db_speed_conn.get_ad_list()
+        # 创建广告ID到广告名称的映射
+        ad_map = {ad['id']: ad['name'] for ad in ad_list_data}
+
+        # 获取曝光统计数据
+        exposure_stats = self.db_speed_conn.get_ad_exposure_statistics(self.date, 'view')
+        exposure_dict = {stat['ad_name']: stat['ad_count'] for stat in exposure_stats}
+        
+        # 获取点击统计数据
+        click_stats = self.db_speed_conn.get_ad_exposure_statistics(self.date, 'click')
+        click_dict = {stat['ad_name']: stat['ad_count'] for stat in click_stats}
+        
+        # 获取完播数
+        ad_gift_user = self.db_speed_conn.get_ad_gift_user(self.date)
+        gift_dict = {stat['ad_name']: stat['total_count'] for stat in ad_gift_user}
+
+        # print(ad_gift_user)
+        # 前一天日期，统计前一天数据
+        date_int = int(self.date.replace('-', ''))
+        
+        # # 合并统计数据
+        for ad_id, ad_name in ad_map.items():
+            exposure = exposure_dict.get(ad_name, 0)
+            clicks = click_dict.get(ad_name, 0) 
+            rewards = gift_dict.get(ad_name, 0) 
+            # print(ad_id, ad_name, date_int, exposure, clicks, rewards)
+            self.db_report_conn.insert_into_report_ad_daily(ad_id, ad_name, date_int, exposure, clicks, rewards)
+            
