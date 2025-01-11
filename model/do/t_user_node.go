@@ -13,11 +13,9 @@ import (
 type TUserNode struct {
 	g.Meta    `orm:"table:t_user_node, do:true"`
 	Id        interface{} // 自增id
-	UserId    interface{} // 用户uid
 	Email     interface{} // 用户邮箱
 	Ip        interface{} // 节点IP
 	V2RayUuid interface{} // uuid
-	Status    interface{} // 状态：0-未写入节点配置；1-已经写入到节点配置
 	CreatedAt *gtime.Time // 创建时间
-	UpdatedAt *gtime.Time // 更新时间
+	UserId    interface{} // 用户uid
 }

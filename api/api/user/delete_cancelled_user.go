@@ -54,9 +54,9 @@ func DeleteCancelledUser(ctx *gin.Context) {
 	}
 
 	for _, node := range nodeEntities {
-		err = service.DeleteUserFormLocalConfigFile(ctx, req.Email, req.UUID, node.Ip, req.OnlyLocalFile)
+		err = service.DeleteUserConfigForNode(ctx, req.Email, req.UUID, node.Ip)
 		if err != nil {
-			global.MyLogger(ctx).Err(err).Msgf("delete user config in local config failed")
+			global.MyLogger(ctx).Err(err).Msgf("delete user config for node failed")
 			response.ResFail(ctx, err.Error())
 			return
 		}

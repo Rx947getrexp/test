@@ -26,7 +26,7 @@ func ApiRoute(group *gin.RouterGroup) {
 		internalGroup.POST("describe_node_list", node.DescribeNodeList)
 		internalGroup.POST("delete_cancelled_user", user.DeleteCancelledUser)
 	}
-
+	group.POST("ad_list_test", ad.ADList)
 	group.POST("generate_dev_id", api.GenerateDevId) // call
 	group.POST("send_email", api.SendEmail)
 	group.POST("reg", api.Reg)     // call

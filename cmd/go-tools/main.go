@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/gogf/gf/contrib/drivers/mysql/v2"
 	"github.com/spf13/cobra"
+	"go-speed/cmd/go-tools/config"
 	"go-speed/cmd/go-tools/tools"
 )
 
@@ -17,7 +18,10 @@ func cmdInit() {
 	}
 	// 添加顶级命令
 
-	rootCmd.AddCommand(tools.AddConfigCmd)
+	rootCmd.AddCommand(
+		tools.AddConfigCmd,
+		config.NewCommand(),
+	)
 	rootCmd.Execute()
 }
 

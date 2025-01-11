@@ -4,7 +4,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"go-speed/api/common/builder"
 	"go-speed/api/types"
-	"go-speed/constant"
 	"go-speed/dao"
 	"go-speed/global"
 	"go-speed/i18n"
@@ -79,7 +78,8 @@ func ADList(ctx *gin.Context) {
 
 	items := make([]ADItem, 0)
 	for _, item := range ads {
-		if !isPicked(req, item) {
+		if !isPicked(ctx, req, item) {
+			global.MyLogger(ctx).Debug().Msgf("ad %d/%s is not Picked", item.Id, item.Name)
 			continue
 		}
 		items = append(items, ADItem{
@@ -93,8 +93,8 @@ func ADList(ctx *gin.Context) {
 			Labels:        builder.BuildStringArray(item.Labels),
 			ExposureTime:  item.ExposureTime,
 			UserLevels:    builder.BuildIntArray(item.UserLevels),
-			StartTime:     item.StartTime.Format(constant.TimeFormat),
-			EndTime:       item.EndTime.Format(constant.TimeFormat),
+			StartTime:     item.StartTime.String(),
+			EndTime:       item.EndTime.String(),
 		})
 	}
 
@@ -114,6 +114,7 @@ func ADList(ctx *gin.Context) {
 		items = []ADItem{items[index]}
 	}
 
+	global.MyLogger(ctx).Debug().Msgf("items: %+v", items)
 	response.RespOk(ctx, i18n.RetMsgSuccess, ADListRes{Items: items})
 }
 
@@ -141,14 +142,15 @@ func weightedRand(ctx *gin.Context, weights []int) int {
 	return 0
 }
 
-func isPicked(req *ADListReq, item entity.TAd) bool {
+func isPicked(ctx *gin.Context, req *ADListReq, item entity.TAd) bool {
 	if len(req.Locations) > 0 {
+		global.Logger.Debug().Msgf("input.locations: %+v", req.Locations)
 		flag := false
 		var locations []string
 		for _, i := range builder.BuildSlotLocations(item.SlotLocations) {
 			locations = append(locations, i.Location)
 		}
-
+		global.Logger.Debug().Msgf("item.locations: %+v", locations)
 		for _, l := range req.Locations {
 			if util.IsInArrayIgnoreCase(l, locations) {
 				flag = true
@@ -161,8 +163,10 @@ func isPicked(req *ADListReq, item entity.TAd) bool {
 	}
 
 	if len(req.Devices) > 0 {
+		global.Logger.Debug().Msgf("input.Devices: %+v", req.Devices)
 		flag := false
 		devices := builder.BuildStringArray(item.Devices)
+		global.Logger.Debug().Msgf("item.Devices: %+v", devices)
 
 		for _, d := range req.Devices {
 			if util.IsInArrayIgnoreCase(d, devices) {
@@ -174,5 +178,6 @@ func isPicked(req *ADListReq, item entity.TAd) bool {
 			return false
 		}
 	}
+	global.Logger.Debug().Msgf("picked: %s", item.Name)
 	return true
 }

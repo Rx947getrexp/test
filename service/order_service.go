@@ -89,6 +89,7 @@ func DepositOrder(order *model.TOrder) {
 	}
 	user.UpdatedAt = nowTime
 	user.Level = goods.MType
+	user.Kicked = 0
 	rows, err = sess.Cols("level", "updated_at", "expired_time").Where("id = ?", user.Id).Update(&user)
 	if err != nil || !has {
 		global.Logger.Err(err).Msg("更新用户信息出错")
@@ -119,6 +120,7 @@ func DepositOrder(order *model.TOrder) {
 			directUser.ExpiredTime += int64(awardTime)
 		}
 		directUser.UpdatedAt = nowTime
+		directUser.Kicked = 0
 		rows, err = sess.Cols("updated_at", "expired_time").Where("id = ?", directUser.Id).Update(&directUser)
 		if err != nil || !has {
 			global.Logger.Err(err).Msg("更新用户信息出错")

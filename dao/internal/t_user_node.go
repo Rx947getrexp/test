@@ -21,31 +21,27 @@ type TUserNodeDao struct {
 // TUserNodeColumns defines and stores column names for table t_user_node.
 type TUserNodeColumns struct {
 	Id        string // 自增id
-	UserId    string // 用户uid
 	Email     string // 用户邮箱
 	Ip        string // 节点IP
 	V2RayUuid string // uuid
-	Status    string // 状态：0-未写入节点配置；1-已经写入到节点配置
 	CreatedAt string // 创建时间
-	UpdatedAt string // 更新时间
+	UserId    string // 用户uid
 }
 
 // tUserNodeColumns holds the columns for table t_user_node.
 var tUserNodeColumns = TUserNodeColumns{
 	Id:        "id",
-	UserId:    "user_id",
 	Email:     "email",
 	Ip:        "ip",
 	V2RayUuid: "v2ray_uuid",
-	Status:    "status",
 	CreatedAt: "created_at",
-	UpdatedAt: "updated_at",
+	UserId:    "user_id",
 }
 
 // NewTUserNodeDao creates and returns a new DAO object for table data access.
 func NewTUserNodeDao() *TUserNodeDao {
 	return &TUserNodeDao{
-		group:   "speed_status",
+		group:   "speed",
 		table:   "t_user_node",
 		columns: tUserNodeColumns,
 	}

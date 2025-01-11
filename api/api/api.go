@@ -10,7 +10,6 @@ import (
 	"go-speed/api/api/common"
 	v2rayConfig "go-speed/api/api/config"
 	"go-speed/api/api/internal"
-	types_api "go-speed/api/types/api"
 	"go-speed/constant"
 	"go-speed/dao"
 	"go-speed/global"
@@ -21,7 +20,6 @@ import (
 	"go-speed/model/request"
 	"go-speed/model/response"
 	"go-speed/service"
-	"go-speed/service/api/speed_api"
 	"go-speed/task"
 	"go-speed/util"
 	"go-speed/util/geo"
@@ -1515,24 +1513,11 @@ func CancelAccount(c *gin.Context) {
 	//}
 
 	// 删除所有节点上的配置
-	err = task.DeleteUserV2rayConfig(c, user.Email, user.V2rayUuid, user.Level)
+	err = task.DeleteUserV2rayConfig(c, user.Email, user.V2rayUuid)
 	if err != nil {
 		global.MyLogger(c).Err(err).Msgf("DeleteUser failed, email: %s", user.Email)
 		response.RespFail(c, i18n.RetMsgLogoutFailed, nil)
 		return
-	}
-
-	for _, ip := range strings.Split(global.Config.System.APIServerIPs, ",") {
-		err = speed_api.DeleteCancelledUser(c, ip, &types_api.DeleteCancelledUserReq{
-			Email:         user.Email,
-			UUID:          user.V2rayUuid,
-			OnlyLocalFile: true,
-		})
-		if err != nil {
-			global.MyLogger(c).Err(err).Msgf("DeleteCancelledUser failed, email: %s", user.Email)
-			response.RespFail(c, i18n.RetMsgLogoutFailed, nil)
-			return
-		}
 	}
 
 	//开启事务

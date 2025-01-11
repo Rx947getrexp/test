@@ -15,7 +15,6 @@ import (
 	"go-speed/model/response"
 	"go-speed/util"
 	"io/ioutil"
-	"strings"
 	"sync"
 	"time"
 )
@@ -26,6 +25,8 @@ const (
 
 	V2rayConfigAdd    = "1"
 	V2rayConfigDelete = "2"
+
+	UserNodesSplit = ","
 )
 
 var nodeUsers map[string]map[string]string
@@ -41,68 +42,96 @@ func getFileName(ip string) string {
 	return fmt.Sprintf("/wwwroot/go/go-api/config/v2ray/users-%s.json", ip)
 }
 
-func isUserInConfig(ctx *gin.Context, userEmail, userUUID, ip string) (flag bool, err error) {
-	nodeUsersRWMutex.Lock()
-	defer nodeUsersRWMutex.Unlock()
-
-	users, ok := nodeUsers[ip]
-	usersFlag, _ := nodeUsersFlag[ip]
-	if !ok {
-		nodeUsers[ip] = make(map[string]string)
-		nodeUsersFlag[ip] = make(map[string]struct{})
-
-		users, usersFlag = loadConfig(ctx, ip)
-		if users != nil && len(users) > 0 {
-			nodeUsers[ip] = users
-			nodeUsersFlag[ip] = usersFlag
-		}
+func isUserAlreadyInNodeConfig(ctx *gin.Context, user *entity.TUser, ip string) (flag bool, err error) {
+	var userNode *entity.TUserNode
+	err = dao.TUserNode.Ctx(ctx).Where(do.TUserNode{
+		Email: user.Email,
+		Ip:    ip,
+	}).Scan(&userNode)
+	if err != nil {
+		return
 	}
 
-	if users == nil || len(users) < 1 {
+	if userNode == nil {
 		return false, nil
 	}
 
-	uuid, ok := users[userEmail]
-	if ok {
-		if uuid == userUUID {
-			return true, nil
-		}
-		return false, gerror.Newf("user exist in config, but account is different. %s", userEmail)
+	if userNode.V2RayUuid != user.V2RayUuid {
+		return false, gerror.Newf(
+			"user %d/%s/%s in node %s v2ray config invalid: uuid inconformity, userNode.Id:%d, uuid:%s",
+			user.Id, user.Email, user.V2RayUuid, ip, userNode.Id, userNode.V2RayUuid)
 	}
 
-	_, ok = usersFlag[strings.ToLower(userEmail)]
-	if ok {
-		return false, gerror.Newf("email ToLower is duplicate. %s", userEmail)
-	} else {
-		return false, nil
+	if userNode.UserId != uint64(user.Id) {
+		global.MyLogger(ctx).Err(gerror.Newf("userNode userId not match")).Msgf("%d <> %d (%d)",
+			user.Id, userNode.UserId, userNode.Id)
 	}
+
+	return true, nil
 }
 
-func loadConfig(ctx *gin.Context, ip string) (map[string]string, map[string]struct{}) {
-	fileName := getFileName(ip)
-
-	// 从文件中读取JSON数据
-	jsonData, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		global.MyLogger(ctx).Err(err).Msgf("read config file failed, %s", fileName)
-		return nil, nil
-	}
-
-	// 定义一个map变量来存储数据
-	var data map[string]string
-
-	// 将JSON数据解码到map变量中
-	err = json.Unmarshal(jsonData, &data)
-	if err != nil {
-		global.MyLogger(ctx).Err(err).Msgf("JSON unmarshaling failed, %s", fileName)
-		return nil, nil
-	}
-	config := make(map[string]struct{})
-	for key, _ := range data {
-		config[strings.ToLower(key)] = struct{}{}
-	}
-	return data, config
-}
+//func isUserInConfig(ctx *gin.Context, userEmail, userUUID, ip string) (flag bool, err error) {
+//	nodeUsersRWMutex.Lock()
+//	defer nodeUsersRWMutex.Unlock()
+//
+//	users, ok := nodeUsers[ip]
+//	usersFlag, _ := nodeUsersFlag[ip]
+//	if !ok {
+//		nodeUsers[ip] = make(map[string]string)
+//		nodeUsersFlag[ip] = make(map[string]struct{})
+//
+//		users, usersFlag = loadConfig(ctx, ip)
+//		if users != nil && len(users) > 0 {
+//			nodeUsers[ip] = users
+//			nodeUsersFlag[ip] = usersFlag
+//		}
+//	}
+//
+//	if users == nil || len(users) < 1 {
+//		return false, nil
+//	}
+//
+//	uuid, ok := users[userEmail]
+//	if ok {
+//		if uuid == userUUID {
+//			return true, nil
+//		}
+//		return false, gerror.Newf("user exist in config, but account is different. %s", userEmail)
+//	}
+//
+//	_, ok = usersFlag[strings.ToLower(userEmail)]
+//	if ok {
+//		return false, gerror.Newf("email ToLower is duplicate. %s", userEmail)
+//	} else {
+//		return false, nil
+//	}
+//}
+//
+//func loadConfig(ctx *gin.Context, ip string) (map[string]string, map[string]struct{}) {
+//	fileName := getFileName(ip)
+//
+//	// 从文件中读取JSON数据
+//	jsonData, err := ioutil.ReadFile(fileName)
+//	if err != nil {
+//		global.MyLogger(ctx).Err(err).Msgf("read config file failed, %s", fileName)
+//		return nil, nil
+//	}
+//
+//	// 定义一个map变量来存储数据
+//	var data map[string]string
+//
+//	// 将JSON数据解码到map变量中
+//	err = json.Unmarshal(jsonData, &data)
+//	if err != nil {
+//		global.MyLogger(ctx).Err(err).Msgf("JSON unmarshaling failed, %s", fileName)
+//		return nil, nil
+//	}
+//	config := make(map[string]struct{})
+//	for key, _ := range data {
+//		config[strings.ToLower(key)] = struct{}{}
+//	}
+//	return data, config
+//}
 
 func addUserConfig(ctx *gin.Context, userEmail, userUUID, ip, tag string, userLevel int) (err error) {
 	url := fmt.Sprintf("http://%s:15003/node/add_sub", ip)
@@ -156,25 +185,35 @@ func saveToFile(ctx *gin.Context, ip string) {
 }
 
 func AddUserConfigToNode(ctx *gin.Context, user *entity.TUser, node *entity.TNode) (err error) {
-	flag, err := isUserInConfig(ctx, user.Email, user.V2RayUuid, node.Ip)
+	flag, err := isUserAlreadyInNodeConfig(ctx, user, node.Ip)
 	if err != nil {
-		return err
+		global.MyLogger(ctx).Err(err).Msgf("check user in node failed, %s", node.Ip)
+		return nil
 	}
+
 	if flag {
-		global.MyLogger(ctx).Debug().Msgf("already in config, skip call api to addsub")
+		global.MyLogger(ctx).Debug().Msgf("already in config, skip call api to addsub, %s", node.Ip)
 		return nil
 	}
 
 	err = addUserConfig(ctx, user.Email, user.V2RayUuid, node.Ip, V2rayConfigAdd, user.Level)
 	if err != nil {
+		global.MyLogger(ctx).Err(err).Msgf("addUserConfig failed, %s, %s", user.Email, node.Ip)
 		return err
 	}
 
-	nodeUsersRWMutex.Lock()
-	defer nodeUsersRWMutex.Unlock()
-	nodeUsers[node.Ip][user.Email] = user.V2RayUuid
-	nodeUsersFlag[node.Ip][strings.ToLower(user.Email)] = struct{}{}
-	saveToFile(ctx, node.Ip)
+	lastId, e := dao.TUserNode.Ctx(ctx).Data(do.TUserNode{
+		Email:     user.Email,
+		Ip:        node.Ip,
+		V2RayUuid: user.V2RayUuid,
+		CreatedAt: gtime.Now(),
+		UserId:    user.Id,
+	}).InsertAndGetId()
+	if e != nil {
+		global.MyLogger(ctx).Err(err).Msgf("insert TUserNode failed, %s, %s", user.Email, node.Ip)
+		return nil
+	}
+	global.MyLogger(ctx).Warn().Msgf("insert TUserNode success, insertId:%d, %s", lastId, node.Ip)
 	return nil
 }
 
@@ -206,51 +245,51 @@ func AddUserConfigToNode(ctx *gin.Context, user *entity.TUser, node *entity.TNod
 //	return doAddUserConfigToV2ray(ctx, user, node, userNode.Id)
 //}
 //}
-
-func doUpdateTime(ctx *gin.Context, userNodeId int64) (err error) {
-	_, e := dao.TUserNode.Ctx(ctx).Data(
-		do.TUserNode{UpdatedAt: gtime.Now()}).Where(do.TUserNode{
-		Id: userNodeId,
-	}).Update()
-	if e != nil {
-		global.MyLogger(ctx).Err(e).Msgf("update TUserNode.updated_at failed")
-	}
-	return nil
-}
-
-func doAddUserConfigToNode(ctx *gin.Context, user *entity.TUser, node *entity.TNode) (err error) {
-	var lastInsertId int64
-	lastInsertId, err = dao.TUserNode.Ctx(ctx).Data(do.TUserNode{
-		UserId:    user.Id,
-		Email:     user.Email,
-		Ip:        node.Ip,
-		V2RayUuid: user.V2RayUuid,
-		Status:    UserNodeStatusInit,
-		CreatedAt: gtime.Now(),
-		UpdatedAt: gtime.Now(),
-	}).InsertAndGetId()
-	if err != nil {
-		return gerror.Wrap(err, "insert TUserNode failed")
-	}
-	global.MyLogger(ctx).Info().Msgf("lastInsertId: %d", lastInsertId)
-	return doAddUserConfigToV2ray(ctx, user, node, lastInsertId)
-}
-
-func doAddUserConfigToV2ray(ctx *gin.Context, user *entity.TUser, node *entity.TNode, userNodeId int64) (err error) {
-	err = addUserConfig(ctx, user.Email, user.V2RayUuid, node.Ip, V2rayConfigAdd, user.Level)
-	if err != nil {
-		return err
-	}
-
-	_, e := dao.TUserNode.Ctx(ctx).Data(
-		do.TUserNode{Status: UserNodeStatusAdded, UpdatedAt: gtime.Now()}).Where(do.TUserNode{
-		Id: userNodeId,
-	}).Update()
-	if e != nil {
-		global.MyLogger(ctx).Err(e).Msgf("update TUserNode.staus = 1 failed")
-	}
-	return nil
-}
+//
+//func doUpdateTime(ctx *gin.Context, userNodeId int64) (err error) {
+//	_, e := dao.TUserNode.Ctx(ctx).Data(
+//		do.TUserNode{UpdatedAt: gtime.Now()}).Where(do.TUserNode{
+//		Id: userNodeId,
+//	}).Update()
+//	if e != nil {
+//		global.MyLogger(ctx).Err(e).Msgf("update TUserNode.updated_at failed")
+//	}
+//	return nil
+//}
+//
+//func doAddUserConfigToNode(ctx *gin.Context, user *entity.TUser, node *entity.TNode) (err error) {
+//	var lastInsertId int64
+//	lastInsertId, err = dao.TUserNode.Ctx(ctx).Data(do.TUserNode{
+//		UserId:    user.Id,
+//		Email:     user.Email,
+//		Ip:        node.Ip,
+//		V2RayUuid: user.V2RayUuid,
+//		Status:    UserNodeStatusInit,
+//		CreatedAt: gtime.Now(),
+//		UpdatedAt: gtime.Now(),
+//	}).InsertAndGetId()
+//	if err != nil {
+//		return gerror.Wrap(err, "insert TUserNode failed")
+//	}
+//	global.MyLogger(ctx).Info().Msgf("lastInsertId: %d", lastInsertId)
+//	return doAddUserConfigToV2ray(ctx, user, node, lastInsertId)
+//}
+//
+//func doAddUserConfigToV2ray(ctx *gin.Context, user *entity.TUser, node *entity.TNode, userNodeId int64) (err error) {
+//	err = addUserConfig(ctx, user.Email, user.V2RayUuid, node.Ip, V2rayConfigAdd, user.Level)
+//	if err != nil {
+//		return err
+//	}
+//
+//	_, e := dao.TUserNode.Ctx(ctx).Data(
+//		do.TUserNode{Status: UserNodeStatusAdded, UpdatedAt: gtime.Now()}).Where(do.TUserNode{
+//		Id: userNodeId,
+//	}).Update()
+//	if e != nil {
+//		global.MyLogger(ctx).Err(e).Msgf("update TUserNode.staus = 1 failed")
+//	}
+//	return nil
+//}
 
 func GetUserListFromNode(ctx *gin.Context, ip string) (resp response.GetUserListResponse, err error) {
 	type userListReq struct{}
@@ -282,27 +321,36 @@ func GetUserListFromNode(ctx *gin.Context, ip string) (resp response.GetUserList
 	return resp, nil
 }
 
-func DeleteUserFormLocalConfigFile(ctx *gin.Context, userEmail, userUUID, ip string, onlyDeleteLocal bool) (err error) {
-	flag, err := isUserInConfig(ctx, userEmail, userUUID, ip)
-	if err != nil {
-		return err
-	}
-	if !flag {
-		global.MyLogger(ctx).Debug().Msgf("email is not in config, skip")
-		return nil
+func DeleteUserConfigForNode(ctx *gin.Context, userEmail, userUUID, ip string) (err error) {
+	if global.Config.System.UserNodeEnable == 1 {
+		var userNode *entity.TUserNode
+		err = dao.TUserNode.Ctx(ctx).Where(do.TUserNode{
+			Email: userEmail,
+			Ip:    ip,
+		}).Scan(&userNode)
+		if err != nil {
+			return
+		}
+		if userNode == nil {
+			global.MyLogger(ctx).Debug().Msgf("email is not in config, skip. %s", ip)
+			return nil
+		}
 	}
 
-	//if !onlyDeleteLocal {
 	err = addUserConfig(ctx, userEmail, userUUID, ip, V2rayConfigDelete, 0)
 	if err != nil {
+		global.MyLogger(ctx).Err(err).Msgf("addUserConfig for delete failed, %s, %s", userEmail, ip)
 		return err
 	}
-	//}
 
-	nodeUsersRWMutex.Lock()
-	defer nodeUsersRWMutex.Unlock()
-	delete(nodeUsers[ip], userEmail)
-	delete(nodeUsersFlag[ip], userEmail)
-	saveToFile(ctx, ip)
+	_, err = dao.TUserNode.Ctx(ctx).Where(do.TUserNode{
+		Email: userEmail,
+		Ip:    ip,
+	}).Delete()
+	if err != nil {
+		global.MyLogger(ctx).Err(err).Msgf("delete TUserNode failed, %s, %s", userEmail, ip)
+		return err
+	}
+	global.MyLogger(ctx).Warn().Msgf("delete user config for node success, %s, %s", userEmail, ip)
 	return nil
 }

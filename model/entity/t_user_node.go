@@ -10,12 +10,10 @@ import (
 
 // TUserNode is the golang structure for table t_user_node.
 type TUserNode struct {
-	Id        int64       `description:"自增id"`
-	UserId    uint64      `description:"用户uid"`
-	Email     string      `description:"用户邮箱"`
-	Ip        string      `description:"节点IP"`
-	V2RayUuid string      `description:"uuid"`
-	Status    int         `description:"状态：0-未写入节点配置；1-已经写入到节点配置"`
-	CreatedAt *gtime.Time `description:"创建时间"`
-	UpdatedAt *gtime.Time `description:"更新时间"`
+	Id        uint64      `orm:"id"         description:"自增id"`
+	Email     string      `orm:"email"      description:"用户邮箱"`
+	Ip        string      `orm:"ip"         description:"节点IP"`
+	V2RayUuid string      `orm:"v2ray_uuid" description:"uuid"`
+	CreatedAt *gtime.Time `orm:"created_at" description:"创建时间"`
+	UserId    uint64      `orm:"user_id"    description:"用户uid"`
 }

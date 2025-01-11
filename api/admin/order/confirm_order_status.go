@@ -228,6 +228,7 @@ func AdminConfirmRevertProcess(ctx *gin.Context, payOrder *entity.TPayOrder, att
 			ExpiredTime: newExpiredTime,
 			UpdatedAt:   gtime.Now(),
 			Version:     user.Version + 1,
+			Kicked:      0,
 		}).Where(do.TUser{
 			Id:      user.Id,
 			Version: user.Version,
@@ -263,7 +264,6 @@ func AdminConfirmRevertProcess(ctx *gin.Context, payOrder *entity.TPayOrder, att
 		global.MyLogger(_ctx).Info().Msgf(">>>> insert TUserVipAttrRecords, lastInsertId: %d", lastInsertId)
 		// 推荐人也要扣减时间
 		if direct != nil && directAttrRecord != nil {
-			// revert user ExpiredTime
 			addTimeDirect := -1 * int64(directAttrRecord.ExpiredTimeTo-directAttrRecord.ExpiredTimeFrom)
 			newExpiredTimeDirect := direct.ExpiredTime + addTimeDirect
 
@@ -271,6 +271,7 @@ func AdminConfirmRevertProcess(ctx *gin.Context, payOrder *entity.TPayOrder, att
 				ExpiredTime: newExpiredTimeDirect,
 				UpdatedAt:   gtime.Now(),
 				Version:     direct.Version + 1,
+				Kicked:      0,
 			}).Where(do.TUser{
 				Id:      direct.Id,
 				Version: direct.Version,
@@ -294,7 +295,7 @@ func AdminConfirmRevertProcess(ctx *gin.Context, payOrder *entity.TPayOrder, att
 				OrderNo:         payOrder.OrderNo + "-revert-direct",
 				ExpiredTimeFrom: direct.ExpiredTime,
 				ExpiredTimeTo:   newExpiredTimeDirect,
-				Desc:            fmt.Sprintf("ExpiredTime add[%d]", addTimeDirect),
+				Desc:            fmt.Sprintf("expiredTime add[%d]", addTimeDirect),
 				CreatedAt:       gtime.Now(),
 			}).InsertAndGetId()
 			if err != nil {
