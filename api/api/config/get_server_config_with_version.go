@@ -79,10 +79,6 @@ func GetServerConfigWithoutRules(ctx *gin.Context) {
 	if err != nil {
 		return
 	}
-	if userEntity.Email == "test7@qq.com" {
-		GetConfigOld(ctx)
-		return
-	}
 
 	winCountry, nodeEntities, err = chooseCountryForUser(ctx, req.UserId, req.CountryName)
 	if err != nil {

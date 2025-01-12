@@ -440,6 +440,7 @@ func GiftDurationForPaymentChannelClosed(ctx *gin.Context, orderNo string,
 			ExpiredTime: newExpiredTime,
 			UpdatedAt:   gtime.Now(),
 			Version:     userEntity.Version + 1,
+			Kicked:      0,
 		}
 		var (
 			affected     int64

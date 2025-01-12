@@ -41,7 +41,7 @@ func EditMemberExpiredTime(c *gin.Context) {
 	}
 	global.Logger.Err(err).Msgf("uname: %s", userEntity.Uname)
 	if !isValidTimestamp(req.ExpiredTime) {
-		global.Logger.Err(nil).Msgf("ExpiredTime: (%d) 参数无效！不能超过20年时间长度。", req.ExpiredTime)
+		global.Logger.Err(nil).Msgf("expiredTime: (%d) 参数无效！不能超过20年时间长度。", req.ExpiredTime)
 		response.ResFail(c, "用户过期参数无效！不能超过20年时间长度。")
 		return
 	}
@@ -53,6 +53,7 @@ func EditMemberExpiredTime(c *gin.Context) {
 			ExpiredTime: req.ExpiredTime, // 管理员直接重置过期时间
 			UpdatedAt:   gtime.Now(),
 			Version:     userEntity.Version + 1,
+			Kicked:      0,
 		}).Where(do.TUser{
 			Id:      userEntity.Id,
 			Version: userEntity.Version,

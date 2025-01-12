@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gogf/gf/v2/encoding/gjson"
 	"github.com/gogf/gf/v2/os/gtime"
-	types_api "go-speed/api/types/api"
 	"go-speed/constant"
 	"go-speed/dao"
 	"go-speed/global"
@@ -15,11 +14,10 @@ import (
 	"go-speed/model/entity"
 	"go-speed/model/request"
 	"go-speed/model/response"
-	"go-speed/service/api/speed_api"
+	"go-speed/service"
 	"go-speed/util"
 	"net/http/httptest"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -48,7 +46,7 @@ func DeleteExpiredUser() {
 		//	// 在这里执行从进程的逻辑
 		//}
 		DoDeleteExpiredUser()
-		time.Sleep(electionInterval)
+		time.Sleep(1 * time.Second)
 	}
 }
 
@@ -62,7 +60,7 @@ func DoDeleteExpiredUser() {
 
 	err = dao.TUser.Ctx(ctx).
 		WhereLTE(dao.TUser.Columns().ExpiredTime, time.Now().Add(time.Minute*1).Unix()).
-		Where(do.TUser{Kicked: 0}).
+		Where(do.TUser{Kicked: 0}).Limit(100).
 		Scan(&items)
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msg("get expired users failed")
@@ -80,38 +78,25 @@ func DoDeleteExpiredUser() {
 		}
 	}
 
-	////whiteList := []string{"zzz@qq.com"}
-	//// TODO：后续要注意时区
-	//nowTime := time.Now().Unix() // 过期30分钟后才执行踢人
-	//
-	//err = global.Db.Where("email != 'zzz@qq.com' and status = 0 and expired_time <= ? and expired_time > ?", nowTime, nowTime-3*24*60*60).OrderBy("expired_time asc").Find(&list)
-	//if err != nil {
-	//	global.MyLogger(ctx).Err(err).Msg("get expired users failed")
-	//	time.Sleep(time.Second * 10)
-	//	return
-	//}
-	//
-	//if len(list) == 0 {
-	//	global.MyLogger(ctx).Info().Msg("no expired user")
-	//	time.Sleep(time.Minute)
-	//	return
-	//}
-	//
-	//for _, user := range list {
-	//	if err = DeleteUser(ctx, user); err != nil {
-	//		global.MyLogger(ctx).Err(err).Msg("delete expired users from v2ray failed")
-	//		continue
-	//	}
-	//	global.MyLogger(ctx).Err(err).Msgf("delete expired(%d) user(%s) from v2ray success", user.ExpiredTime, user.Email)
-	//
-	//	//if err = UpdateUserStatus(user); err != nil {
-	//	//	global.Logger.Err(err).Msg("update user status failed")
-	//	//}
-	//	//global.Logger.Err(err).Msgf("update expired(%d) user(%s) status success", user.ExpiredTime, user.Email)
-	//}
+	global.MyLogger(ctx).Info().Msg("DoDeleteExpiredUser finished this time")
 }
 
 func kickUser(ctx *gin.Context, user *entity.TUser) (err error) {
+	var userInfoNow *entity.TUser
+	err = dao.TUser.Ctx(ctx).Where(do.TUser{
+		Id:    user.Id,
+		Email: user.Email,
+	}).Scan(&userInfoNow)
+	if err != nil {
+		global.MyLogger(ctx).Err(err).Msgf("query user now info failed, email: %s", user.Email)
+		return
+	}
+
+	if !service.IsVIPExpired(userInfoNow) {
+		global.MyLogger(ctx).Info().Msgf("user is not expired, (%d/%s) ", user.Id, user.Email)
+		return
+	}
+
 	var affected int64
 	affected, err = dao.TUser.Ctx(ctx).
 		Where(do.TUser{
@@ -130,20 +115,8 @@ func kickUser(ctx *gin.Context, user *entity.TUser) (err error) {
 		global.MyLogger(ctx).Info().Msgf("userLevel update not success, (%d/%s), affected=%d, but not 1", user.Id, user.Email, affected)
 	}
 
-	for _, ip := range strings.Split(global.Config.System.APIServerIPs, ",") {
-		err = speed_api.DeleteCancelledUser(ctx, ip, &types_api.DeleteCancelledUserReq{
-			Email:         user.Email,
-			UUID:          user.V2RayUuid,
-			OnlyLocalFile: true,
-		})
-		if err != nil {
-			global.MyLogger(ctx).Err(err).Msgf("DeleteCancelledUser failed, email: %s", user.Email)
-			return
-		}
-	}
-
 	// 删除所有节点上的配置
-	err = DeleteUserV2rayConfig(ctx, user.Email, user.V2RayUuid, user.Level)
+	err = DeleteUserV2rayConfig(ctx, user.Email, user.V2RayUuid)
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("DeleteUser failed, email: %s", user.Email)
 		return
@@ -230,16 +203,7 @@ func DeleteUser(ctx *gin.Context, user *model.TUser) error {
 	return nil
 }
 
-func DeleteUserV2rayConfig(ctx *gin.Context, email, v2rayUuid string, userLevel int) error {
-	req := &request.NodeAddSubRequest{
-		Email: email,
-		Uuid:  v2rayUuid,
-		Level: fmt.Sprintf("%d", userLevel),
-		Tag:   "2", // TODO：删除用户
-	}
-	global.Logger.Info().Msgf("delete-user-req, req: %s", gjson.MustEncode(req))
-
-	// TODO：白名单逻辑
+func DeleteUserV2rayConfig(ctx *gin.Context, email, uuid string) error {
 	var nodeEntities []entity.TNode
 	err := dao.TNode.Ctx(ctx).
 		Where(do.TNode{Status: 1}).
@@ -250,21 +214,12 @@ func DeleteUserV2rayConfig(ctx *gin.Context, email, v2rayUuid string, userLevel 
 	}
 
 	for _, node := range nodeEntities {
-		url := fmt.Sprintf("http://%s:15003/node/add_sub", node.Ip)
-
-		timestamp := fmt.Sprint(time.Now().Unix())
-		headerParam := make(map[string]string)
-		res := new(response.Response)
-		headerParam["timestamp"] = timestamp
-		headerParam["accessToken"] = util.MD5(fmt.Sprint(timestamp, constant.AccessTokenSalt))
-
-		global.Logger.Info().Msgf("delete-user-req, url: %s", url)
-		err = util.HttpClientPostV2(url, headerParam, req, res)
+		err = service.DeleteUserConfigForNode(ctx, email, uuid, node.Ip)
 		if err != nil {
-			global.MyLogger(ctx).Err(err).Msgf("delete-user-failed. email: %s, uuid: %s, ip: %s", req.Email, req.Uuid, node.Ip)
+			global.MyLogger(ctx).Err(err).Msgf("delete-user-failed. email: %s, uuid: %s, ip: %s", email, uuid, node.Ip)
 			return err
 		}
-		global.MyLogger(ctx).Info().Msgf("delete-user-success. email: %s, uuid: %s, ip: %s", req.Email, req.Uuid, node.Ip)
+		global.MyLogger(ctx).Info().Msgf("delete-user-success. email: %s, uuid: %s, ip: %s", email, uuid, node.Ip)
 	}
 	return nil
 }
