@@ -22,14 +22,12 @@ const (
 )
 
 func UserRecovery(c *gin.Context, userInfo *entity.TUser) {
-
 	// 当前时间
 	now := gtime.Now()
 	nowUnix := now.Unix()
 	// 获取用户是否已经过期maxExpiredTime天
 	expiredPlusThirtyDays := userInfo.ExpiredTime + int64(maxExpiredTime)
 	isExpiredMoreThanThirtyDays := nowUnix > expiredPlusThirtyDays
-
 	// 活动结束目标时间
 	targetTime := gtime.NewFromStr("2025-03-01 00:00:00")
 
@@ -69,7 +67,7 @@ func UserRecovery(c *gin.Context, userInfo *entity.TUser) {
 				OpId:      strconv.FormatInt(OpId, 10),
 				OpUid:     userInfo.Id,
 				Title:     "老用户挽回赠送15天时长",
-				GiftSec:   15 * secondsInADay,
+				GiftSec:   giftTimestamp,
 				GType:     3,
 				CreatedAt: now,
 				UpdatedAt: now,
