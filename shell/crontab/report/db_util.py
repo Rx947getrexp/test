@@ -563,11 +563,6 @@ class Speed:
     #广告end
     ################################
 
-    def get_recovery_users(self, date, timestamp):
-        sql = """SELECT email FROM speed.t_user WHERE created_at <= '{}' AND expired_time <= '{}';""".format(date, timestamp)
-        rows = mysql_query_db(self.conn, sql)
-        return  [(row['email']) for row in rows]
-
 class SpeedReport:
     def __init__(self):
         self.config = load_config("./config.yaml")
@@ -885,6 +880,19 @@ class SpeedReport:
             rewards=VALUES(rewards),
             updated_at=CURRENT_TIMESTAMP;
         """ % (ad_id, ad_name, date, exposure, clicks, rewards)
+        mysql_execute(self.conn, sql)
+
+    def get_recovery_users(self):
+        sql = """SELECT email FROM speed_report.t_user_recovery where status = 0;"""
+        rows = mysql_query_db(self.conn, sql)
+        return [(row['email']) for row in rows]
+    
+    def update_recovery_emails_status(self, email_list_str):
+        sql = """
+        UPDATE speed_report.t_user_recovery
+        SET status = 1
+        WHERE email IN ({});
+        """.format(email_list_str)
         mysql_execute(self.conn, sql)
 
 class SpeedCollector:

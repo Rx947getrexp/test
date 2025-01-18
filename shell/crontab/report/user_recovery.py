@@ -4,7 +4,7 @@ import time
 import email_service
 import log
 
-from db_util import Speed  # 导入 Speed 类
+from db_util import SpeedReport  # 导入 Speed 类
 
 # 邮件发送配置
 batch_size=99 #每次发送的收件人数量上限100人每封
@@ -59,32 +59,38 @@ def send_bulk_emails(sender, subject, body, recipients):
             # logging.info(f"正在发送第 {batch_index + 1}/{total_batches} 批次...")
             logging.info(f"Sending batch {batch_index + 1}/{total_batches}...")
 
+            # print(sender, subject, body, current_batch)
             sender.send_email_tls(subject, body, current_batch)
 
             sent_count += 1  # 增加已发送邮件计数
             # logging.info(f"成功发送第 {batch_index + 1} 批次邮件，当前已发送 {sent_count} 封邮件。")
             logging.info(f"Successfully sent batch {batch_index + 1} emails, a total of {sent_count} emails sent so far.")
 
+            update_send_emails_status(current_batch)
 
         except Exception as e:
             # logging.error(f"发送第 {batch_index + 1} 批次邮件时发生错误: {e}")
             logging.error(f"An error occurred while sending batch {batch_index + 1} emails: {e}")
             continue  # 跳过错误，继续发送后续批次
-
+        
         # 如果需要，可以设置发送间隔，避免触发反垃圾邮件机制
         time.sleep(60)
 
 # 获取需要发送的用户邮件地址
 def get_recovery_users():
-    # 获取当前时间
-    now = datetime.now()
-    # 当前时间减去 30 天
-    thirty_days_ago = now - timedelta(days=30)
-    # 获取 Unix 时间戳
-    thirty_days_ago_timestamp = int(thirty_days_ago.timestamp())
     # 获取需要发送的用户邮件
-    recipients = Speed().get_recovery_users(thirty_days_ago, thirty_days_ago_timestamp)  # 获取需要发送的用户邮件
+    recipients = SpeedReport().get_recovery_users()  # 获取需要发送的用户邮件
     return recipients
+
+def update_send_emails_status(emails):
+    # 将电子邮件列表转换成SQL IN子句格式
+    try:
+        # 将电子邮件列表转换成SQL IN子句格式
+        email_list_str = "'" + "','".join(emails) + "'"
+        SpeedReport().update_recovery_emails_status(email_list_str)
+    except Exception as e:
+        # logging.error(f"更新电子邮件状态时发生错误: {e}")
+        logging.error(f"An error occurred while updating email status: {e}")
 
 def run():
     # 开始执行任务
@@ -95,6 +101,10 @@ def run():
     subject, body = get_email_content()
     # 获取需要发送的用户邮件
     recipients = get_recovery_users()
+
+    if len(recipients) == 0:
+        logging.info("No users found to send emails.")
+        return
     # recipients = ["pmm73219@gmail.com", "273768414@qq.com", "shenfuqing@163.com", "mmp73219@outlook.com"] #测试发送
     # 分批次发送邮件，遵循服务商限制，使用 TLS
     send_bulk_emails(sender, subject, body, recipients)
