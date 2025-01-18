@@ -18,6 +18,7 @@ import (
 	"go-speed/util"
 	"net/http/httptest"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -46,7 +47,7 @@ func DeleteExpiredUser() {
 		//	// 在这里执行从进程的逻辑
 		//}
 		DoDeleteExpiredUser()
-		time.Sleep(1 * time.Second)
+		time.Sleep(2 * time.Second)
 	}
 }
 
@@ -60,7 +61,7 @@ func DoDeleteExpiredUser() {
 
 	err = dao.TUser.Ctx(ctx).
 		WhereLTE(dao.TUser.Columns().ExpiredTime, time.Now().Add(time.Minute*1).Unix()).
-		Where(do.TUser{Kicked: 0}).Limit(100).
+		Where(do.TUser{Kicked: 0}).Limit(10).
 		Scan(&items)
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msg("get expired users failed")
@@ -71,17 +72,18 @@ func DoDeleteExpiredUser() {
 		return
 	}
 
-	for _, item := range items {
-		err = kickUser(ctx, &item)
-		if err != nil {
-			global.MyLogger(ctx).Err(err).Msgf("kickUser failed, user: %d/%s", item.Id, item.Email)
-		}
+	var wg sync.WaitGroup
+	for i, _ := range items {
+		wg.Add(1)
+		go kickUser(ctx, &wg, &items[i])
 	}
+	wg.Wait() // 等待所有 goroutine 结束
 
 	global.MyLogger(ctx).Info().Msg("DoDeleteExpiredUser finished this time")
 }
 
-func kickUser(ctx *gin.Context, user *entity.TUser) (err error) {
+func kickUser(ctx *gin.Context, wg *sync.WaitGroup, user *entity.TUser) (err error) {
+	defer wg.Done() // 在 goroutine 结束时，减少计数器
 	var userInfoNow *entity.TUser
 	err = dao.TUser.Ctx(ctx).Where(do.TUser{
 		Id:    user.Id,
