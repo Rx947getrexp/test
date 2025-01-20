@@ -23,7 +23,7 @@ def init_logging(file_name):
     # log_file_handler.setFormatter(formatter)
     # log.addHandler(log_file_handler)
 
-    handler = RotatingFileHandler(filename=file_name, mode='a', maxBytes=1024 * 1024 * 200, backupCount=2)
+    handler = RotatingFileHandler(filename=file_name, mode='a', maxBytes=1024 * 1024 * 200, backupCount=2,encoding='utf-8')
     handler.setFormatter(formatter)
     log.addHandler(handler)
     logging.info("init_logging success")

@@ -32,7 +32,7 @@ def mysql_execute(_conn, sql):
 
 class Speed:
     def __init__(self):
-        self.config = load_config("/shell/report/config.yaml")
+        self.config = load_config("./config.yaml")
         self.conn = mysql_connect(self.config["speed-db"])
         self.exchange_rate_usd = 90.23  # usdt汇率 1u=90.23rub
         self.exchange_rate_wmz = 65  # wmz汇率 1u=65rub
@@ -565,7 +565,7 @@ class Speed:
 
 class SpeedReport:
     def __init__(self):
-        self.config = load_config("/shell/report/config.yaml")
+        self.config = load_config("./config.yaml")
         self.conn = mysql_connect(self.config["report-speed-db"])
         self.data_name = {
             "193.233.48.70": "俄罗斯1",
@@ -882,9 +882,22 @@ class SpeedReport:
         """ % (ad_id, ad_name, date, exposure, clicks, rewards)
         mysql_execute(self.conn, sql)
 
+    def get_recovery_users(self):
+        sql = """SELECT email FROM speed_report.t_user_recovery where status = 0;"""
+        rows = mysql_query_db(self.conn, sql)
+        return [(row['email']) for row in rows]
+    
+    def update_recovery_emails_status(self, email_list_str):
+        sql = """
+        UPDATE speed_report.t_user_recovery
+        SET status = 1
+        WHERE email IN ({});
+        """.format(email_list_str)
+        mysql_execute(self.conn, sql)
+
 class SpeedCollector:
     def __init__(self):
-        self.config = load_config("/shell/report/config.yaml")
+        self.config = load_config("./config.yaml")
         self.conn = mysql_connect(self.config["collector-speed-db"])
 
     def close_connection(self):
