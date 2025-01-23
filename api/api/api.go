@@ -753,6 +753,17 @@ func ReceiveFree(c *gin.Context) {
 	}
 
 	if status == 1 {
+		var affected int64
+		affected, err = dao.TUser.Ctx(c).Where(do.TUser{Id: user.Id, Email: user.Email}).
+			Data(do.TUser{Kicked: 0}).
+			UpdateAndGetAffected()
+		if err != nil {
+			global.MyLogger(c).Err(err).Msgf("update user Kicked flag failed, email: %s", user.Email)
+			response.RespFail(c, i18n.RetMsgOperateFailed, nil)
+			return
+		}
+		global.MyLogger(c).Debug().Msgf("update user Kicked flag, affected: %d", affected)
+
 		gift := &model.TGift{
 			UserId:    user.Id,
 			OpId:      fmt.Sprint(id),
@@ -1211,8 +1222,8 @@ func Connect(c *gin.Context) {
 		//return
 		req.Tag = "1"
 	}
-	req.Uuid = user.V2rayUuid
-	req.Email = user.Email
+	req.Uuid = util.GetUserV2rayConfigUUID(user.V2rayUuid)
+	req.Email = util.GetUserV2rayConfigEmail(user.Email)
 	req.Level = fmt.Sprintf("%d", user.Level)
 
 	service.UpdateLoginInfo(c, user.Id)

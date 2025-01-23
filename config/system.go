@@ -15,4 +15,5 @@ type System struct {
 	APIServerDNSList  string `mapstructure:"api_server_dns_list"`  // api dns 地址
 	NodeServerDNSList string `mapstructure:"node_server_dns_list"` // node dns 地址
 	UserNodeEnable    int    `mapstructure:"user_node_enable"`
+	AppName           string `mapstructure:"app_name"` // app名称
 }

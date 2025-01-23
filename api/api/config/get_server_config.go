@@ -15,6 +15,7 @@ import (
 	"go-speed/model/entity"
 	"go-speed/model/response"
 	"go-speed/service"
+	"go-speed/util"
 	"net/http"
 )
 
@@ -70,7 +71,12 @@ func GetServerConfig(ctx *gin.Context) {
 		}
 		for _, dns := range dnsList {
 			for _, nodePort := range nodePorts {
-				v2rayServers = append(v2rayServers, Server{Password: userEntity.V2RayUuid, Port: nodePort, Address: dns.Dns})
+				v2rayServers = append(v2rayServers, Server{
+					Email:    util.GetUserV2rayConfigEmail(userEntity.Email),
+					Password: util.GetUserV2rayConfigUUID(userEntity.V2RayUuid),
+					Port:     nodePort,
+					Address:  dns.Dns,
+				})
 			}
 		}
 	}

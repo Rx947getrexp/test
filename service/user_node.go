@@ -45,7 +45,7 @@ func getFileName(ip string) string {
 func isUserAlreadyInNodeConfig(ctx *gin.Context, user *entity.TUser, ip string) (flag bool, err error) {
 	var userNode *entity.TUserNode
 	err = dao.TUserNode.Ctx(ctx).Where(do.TUserNode{
-		Email: user.Email,
+		Email: util.GetUserV2rayConfigEmail(user.Email),
 		Ip:    ip,
 	}).Scan(&userNode)
 	if err != nil {
@@ -56,7 +56,7 @@ func isUserAlreadyInNodeConfig(ctx *gin.Context, user *entity.TUser, ip string) 
 		return false, nil
 	}
 
-	if userNode.V2RayUuid != user.V2RayUuid {
+	if userNode.V2RayUuid != util.GetUserV2rayConfigUUID(user.V2RayUuid) {
 		return false, gerror.Newf(
 			"user %d/%s/%s in node %s v2ray config invalid: uuid inconformity, userNode.Id:%d, uuid:%s",
 			user.Id, user.Email, user.V2RayUuid, ip, userNode.Id, userNode.V2RayUuid)
@@ -138,8 +138,8 @@ func addUserConfig(ctx *gin.Context, userEmail, userUUID, ip, tag string, userLe
 	global.MyLogger(ctx).Info().Msgf(">>>>>>>>> url: %s", url)
 
 	nodeAddSubRequest := &request.NodeAddSubRequest{
-		Email: userEmail,
-		Uuid:  userUUID,
+		Email: util.GetUserV2rayConfigEmail(userEmail),
+		Uuid:  util.GetUserV2rayConfigUUID(userUUID),
 		Level: fmt.Sprintf("%d", userLevel),
 		Tag:   tag,
 	}
@@ -203,9 +203,9 @@ func AddUserConfigToNode(ctx *gin.Context, user *entity.TUser, node *entity.TNod
 	}
 
 	lastId, e := dao.TUserNode.Ctx(ctx).Data(do.TUserNode{
-		Email:     user.Email,
+		Email:     util.GetUserV2rayConfigEmail(user.Email),
 		Ip:        node.Ip,
-		V2RayUuid: user.V2RayUuid,
+		V2RayUuid: util.GetUserV2rayConfigUUID(user.V2RayUuid),
 		CreatedAt: gtime.Now(),
 		UserId:    user.Id,
 	}).InsertAndGetId()
@@ -325,7 +325,7 @@ func DeleteUserConfigForNode(ctx *gin.Context, userEmail, userUUID, ip string) (
 	if global.Config.System.UserNodeEnable == 1 {
 		var userNode *entity.TUserNode
 		err = dao.TUserNode.Ctx(ctx).Where(do.TUserNode{
-			Email: userEmail,
+			Email: util.GetUserV2rayConfigEmail(userEmail),
 			Ip:    ip,
 		}).Scan(&userNode)
 		if err != nil {
@@ -344,7 +344,7 @@ func DeleteUserConfigForNode(ctx *gin.Context, userEmail, userUUID, ip string) (
 	}
 
 	_, err = dao.TUserNode.Ctx(ctx).Where(do.TUserNode{
-		Email: userEmail,
+		Email: util.GetUserV2rayConfigEmail(userEmail),
 		Ip:    ip,
 	}).Delete()
 	if err != nil {
