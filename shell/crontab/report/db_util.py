@@ -34,7 +34,7 @@ def mysql_execute(_conn, sql):
 
 class Speed:
     def __init__(self):
-        self.config = load_config("./config.yaml")
+        self.config = load_config("/shell/report/config.yaml")
         self.conn = mysql_connect(self.config["speed-db"])
         self.exchange_rate_usd = 90.23  # usdt汇率 1u=90.23rub
         self.exchange_rate_wmz = 65  # wmz汇率 1u=65rub
@@ -722,7 +722,7 @@ class Speed:
 
 class SpeedReport:
     def __init__(self):
-        self.config = load_config("./config.yaml")
+        self.config = load_config("/shell/report/config.yaml")
         self.conn = mysql_connect(self.config["report-speed-db"])
         self.data_name = {
             "193.233.48.70": "俄罗斯1",
@@ -1111,7 +1111,7 @@ class SpeedReport:
 
 class SpeedCollector:
     def __init__(self):
-        self.config = load_config("./config.yaml")
+        self.config = load_config("/shell/report/config.yaml")
         self.conn = mysql_connect(self.config["collector-speed-db"])
 
     def close_connection(self):
