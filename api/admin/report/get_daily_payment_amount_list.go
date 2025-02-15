@@ -1,0 +1,153 @@
+package report
+
+import (
+	"go-speed/constant"
+	"go-speed/dao"
+	"go-speed/global"
+	"go-speed/i18n"
+	"go-speed/model/entity"
+	"go-speed/model/response"
+	"time"
+
+	"github.com/gin-gonic/gin"
+)
+
+type DailyPaymentAmoutRequest struct {
+	StartDate int    `form:"start_date" json:"start_date" dc:"数据日期, 20230101"`
+	EndDate   int    `form:"end_date" json:"end_date" dc:"数据日期, 20230101"`
+	Date      int    `form:"date" json:"date" dc:"数据日期, 20230101"`
+	Channel   string `form:"channel" json:"ad_name" dc:"广告名称"`
+	OrderBy   string `form:"order_by" json:"order_by" dc:"排序字段，eg: id|created_time"`
+	OrderType string `form:"order_type" json:"order_type" dc:"排序类型，eg: asc|desc"`
+	Page      int    `form:"page" json:"page" dc:"分页查询page, 从1开始"`
+	Size      int    `form:"size" json:"size" dc:"分页查询size, 最大1000"`
+}
+
+type DailyPaymentAmout struct {
+	Date      int     `description:"数据日期, 20230101"`
+	Channel   string  `description:"支付渠道名称"`
+	Amount    float64 `description:"支付金额"`
+	CreatedAt string  `description:"数据统计时间"`
+}
+
+type DailyPaymentAmoutResponse struct {
+	Total       int                 `json:"total" dc:"数据总条数"`
+	Items       []DailyPaymentAmout `json:"items" dc:"数据明细"`
+	ChannelList []string            `json:"channel_list" dc:"支付通道ID列表"`
+}
+
+func GetDailyPaymentAmoutList(ctx *gin.Context) {
+	var (
+		err          error
+		req          = new(DailyPaymentAmoutRequest)
+		entities     []entity.TDailyPaymentTotalByChannel
+		channel_list []string
+		total        int
+	)
+
+	// 绑定请求参数
+	if err = ctx.ShouldBind(req); err != nil {
+		global.MyLogger(ctx).Err(err).Msgf("绑定参数失败")
+		response.ResFail(ctx, err.Error())
+		return
+	}
+	if req.Date == 0 {
+		if req.StartDate <= 0 || req.EndDate <= 0 {
+			// 获取当前时间
+			currentTime := time.Now()
+			if req.StartDate <= 0 {
+				// 计算前第20天的日期
+				DaysAgo := currentTime.AddDate(0, 0, -20)
+				req.StartDate = getFormatDateToInt(DaysAgo)
+			}
+			if req.EndDate <= 0 {
+				req.EndDate = getFormatDateToInt(currentTime)
+			}
+		}
+	}
+
+	// 调整日期顺序，确保 StartDate 小于 EndDate
+	if req.StartDate > req.EndDate {
+		req.StartDate, req.EndDate = req.EndDate, req.StartDate
+	}
+	// 设置分页大小，默认 8，最大 1000
+	size := req.Size
+	if size < 1 || size > constant.MaxPageSize {
+		size = constant.MaxPageSize
+	}
+	offset := 0
+	if req.Page > 1 {
+		offset = (req.Page - 1) * size
+	}
+
+	// 设置排序字段和排序方式
+	if req.OrderBy == "" {
+		req.OrderBy = "date" // 默认按数据日期排序
+	}
+	if req.OrderType == "" {
+		req.OrderType = "desc"
+	}
+
+	// 查询数据
+	model := dao.TDailyPaymentTotalByChannel.Ctx(ctx)
+
+	if req.Date == 0 {
+		model = model.WhereBetween("date", req.StartDate, req.EndDate)
+	} else {
+		model = model.Where("date", req.Date)
+	}
+
+	if req.Channel != "" {
+		if req.Channel == "新版支付" {
+			channels := []string{"russpay-bankcard", "russpay-sber", "russpay-sbp"}
+			model = model.WhereIn("channel", channels)
+		} else {
+			model = model.Where("channel", req.Channel)
+		}
+	}
+
+	total, err = model.Count()
+
+	if err != nil {
+		global.MyLogger(ctx).Err(err).Msgf("获取支付报表数据出错")
+		response.ResFail(ctx, "获取支付报表数据出错")
+		return
+	}
+	err = model.Order(req.OrderBy, req.OrderType).Offset(offset).Limit(size).Scan(&entities)
+	if err != nil {
+		global.MyLogger(ctx).Err(err).Msgf("获取支付报表数据失败")
+		response.ResFail(ctx, "获取支付报表数据失败")
+		return
+	}
+	items := make([]DailyPaymentAmout, 0)
+	for _, entity := range entities {
+		items = append(items, DailyPaymentAmout{
+			Date:      entity.Date,
+			Channel:   entity.Channel,
+			Amount:    entity.Amount,
+			CreatedAt: entity.CreatedAt.String(),
+		})
+	}
+
+	// 获取支付通道ID列表
+	result, err := dao.TPaymentChannel.Ctx(ctx).Fields("channel_id").All()
+	if err != nil {
+		global.MyLogger(ctx).Err(err).Msgf("获取支付通道ID列表失败")
+		response.ResFail(ctx, "获取支付通道ID列表失败")
+		return
+	}
+
+	channel_list = make([]string, 0)
+	channel_list = append(channel_list, "新版支付") // 添加“新版支付”
+	for _, res := range result {
+		if channelID, ok := res.Map()["channel_id"].(string); ok {
+			channel_list = append(channel_list, channelID)
+		}
+	}
+
+	response.RespOk(ctx, i18n.RetMsgSuccess, DailyPaymentAmoutResponse{
+		Total:       total,
+		Items:       items,
+		ChannelList: channel_list,
+	})
+}

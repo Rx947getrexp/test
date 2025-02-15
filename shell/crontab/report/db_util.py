@@ -5,6 +5,8 @@ import sys
 import pymysql
 from common import load_config
 import util
+
+
 def mysql_connect(db):
     """连接DB"""
     return pymysql.connect(host=db["host"], port=db["port"], user=db["user"], passwd=db["pswd"], db=db["db"],
@@ -32,7 +34,7 @@ def mysql_execute(_conn, sql):
 
 class Speed:
     def __init__(self):
-        self.config = load_config("./config.yaml")
+        self.config = load_config("/shell/crontab/config.yaml")
         self.conn = mysql_connect(self.config["speed-db"])
         self.exchange_rate_usd = 90.23  # usdt汇率 1u=90.23rub
         self.exchange_rate_wmz = 65  # wmz汇率 1u=65rub
@@ -184,8 +186,7 @@ class Speed:
         return rows[0]["cnt"]
 
     def count_recharge_total_channel_user(self, channel, goods_id, currency, et):
-        sql = """select count(*) as cnt FROM speed.t_pay_order t1 JOIN speed.t_user t2 on t1.email=t2.email  WHERE t2.channel = '%s' and t1.goods_id = '%s' and ((t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') OR (t1.currency IN ('USD', 'WMZ','RUB') AND t1.status = 'paid')) and t1.currency='%s' and t1.created_at <= '%s';""" % (
-            channel, goods_id, currency, et)
+        sql = """select count(*) as cnt FROM speed.t_pay_order t1 JOIN speed.t_user t2 on t1.email=t2.email  WHERE t2.channel = '%s' and t1.goods_id = '%s' and ((t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') OR (t1.currency IN ('USD', 'WMZ','RUB') AND t1.status = 'paid')) and t1.currency='%s' and t1.created_at <= '%s';""" % (channel, goods_id, currency, et)
         rows = mysql_query_db(self.conn, sql)
         if len(rows) != 1:
             logging.error("sql: %s, rows: %d != 1" % (sql, len(rows)))
@@ -193,8 +194,7 @@ class Speed:
         return rows[0]["cnt"]
 
     def count_channel_user_by_create_time(self, channel, st, et):
-        sql = """select count(*) as cnt from speed.t_user where channel= '%s' and created_at >= '%s' and created_at <= '%s';""" % (
-            channel, st, et)
+        sql = """select count(*) as cnt from speed.t_user where channel= '%s' and created_at >= '%s' and created_at <= '%s';""" % (channel, st, et)
         rows = mysql_query_db(self.conn, sql)
         if len(rows) != 1:
             logging.error("sql: %s, rows: %d != 1" % (sql, len(rows)))
@@ -212,8 +212,7 @@ class Speed:
 
     def count_channel_user_online(self, channel, date, st, et):
         # sql = """select count(distinct email) as cnt from speed_collector.t_v2ray_user_traffic where date = '%s' and email in (select email from speed.t_user where channel='%s' and created_at <= '%s');""" % (date.replace("-", ""), channel, et)
-        sql = "SELECT COUNT(DISTINCT email) as cnt FROM (SELECT email FROM (SELECT DISTINCT email FROM speed_report.t_user_op_log WHERE (content LIKE '%点击连接%' OR content LIKE '%开始连接%') AND created_at >= '{}' AND result = 'success' AND created_at <= '{}' AND email IN (SELECT email FROM speed.t_user WHERE channel='{}')) AS derived_table1 UNION SELECT email FROM (SELECT email FROM speed_collector.t_v2ray_user_traffic WHERE date = '{}' AND email IN (SELECT email FROM speed.t_user WHERE channel='{}' AND created_at <= '{}')) AS derived_table2) AS distinct_emails;".format(
-            st, et, channel, date.replace("-", ""), channel, et)
+        sql = "SELECT COUNT(DISTINCT email) as cnt FROM (SELECT email FROM (SELECT DISTINCT email FROM speed_report.t_user_op_log WHERE (content LIKE '%点击连接%' OR content LIKE '%开始连接%') AND created_at >= '{}' AND result = 'success' AND created_at <= '{}' AND email IN (SELECT email FROM speed.t_user WHERE channel='{}')) AS derived_table1 UNION SELECT email FROM (SELECT email FROM speed_collector.t_v2ray_user_traffic WHERE date = '{}' AND email IN (SELECT email FROM speed.t_user WHERE channel='{}' AND created_at <= '{}')) AS derived_table2) AS distinct_emails;".format(st, et, channel, date.replace("-", ""), channel, et)
         rows = mysql_query_db(self.conn, sql)
         if len(rows) != 1:
             logging.error("sql: %s, rows: %d != 1" % (sql, len(rows)))
@@ -223,6 +222,23 @@ class Speed:
     def count_channel_user_by_month(self, channel, st, et):
         sql = """select count(distinct email) as cnt from speed_collector.t_v2ray_user_traffic where email in (select email from speed.t_user where channel='%s' and created_at >= '%s' and created_at <= '%s') and created_at >= '%s' and created_at <= '%s';""" % (
         channel, st, et, st, et)
+        rows = mysql_query_db(self.conn, sql)
+        if len(rows) != 1:
+            logging.error("sql: %s, rows: %d != 1" % (sql, len(rows)))
+            sys.exit(1)
+        return rows[0]["cnt"]
+    
+    def count_channel_active_users(self, channel, st, et):
+        sql = """select count(distinct email) as cnt from speed_collector.t_v2ray_user_traffic where email in (select email from speed.t_user where channel='%s') and created_at >= '%s' and created_at <= '%s';""" % (
+        channel, st, et)
+        rows = mysql_query_db(self.conn, sql)
+        if len(rows) != 1:
+            logging.error("sql: %s, rows: %d != 1" % (sql, len(rows)))
+            sys.exit(1)
+        return rows[0]["cnt"]
+    
+    def count_channel_active_users_by_at (self, channel, st, et, dst, det, st2, et2):
+        sql = """SELECT COUNT(DISTINCT email) AS cnt FROM (SELECT email FROM (SELECT DISTINCT email FROM speed_report.t_user_op_log WHERE (content LIKE '%点击连接%' OR content LIKE '%开始连接%') AND created_at >= '{}' AND result = 'success' AND created_at <= '{}' AND email IN (SELECT email FROM speed.t_user WHERE channel='{}' and created_at BETWEEN '{}' AND '{}')) AS derived_table1 UNION SELECT email FROM (SELECT email FROM speed_collector.t_v2ray_user_traffic WHERE date BETWEEN '{}' AND '{}' AND email IN (SELECT email FROM speed.t_user WHERE channel='{}' AND created_at BETWEEN '{}' AND '{}')) AS derived_table2) AS distinct_emails;""".format(st2, et2, channel, st, et, dst, det, channel, st, et)
         rows = mysql_query_db(self.conn, sql)
         if len(rows) != 1:
             logging.error("sql: %s, rows: %d != 1" % (sql, len(rows)))
@@ -300,8 +316,7 @@ class Speed:
         '''
         充值总金额
         '''
-        sql = """select t1.currency, t1.order_reality_amount,t1.status FROM speed.t_pay_order t1 JOIN speed.t_user t2 on t1.email=t2.email  WHERE t2.channel = '%s' and ((t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') OR (t1.currency IN ('USD', 'WMZ','RUB') AND t1.status = 'paid')) and t1.created_at <= '%s';""" % (
-            channel, et)
+        sql = """select t1.currency, t1.order_reality_amount,t1.status FROM speed.t_pay_order t1 JOIN speed.t_user t2 on t1.email=t2.email  WHERE t2.channel = '%s' and ((t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') OR (t1.currency IN ('USD', 'WMZ','RUB') AND t1.status = 'paid')) and t1.created_at <= '%s';""" % (channel, et)
         rows = mysql_query_db(self.conn, sql)
         total_recharge = 0
         for row in rows:
@@ -321,8 +336,7 @@ class Speed:
         '''
         新增充值总金额
         '''
-        sql = """select t1.currency, t1.order_reality_amount,t1.status FROM speed.t_pay_order t1 JOIN speed.t_user t2 on t1.email = t2.email  WHERE t2.channel = '%s' and ((t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') OR (t1.currency IN ('USD', 'WMZ','RUB') AND t1.status = 'paid')) and t1.created_at >= '%s' and t1.created_at <= '%s';""" % (
-            channel, st, et)
+        sql = """select t1.currency, t1.order_reality_amount,t1.status FROM speed.t_pay_order t1 JOIN speed.t_user t2 on t1.email = t2.email  WHERE t2.channel = '%s' and ((t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') OR (t1.currency IN ('USD', 'WMZ','RUB') AND t1.status = 'paid')) and t1.created_at >= '%s' and t1.created_at <= '%s';""" % (channel, st, et)
         rows = mysql_query_db(self.conn, sql)
         total_recharge = 0
         for row in rows:
@@ -336,6 +350,133 @@ class Speed:
             else:
                 continue
             total_recharge += float(amount_in_rub)
+        return total_recharge
+    
+    # 按时间段统计充值量
+    def count_channel_recharge_times (self, channel, st, et):
+        '''
+        按渠道统计时间段内充值用户量
+        '''
+        sql = """select count(distinct user_id) as cnt FROM speed.t_pay_order t1 JOIN speed.t_user t2 on t1.email = t2.email WHERE t2.channel = '%s' and ((t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') OR (t1.currency IN ('USD', 'WMZ','RUB') AND t1.status = 'paid')) and t1.created_at >= '%s' and t1.created_at <= '%s';""" % (channel, st, et)
+        rows = mysql_query_db(self.conn, sql)
+        # print(sql)
+        if len(rows) != 1:
+            logging.error("sql: %s, rows: %d != 1" % (sql, len(rows)))
+            sys.exit(1)
+        return rows[0]["cnt"]
+    
+    def count_channel_recharge_users_retained (self, channel, st, et, first_day, last_day, nmst, nmet):
+        first_day = first_day.replace('-','')
+        last_day = last_day.replace('-','')
+        sql = f"""
+        WITH recharge_users AS (
+            SELECT DISTINCT t1.email 
+            FROM speed.t_pay_order t1
+            JOIN speed.t_user t2 ON t1.email = t2.email
+            WHERE t2.channel = '{channel}'
+            AND (
+                (t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') 
+                OR (t1.currency IN ('USD', 'WMZ', 'RUB') AND t1.status = 'paid')
+            )
+            AND t1.created_at BETWEEN '{st}' AND '{et}'
+            AND t2.created_at <= '{et}'
+        ),
+        retained_users AS (
+            SELECT DISTINCT email 
+            FROM speed_report.t_user_op_log 
+            WHERE (content LIKE '%%点击连接%%' OR content LIKE '%%开始连接%%') 
+            AND created_at BETWEEN '{nmst}' AND '{nmet}' 
+            AND result = 'success'
+            AND email IN (SELECT email FROM recharge_users)
+            UNION
+            SELECT DISTINCT email 
+            FROM speed_collector.t_v2ray_user_traffic 
+            WHERE date BETWEEN {first_day} AND {last_day} 
+            AND email IN (SELECT email FROM recharge_users)
+        )
+        SELECT COUNT(*) as cnt FROM retained_users;
+        """
+        rows = mysql_query_db(self.conn, sql)
+        if len(rows) != 1:
+            logging.error("sql: %s, rows: %d != 1" % (sql, len(rows)))
+            sys.exit(1)
+        return rows[0]["cnt"]
+
+    def count_channel_renewal_users(self,channel, last_month_start, last_month_end, this_month_start, this_month_end):
+        sql = f"""
+        WITH last_month_users AS (
+            SELECT DISTINCT t1.email 
+            FROM speed.t_pay_order t1
+            JOIN speed.t_user t2 ON t1.email = t2.email
+            WHERE t2.channel = '{channel}'
+            AND (
+                (t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') 
+                OR (t1.currency IN ('USD', 'WMZ', 'RUB') AND t1.status = 'paid')
+            )
+            AND t1.created_at BETWEEN '{last_month_start}' AND '{last_month_end}'
+            AND t2.created_at <= '{last_month_end}'
+        ),
+        renewed_users AS (
+            SELECT DISTINCT t1.email
+            FROM speed.t_pay_order t1
+            WHERE t1.email IN (SELECT email FROM last_month_users)
+            AND (
+                (t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') 
+                OR (t1.currency IN ('USD', 'WMZ', 'RUB') AND t1.status = 'paid')
+            )
+            AND t1.created_at BETWEEN '{this_month_start}' AND '{this_month_end}'
+        )
+        SELECT COUNT(*) AS cnt FROM renewed_users;
+        """
+        # print(sql)
+        rows = mysql_query_db(self.conn, sql)
+        if len(rows) != 1:
+            logging.error("sql: %s, rows: %d != 1" % (sql, len(rows)))
+            sys.exit(1)
+        return rows[0]["cnt"]
+    
+    def count_channel_renewal_amount(self, channel, last_month_start, last_month_end, this_month_start, this_month_end):
+        sql = f"""
+        WITH last_month_users AS (
+            SELECT DISTINCT t1.email 
+            FROM speed.t_pay_order t1
+            JOIN speed.t_user t2 ON t1.email = t2.email
+            WHERE t2.channel = '{channel}'
+            AND (
+                (t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') 
+                OR (t1.currency IN ('USD', 'WMZ', 'RUB') AND t1.status = 'paid')
+            )
+            AND t1.created_at BETWEEN '{last_month_start}' AND '{last_month_end}'
+            AND t2.created_at <= '{last_month_end}'
+        )
+        SELECT t1.currency, t1.order_reality_amount, t1.status 
+        FROM speed.t_pay_order t1
+        WHERE t1.email IN (SELECT email FROM last_month_users)
+        AND (
+            (t1.currency = 'RUB' AND t1.status = 'admin-confirm-passed') 
+            OR (t1.currency IN ('USD', 'WMZ', 'RUB') AND t1.status = 'paid')
+        )
+        AND t1.created_at BETWEEN '{this_month_start}' AND '{this_month_end}';
+        """
+        # print(sql)
+        rows = mysql_query_db(self.conn, sql)
+
+        total_recharge = 0
+        for row in rows:
+            status = row['status']
+            currency = row['currency']
+            amount = row['order_reality_amount']
+            
+            # 统一转换为 RUB
+            if status == "paid":
+                amount_in_rub = self.convert_to_rub(amount, currency)
+            elif status == "admin-confirm-passed":
+                amount_in_rub = amount
+            else:
+                continue
+            
+            total_recharge += float(amount_in_rub)
+
         return total_recharge
 
     def query_device_list(self, et):
@@ -562,10 +703,26 @@ class Speed:
         return rows
     #广告end
     ################################
+    
+    # 获取支付渠道
+    def get_payment_channel(self):
+        sql = """SELECT channel_id FROM speed.t_payment_channel"""
+        rows = mysql_query_db(self.conn, sql)
+        return [row['channel_id'] for row in rows]
+    
+    # 获取指定日期的支付订单
+    def get_pay_order(self, date):
+        sql = """SELECT * FROM speed.t_pay_order where status = 'paid' and DATE(created_at) = '{}'""".format(date)
+        rows = mysql_query_db(self.conn, sql)
+        return rows
+    
+    # 根据渠道统计充值用户数量，金额
+
+
 
 class SpeedReport:
     def __init__(self):
-        self.config = load_config("./config.yaml")
+        self.config = load_config("/shell/crontab/config.yaml")
         self.conn = mysql_connect(self.config["report-speed-db"])
         self.data_name = {
             "193.233.48.70": "俄罗斯1",
@@ -696,8 +853,7 @@ class SpeedReport:
 
     def insert_daily_user_recharge(self, date, data):
         logging.info(data)
-        mysql_execute(self.conn,
-                      "delete from speed_report.t_user_recharge_report_day where date=%s" % date.replace("-", ""))
+        mysql_execute(self.conn,"delete from speed_report.t_user_recharge_report_day where date=%s" % date.replace("-", ""))
         for goods_id in data.keys():
             user = data[goods_id]
             sql = """insert into speed_report.t_user_recharge_report_day set date=%s, goods_id=%d, total=%d, new=%d,created_at=now();""" % (
@@ -895,9 +1051,59 @@ class SpeedReport:
         """.format(email_list_str)
         mysql_execute(self.conn, sql)
 
+    # 插入每日按渠道统计的支付数据
+    def insert_into_report_pay_daily(self, date, channel, amount, created_at):
+        sql = """
+        INSERT INTO speed_report.t_daily_payment_total_by_channel (date, channel, amount, created_at)
+        VALUES (%s, '%s', %s, '%s')
+        """  % (date, channel, amount, created_at)
+        mysql_execute(self.conn, sql)
+
+    # 插入每日按渠道统计的注册和充值数据
+    def insert_into_report_channel_registration_pay_daily(self, date_init, channel, new_users, daily_active_users, monthly_active_users, total_recharge_users, total_recharge_amount):
+        created_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        channel = channel if channel else '官网'
+        sql = """
+        INSERT INTO speed_report.t_channel_registration_pay_daily (date, channel, new_users, daily_active_users, monthly_active_users, total_recharge_users, total_recharge_amount, created_at)
+        VALUES (%s, '%s', %s, %s, %s, %s, '%s', '%s')
+        """  % (date_init, channel, new_users, daily_active_users, monthly_active_users, total_recharge_users, total_recharge_amount, created_at)
+        mysql_execute(self.conn, sql)
+
+    #插入渠道留存数据
+    def insert_channel_retaind_daily(self, date_init, channel,new_users,day_2_retained,day_7_retained,day_15_retained,day_30_retained):
+        created_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        channel = channel if channel else '官网'
+        sql = """
+        INSERT INTO speed_report.t_channel_retaind_daily (date, channel, new_users, day_2_retained, day_7_retained, day_15_retained, day_30_retained, created_at)
+        VALUES (%s, '%s', %s, %s, %s, %s, %s, '%s')
+        """  % (date_init, channel, new_users, day_2_retained,day_7_retained,day_15_retained,day_30_retained, created_at)
+        # print(sql)
+        mysql_execute(self.conn, sql)
+
+    def insert_channel_recharge_monthly(self, last_month, channel, total_recharge_users, total_recharge_amount, total_recharge_retained, total_renewals_users, total_renewals_users_amount):
+        created_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        updated_at = created_at
+        channel = channel if channel else '官网'
+
+        sql = """
+        INSERT INTO speed_report.t_channel_recharge_renewals_monthly 
+            (month, channel, recharge_users, recharge_amount, retained, renewals_users, renewals_amount, created_at, updated_at)
+        VALUES ('%s', '%s', %s, %s, %s, %s, %s, '%s', '%s')
+        ON DUPLICATE KEY UPDATE 
+            recharge_users = %s,
+            recharge_amount = %s,
+            retained = %s,
+            renewals_users = %s,
+            renewals_amount = %s,
+            updated_at = '%s';
+        """ % (last_month, channel, total_recharge_users, total_recharge_amount, total_recharge_retained, total_renewals_users, total_renewals_users_amount, created_at, updated_at,
+            total_recharge_users, total_recharge_amount, total_recharge_retained, total_renewals_users, total_renewals_users_amount, updated_at)
+        # 执行 SQL 语句
+        mysql_execute(self.conn, sql)
+
 class SpeedCollector:
     def __init__(self):
-        self.config = load_config("./config.yaml")
+        self.config = load_config("/shell/crontab/config.yaml")
         self.conn = mysql_connect(self.config["collector-speed-db"])
 
     def close_connection(self):
