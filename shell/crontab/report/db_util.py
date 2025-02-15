@@ -34,7 +34,7 @@ def mysql_execute(_conn, sql):
 
 class Speed:
     def __init__(self):
-        self.config = load_config("/shell/report/config.yaml")
+        self.config = load_config("./config.yaml")
         self.conn = mysql_connect(self.config["speed-db"])
         self.exchange_rate_usd = 90.23  # usdt汇率 1u=90.23rub
         self.exchange_rate_wmz = 65  # wmz汇率 1u=65rub
@@ -722,7 +722,7 @@ class Speed:
 
 class SpeedReport:
     def __init__(self):
-        self.config = load_config("/shell/report/config.yaml")
+        self.config = load_config("./config.yaml")
         self.conn = mysql_connect(self.config["report-speed-db"])
         self.data_name = {
             "193.233.48.70": "俄罗斯1",
@@ -1074,9 +1074,17 @@ class SpeedReport:
         created_at = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         channel = channel if channel else '官网'
         sql = """
-        INSERT INTO speed_report.t_channel_retaind_daily (date, channel, new_users, day_2_retained, day_7_retained, day_15_retained, day_30_retained, created_at)
-        VALUES (%s, '%s', %s, %s, %s, %s, %s, '%s')
-        """  % (date_init, channel, new_users, day_2_retained,day_7_retained,day_15_retained,day_30_retained, created_at)
+            INSERT INTO speed_report.t_channel_retaind_daily 
+            (date, channel, new_users, day_2_retained, day_7_retained, day_15_retained, day_30_retained, created_at)
+            VALUES (%s, '%s', %s, %s, %s, %s, %s, '%s')
+            ON DUPLICATE KEY UPDATE 
+            new_users=VALUES(new_users), 
+            day_2_retained=VALUES(day_2_retained), 
+            day_7_retained=VALUES(day_7_retained), 
+            day_15_retained=VALUES(day_15_retained), 
+            day_30_retained=VALUES(day_30_retained), 
+            created_at=VALUES(created_at)
+            """  % (date_init, channel, new_users, day_2_retained,day_7_retained,day_15_retained,day_30_retained, created_at)
         # print(sql)
         mysql_execute(self.conn, sql)
 
@@ -1103,7 +1111,7 @@ class SpeedReport:
 
 class SpeedCollector:
     def __init__(self):
-        self.config = load_config("/shell/report/config.yaml")
+        self.config = load_config("./config.yaml")
         self.conn = mysql_connect(self.config["collector-speed-db"])
 
     def close_connection(self):
