@@ -7,7 +7,6 @@ import (
 	"go-speed/i18n"
 	"go-speed/model/entity"
 	"go-speed/model/response"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,7 +14,6 @@ import (
 type DailyChannelRetaindRequest struct {
 	StartDate int    `form:"start_date" json:"start_date" dc:"数据日期, 20230101"`
 	EndDate   int    `form:"end_date" json:"end_date" dc:"数据日期, 20230101"`
-	Date      int    `form:"date" json:"date" dc:"数据日期, 20230101"`
 	Channel   string `form:"channel" json:"channel" dc:"注册渠道id名称"`
 	OrderBy   string `form:"order_by" json:"order_by" dc:"排序字段，eg: id|created_time"`
 	OrderType string `form:"order_type" json:"order_type" dc:"排序类型，eg: asc|desc"`
@@ -52,25 +50,6 @@ func GetDailyChannelRetaindList(ctx *gin.Context) {
 		response.ResFail(ctx, err.Error())
 		return
 	}
-	if req.Date == 0 {
-		if req.StartDate <= 0 || req.EndDate <= 0 {
-			// 获取当前时间
-			currentTime := time.Now()
-			if req.StartDate <= 0 {
-				// 计算前第20天的日期
-				DaysAgo := currentTime.AddDate(0, 0, -20)
-				req.StartDate = getFormatDateToInt(DaysAgo)
-			}
-			if req.EndDate <= 0 {
-				req.EndDate = getFormatDateToInt(currentTime)
-			}
-		}
-	}
-
-	// 调整日期顺序，确保 StartDate 小于 EndDate
-	if req.StartDate > req.EndDate {
-		req.StartDate, req.EndDate = req.EndDate, req.StartDate
-	}
 	// 设置分页大小，默认 8，最大 1000
 	size := req.Size
 	if size < 1 || size > constant.MaxPageSize {
@@ -89,13 +68,7 @@ func GetDailyChannelRetaindList(ctx *gin.Context) {
 		req.OrderType = "desc"
 	}
 	// 查询数据
-	model := dao.TChannelRetaindDaily.Ctx(ctx)
-
-	if req.Date == 0 {
-		model = model.WhereBetween("date", req.StartDate, req.EndDate)
-	} else {
-		model = model.Where("date", req.Date)
-	}
+	model := dao.TChannelRetaindDaily.Ctx(ctx).WhereBetween("date", req.StartDate, req.EndDate)
 
 	if req.Channel != "" {
 		model = model.Where("channel", req.Channel)
