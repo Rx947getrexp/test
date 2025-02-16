@@ -36,11 +36,10 @@ type DailyPaymentAmoutResponse struct {
 
 func GetDailyPaymentAmoutList(ctx *gin.Context) {
 	var (
-		err          error
-		req          = new(DailyPaymentAmoutRequest)
-		entities     []entity.TDailyPaymentTotalByChannel
-		channel_list []string
-		total        int
+		err      error
+		req      = new(DailyPaymentAmoutRequest)
+		entities []entity.TDailyPaymentTotalByChannel
+		total    int
 	)
 
 	// 绑定请求参数
@@ -98,24 +97,8 @@ func GetDailyPaymentAmoutList(ctx *gin.Context) {
 		})
 	}
 
-	// 获取支付通道ID列表
-	result, err := dao.TPaymentChannel.Ctx(ctx).Fields("channel_id").All()
-	if err != nil {
-		global.MyLogger(ctx).Err(err).Msgf("获取支付通道ID列表失败")
-		response.ResFail(ctx, "获取支付通道ID列表失败")
-		return
-	}
-
-	channel_list = make([]string, 0)
-	for _, res := range result {
-		if channelID, ok := res.Map()["channel_id"].(string); ok {
-			channel_list = append(channel_list, channelID)
-		}
-	}
-
 	response.RespOk(ctx, i18n.RetMsgSuccess, DailyPaymentAmoutResponse{
-		Total:       total,
-		Items:       items,
-		ChannelList: channel_list,
+		Total: total,
+		Items: items,
 	})
 }
