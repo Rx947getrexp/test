@@ -15,8 +15,8 @@ import (
 )
 
 type MonthlyChannelrechargeRenewalsRequest struct {
-	Month     int    `form:"month" json:"date" dc:"数据日期, 20230101"`
-	Channel   string `form:"channel" json:"ad_name" dc:"广告名称"`
+	Month     int    `form:"month" json:"date" dc:"数据月份, 202301"`
+	Channel   string `form:"channel" json:"channel" dc:"注册渠道id名称"`
 	OrderBy   string `form:"order_by" json:"order_by" dc:"排序字段，eg: id|created_time"`
 	OrderType string `form:"order_type" json:"order_type" dc:"排序类型，eg: asc|desc"`
 	Page      int    `form:"page" json:"page" dc:"分页查询page, 从1开始"`
