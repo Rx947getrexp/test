@@ -12,13 +12,13 @@ import (
 )
 
 type DailyPaymentAmoutRequest struct {
-	StartDate int    `form:"start_date" json:"start_date" dc:"数据日期, 20230101"`
-	EndDate   int    `form:"end_date" json:"end_date" dc:"数据日期, 20230101"`
-	Channel   string `form:"channel" json:"channel" dc:"支付渠道名称"`
-	OrderBy   string `form:"order_by" json:"order_by" dc:"排序字段，eg: id|created_time"`
-	OrderType string `form:"order_type" json:"order_type" dc:"排序类型，eg: asc|desc"`
-	Page      int    `form:"page" json:"page" dc:"分页查询page, 从1开始"`
-	Size      int    `form:"size" json:"size" dc:"分页查询size, 最大1000"`
+	StartDate int      `form:"start_date" json:"start_date" dc:"数据日期, 20230101"`
+	EndDate   int      `form:"end_date" json:"end_date" dc:"数据日期, 20230101"`
+	Channel   []string `form:"channel" json:"channel" dc:"支付渠道名称"` // 保持为切片类型
+	OrderBy   string   `form:"order_by" json:"order_by" dc:"排序字段，eg: id|created_time"`
+	OrderType string   `form:"order_type" json:"order_type" dc:"排序类型，eg: asc|desc"`
+	Page      int      `form:"page" json:"page" dc:"分页查询page, 从1开始"`
+	Size      int      `form:"size" json:"size" dc:"分页查询size, 最大1000"`
 }
 
 type DailyPaymentAmout struct {
@@ -71,13 +71,8 @@ func GetDailyPaymentAmoutList(ctx *gin.Context) {
 	// 查询数据
 	model := dao.TDailyPaymentTotalByChannel.Ctx(ctx).WhereBetween("date", req.StartDate, req.EndDate)
 
-	if req.Channel != "" {
-		if req.Channel == "新版支付" {
-			channels := []string{"russpay-bankcard", "russpay-sber", "russpay-sbp"}
-			model = model.WhereIn("channel", channels)
-		} else {
-			model = model.Where("channel", req.Channel)
-		}
+	if len(req.Channel) > 0 {
+		model = model.WhereIn("channel", req.Channel)
 	}
 
 	total, err = model.Count()
@@ -112,7 +107,6 @@ func GetDailyPaymentAmoutList(ctx *gin.Context) {
 	}
 
 	channel_list = make([]string, 0)
-	channel_list = append(channel_list, "新版支付") // 添加“新版支付”
 	for _, res := range result {
 		if channelID, ok := res.Map()["channel_id"].(string); ok {
 			channel_list = append(channel_list, channelID)
