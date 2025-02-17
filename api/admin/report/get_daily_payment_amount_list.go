@@ -66,10 +66,12 @@ func GetDailyPaymentAmoutList(ctx *gin.Context) {
 	if req.OrderType == "" {
 		req.OrderType = "desc"
 	}
+
 	// 处理 channel 参数（手动拆分字符串）
 	if len(req.Channel) == 1 { // 如果是一个字符串，可能是"freekassa-44,freekassa-36"
 		req.Channel = strings.Split(req.Channel[0], ",") // 拆分为切片
 	}
+
 	// 查询数据
 	model := dao.TDailyPaymentTotalByChannel.Ctx(ctx).WhereBetween("date", req.StartDate, req.EndDate)
 
