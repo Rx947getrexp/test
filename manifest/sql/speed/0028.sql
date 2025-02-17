@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS speed_report.t_daily_payment_total_by_channel (
     channel VARCHAR(255) NOT NULL COMMENT '支付渠道名称',
     amount DECIMAL(10, 2) NOT NULL COMMENT '支付金额统计',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '记录创建时间，默认值为当前时间',
-    UNIQUE KEY unique_date_channel (date, channel) COMMENT '确保每个日期和支付渠道的组合是唯一的',
+    UNIQUE KEY unique_date_channel (date, channel) COMMENT '确保每个日期和支付渠道的组合是唯一的'
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='每日按渠道统计充值金额总数';
 
 #每日按渠道统计日活月活充值金额
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS speed_report.t_channel_registration_pay_daily (
     total_recharge_users INT NOT NULL COMMENT '充值用户数量',
     total_recharge_amount VARCHAR(128) NOT NULL COMMENT '付费金额数量',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '记录创建时间，默认值为当前时间',
-    UNIQUE KEY unique_date_channel (date, channel) COMMENT '确保每个日期和渠道的组合是唯一的',
+    UNIQUE KEY unique_date_channel (date, channel) COMMENT '确保每个日期和渠道的组合是唯一的'
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='每日按渠道统计日活月活充值金额';
 
 #每日按渠道统计留存
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS speed_report.t_channel_retaind_daily (
     day_30_retained INT NOT NULL COMMENT '新增用户30日留存数量',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '记录创建时间，默认值为当前时间',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '记录更新时间，默认值为当前时间，并在每次更新时自动更新',
-    UNIQUE KEY unique_date_channel (date, channel) COMMENT '确保每个日期和渠道的组合是唯一的',
+    UNIQUE KEY unique_date_channel (date, channel) COMMENT '确保每个日期和渠道的组合是唯一的'
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='每日按渠道统计留存';
 
 #每月按渠道统计充值续费人数金额
@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS speed_report.t_channel_recharge_renewals_monthly (
     renewals_amount VARCHAR(128) NOT NULL COMMENT '次月续费充值总金额',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '记录创建时间，默认值为当前时间',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '记录更新时间，默认值为当前时间，并在每次更新时自动更新',
-    UNIQUE KEY unique_month_channel (month, channel) COMMENT '确保每个日期和渠道的组合是唯一的',
+    UNIQUE KEY unique_month_channel (month, channel) COMMENT '确保每个日期和渠道的组合是唯一的'
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='每月按渠道统计充值续费人数金额';
 
 
