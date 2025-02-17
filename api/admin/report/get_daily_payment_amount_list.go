@@ -29,9 +29,8 @@ type DailyPaymentAmout struct {
 }
 
 type DailyPaymentAmoutResponse struct {
-	Total       int                 `json:"total" dc:"数据总条数"`
-	Items       []DailyPaymentAmout `json:"items" dc:"数据明细"`
-	ChannelList []string            `json:"channel_list" dc:"支付通道ID列表"`
+	Total int                 `json:"total" dc:"数据总条数"`
+	Items []DailyPaymentAmout `json:"items" dc:"数据明细"`
 }
 
 func GetDailyPaymentAmoutList(ctx *gin.Context) {
