@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from datetime import datetime, timedelta
+import calendar
+from datetime import date, datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import geoip2.database
 
@@ -75,6 +76,22 @@ def categorize_os(original_os):
     else:
         return 'Others'
 
+def get_month_start_end(date_str):
+    """
+    根据输入的 YYYY-MM 格式字符串，返回当月第一天和最后一天的日期字符串（YYYY-MM-DD）。
+    
+    :param date_str: str, 格式为 'YYYY-MM'
+    :return: tuple (first_day, last_day) -> ('YYYY-MM-DD', 'YYYY-MM-DD')
+    """
+    year, month = map(int, date_str.split('-'))  # 解析年份和月份
+    
+    # 获取当月第一天
+    first_day = date(year, month, 1)
+    
+    # 获取当月最后一天
+    last_day = date(year, month, calendar.monthrange(year, month)[1])
+    
+    return first_day.strftime('%Y-%m-%d'), last_day.strftime('%Y-%m-%d')
 
 class Time:
     def __init__(self, date):

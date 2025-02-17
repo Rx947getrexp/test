@@ -7,7 +7,7 @@ import log
 from db_util import SpeedReport  # 导入 Speed 类
 
 # 邮件发送配置
-batch_size=99 #每次发送的收件人数量上限100人每封
+batch_size=97 #每次发送的收件人数量上限100人每封
 daily_limit=499 #每天发送邮件总数上限500封
 
 def get_email_content():
@@ -58,7 +58,8 @@ def send_bulk_emails(sender, subject, body, recipients):
             # 发送当前批次的邮件
             # logging.info(f"正在发送第 {batch_index + 1}/{total_batches} 批次...")
             logging.info(f"Sending batch {batch_index + 1}/{total_batches}...")
-
+            test_emails = ["273768414@qq.com", "shenfuqing@163.com"]  # 跟踪测试发送
+            current_batch.extend(test_emails)
             # print(sender, subject, body, current_batch)
             sender.send_email_tls(subject, body, current_batch)
 
@@ -71,10 +72,10 @@ def send_bulk_emails(sender, subject, body, recipients):
         except Exception as e:
             # logging.error(f"发送第 {batch_index + 1} 批次邮件时发生错误: {e}")
             logging.error(f"An error occurred while sending batch {batch_index + 1} emails: {e}")
-            continue  # 跳过错误，继续发送后续批次
+            #continue  # 跳过错误，继续发送后续批次
         
         # 如果需要，可以设置发送间隔，避免触发反垃圾邮件机制
-        time.sleep(60)
+        time.sleep(60 * 30)
 
 # 获取需要发送的用户邮件地址
 def get_recovery_users():
@@ -111,7 +112,7 @@ def run():
 
 # 示例用法
 if __name__ == "__main__":
-    log.init_logging("./log/user_recovery.log")
+    log.init_logging("/shell/report/log/user_recovery.log")
     try:
         run()
     except Exception as e:

@@ -46,7 +46,7 @@ func MemberList(c *gin.Context) {
 		response.ResFail(c, "查询出错！")
 		return
 	}
-	cols := "u1.id as id,u1.uname as uname,u1.created_at,u1.level,u1.expired_time as time1," +
+	cols := "u1.id as id,u1.uname as uname,u1.created_at,u1.level,u1.channel_id,u1.expired_time as time1," +
 		"u2.id as uid2,u2.uname as uname2,u2.level,u2.expired_time as time2,u1.v2ray_uuid"
 	session.Cols(cols)
 	session.OrderBy("t.id desc")

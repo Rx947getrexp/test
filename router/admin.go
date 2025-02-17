@@ -55,10 +55,14 @@ func AdminRoute(group *gin.RouterGroup) {
 		group.GET("reset_cache", admin.ResetCache) //刷新缓存
 
 		// 后台系统管理报表
-		group.GET("get_user_monthly_retention_list", report.GetUserMonthlyRetention) //获取最近前两个月的月留存数据
-		group.GET("get_daily_registered_user_list", report.GetDailyRegisteredUser)   //获取每日注册用户统计数据
-		group.GET("get_daily_recharge_list", report.GetDailyRechargeList)            //获取每日充值统计数据
-		group.GET("get_daily_ad_statistics_list", report.GetDailyAdStatisticsList)   //获取每日广告统计数据
+		group.GET("get_user_monthly_retention_list", report.GetUserMonthlyRetention)                          //获取最近前两个月的月留存数据
+		group.GET("get_daily_registered_user_list", report.GetDailyRegisteredUser)                            //获取每日注册用户统计数据
+		group.GET("get_daily_recharge_list", report.GetDailyRechargeList)                                     //获取每日充值统计数据
+		group.GET("get_daily_ad_statistics_list", report.GetDailyAdStatisticsList)                            //获取每日广告统计数据
+		group.GET("get_daily_payment_amount_list", report.GetDailyPaymentAmoutList)                           //获取每日按渠道统计充值金额总数
+		group.GET("get_daily_channel_registration_pay_list", report.GetDailyChannelRegistrationPayList)       //获取每日按渠道统计日活月活充值金额
+		group.GET("get_daily_channel_retaind_list", report.GetDailyChannelRetaindList)                        //获取每日按渠道统计日活月活充值金额
+		group.GET("get_monthly_channel_recharge_renewals_list", report.GetMonthlyChannelrechargeRenewalsList) //获取每月按渠道统计充值续费人数金额
 
 		//系统管理
 		sysGroup := group.Group("sys")

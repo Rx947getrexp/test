@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from decimal import Decimal
 import sys
 import time
 from datetime import timedelta, datetime
@@ -34,6 +35,10 @@ class ReportUser:
             self.report_daily_device_retaind()  # 新的按设备统计次日，7日，15日留存
             self.report_monthly_device_retaind()  # 新的按设备统计次月留存
             self.report_ad_daily() #按日统计广告曝光量和点击量
+            self.report_pay_daily() #按日统计支付金额
+            self.report_channel_registration_pay_daily() #按日期获取注册用户数和付费用户数
+            self.report_channel_retaind_daily() #按日期获取推广渠道的留存用户数
+            self.report_channel_recharge_by_month() #按月统计推广渠道的充值用户数和充值金额
         self.db_speed_conn.close_connection()
         self.db_report_conn.close_connection()
         self.db_collector_conn.close_connection()
@@ -517,4 +522,139 @@ class ReportUser:
             rewards = gift_dict.get(ad_name, 0) 
             # print(ad_id, ad_name, date_int, exposure, clicks, rewards)
             self.db_report_conn.insert_into_report_ad_daily(ad_id, ad_name, date_int, exposure, clicks, rewards)
-            
+
+    def report_pay_daily(self):
+        logging.info(f"{'*' * 20}{sys._getframe().f_code.co_name}{'*' * 20}")
+        # print(self.date) #昨天的日期
+        payment_channels = self.db_speed_conn.get_payment_channel()
+        # print(payment_channel)
+
+        # 获取每日付费数据
+        pay_orders = self.db_speed_conn.get_pay_order(self.date)
+        # print(pay_order)
+
+        # 初始化一个字典用于存储每个支付渠道的总金额
+        total_by_channel = {channel: Decimal('0.00') for channel in payment_channels}
+
+        for pay_order in pay_orders:
+            channel = pay_order['payment_channel_id']
+            # 确保支付渠道在字典中
+            if channel in total_by_channel:
+                # 将字符串形式的实际支付金额转换为Decimal类型并累加
+                total_by_channel[channel] += Decimal(pay_order['order_reality_amount'])
+        
+        # 格式化结果
+        formatted_output = {channel: str(amount) for channel, amount in total_by_channel.items()}
+        # print(formatted_output)
+
+        date_int = int(self.date.replace('-', ''))
+        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        for channel, amount in formatted_output.items():
+            # print(date_int, channel, amount)
+            self.db_report_conn.insert_into_report_pay_daily(date_int, channel, amount, current_time)
+
+    #根据日期获取注册用户数和付费用户数
+    def report_channel_registration_pay_daily(self):
+        logging.info(f"{'*' * 20}{sys._getframe().f_code.co_name}{'*' * 20}")
+        date_init = self.date.replace('-', '')
+        # print(date_init,self.month_start_time)
+        """ 获取channel列表 """
+        rows = self.db_speed_conn.query_channel_list(self.end_time)
+        for row in rows:
+            channel = row["channel"]
+            """当前推广渠道新增用户数量"""
+            new_users = self.db_speed_conn.count_channel_user_by_create_time(channel, self.start_time, self.end_time)
+            """当前推广渠道日活用户数量"""
+            daily_active_users = self.db_speed_conn.count_channel_active_users(channel, self.start_time, self.end_time)
+            """当前推广渠道月活用户数量"""
+            monthly_active_users = self.db_speed_conn.count_channel_active_users(channel, self.month_start_time, self.end_time)
+            """当前推广渠道付费用户数量"""
+            total_recharge_users = self.db_speed_conn.count_total_number_of_recharges_by_create_time(channel, self.start_time, self.end_time)
+            """当前推广渠道付费金额数量"""
+            total_recharge_amount = self.db_speed_conn.count_total_recharge_amount_by_create_time(channel, self.start_time, self.end_time)
+            self.db_report_conn.insert_into_report_channel_registration_pay_daily(date_init, channel, new_users, daily_active_users, monthly_active_users, total_recharge_users, total_recharge_amount)
+        # print(data)
+    
+    # 根据日期获取推广渠道的留存用户数
+    ###############################
+    #因为是需要统计次日留存，七日留存，十五日留存，三十日留存，
+    #所以只能从30日之前统计，所以需要获取30天前的数据
+    ###############################
+    def report_channel_retaind_daily(self):
+        logging.info(f"{'*' * 20}{sys._getframe().f_code.co_name}{'*' * 20}")
+        date_init = self.date.replace('-','')
+        #30天前的日期
+        thirty_days_ago = util.get_previous_days(30) #获取30天前的日期 比如2025-01-13
+        t = util.Time(thirty_days_ago) #获取30天前的日期
+        # date = t.date.replace('-','') #当天的日期比如2025-2-12
+        st = t.get_start_time() #当天开始时间 比如2025-2-12 17:40:51
+        et = t.get_end_time() #当天结束时间 比如2025-2-12 17:40:54
+        # print(thirty_days_ago)
+        # print(date, st, et)
+        #30天前的次日日期
+        next_day_date = (datetime.strptime(thirty_days_ago, '%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d')
+        t2 = util.Time(next_day_date) #获取30天前次日的日期
+        date2 = t2.date.replace('-','') #当天的日期比如2025-2-12
+        st2 = t2.get_start_time() #当天开始时间 比如2025-2-12 17:40:51
+        et2 = t2.get_end_time() #当天结束时间 比如2025-2-12 17:40:54
+        # print(next_day_date)
+        # print(date2, st2, et2)
+        seven_day_date = (datetime.strptime(thirty_days_ago, '%Y-%m-%d') + timedelta(days=7)).strftime('%Y-%m-%d')
+        t7 = util.Time(seven_day_date) #获取30天前7日的日期
+        date7 = t7.date.replace('-','') #当天的日期比如2025-2-12
+        # st7 = t7.get_start_time() #当天开始时间 比如2025-2-12 17:40:51
+        et7 = t7.get_end_time() #当天结束时间 比如2025-2-12 17:40:54
+        fifteen_day_date = (datetime.strptime(thirty_days_ago, '%Y-%m-%d') + timedelta(days=15)).strftime('%Y-%m-%d')
+        t15 = util.Time(fifteen_day_date) #获取30天前15日的日期
+        date15 = t15.date.replace('-','') #当天的日期比如2025-2-12
+        # st15 = t15.get_start_time() #当天开始时间 比如2025-2-12 17:40:51
+        et15 = t15.get_end_time() #当天结束时间 比如2025-2-12 17:40:54
+        # print(thirty_days_ago,seven_day_date,fifteen_day_date)
+        """ 获取channel列表 """
+        rows = self.db_speed_conn.query_channel_list(et)
+        for row in rows:
+            channel = row["channel"]
+            # print("channel=>",channel)
+            """当前推广渠道新增用户数量"""
+            new_users = self.db_speed_conn.count_channel_user_by_create_time(channel, st, et)
+            """当前推广渠道新增用户次日留存数量"""
+            day_2_retained = self.db_speed_conn.count_channel_active_users_by_at(channel, st, et, date2, date2, st2, et2)
+            """当前推广渠道新增用户7日留存数量"""
+            day_7_retained = self.db_speed_conn.count_channel_active_users_by_at(channel, st, et, date2, date7, st2, et7)
+            """当前推广渠道新增用户15日留存数量"""
+            day_15_retained = self.db_speed_conn.count_channel_active_users_by_at(channel, st, et, date2, date15, st2, et15)
+            """当前推广渠道新增用户30日留存数量"""
+            day_30_retained = self.db_speed_conn.count_channel_active_users_by_at(channel, st, et, date2, date_init, st2, self.end_time)
+            self.db_report_conn.insert_channel_retaind_daily(date_init,channel,new_users,day_2_retained,day_7_retained,day_15_retained,day_30_retained)
+
+    def report_channel_recharge_by_month (self):
+        logging.info(f"{'*' * 20}{sys._getframe().f_code.co_name}{'*' * 20}")
+        last_month = util.get_previous_months(1) #获取当前月份的前1个月
+        last_first_day, last_last_day = util.get_month_start_end(last_month)
+        # print(last_first_day, last_last_day)
+        mst = util.Time(last_first_day).get_start_time()
+        met = util.Time(last_last_day).get_end_time()
+        # print(mst, met)
+        # 本月第一天
+        first_day = util.get_month_date()
+        last_day = util.get_yesterday_date()
+        nmst = util.Time(first_day).get_start_time()
+        nmet = util.Time(last_day).get_end_time()
+        # print(nmst, nmet)
+        """ 获取channel列表 """
+        rows = self.db_speed_conn.query_channel_list(self.end_time)
+        for row in rows:
+            """当前推广渠道"""
+            channel = row["channel"]
+            """当前推广渠道充值用户数量"""
+            total_recharge_users = self.db_speed_conn.count_channel_recharge_times(channel, mst, met)
+            """当前推广渠道充值金额总数"""
+            total_recharge_amount = self.db_speed_conn.count_total_recharge_amount_by_create_time(channel, mst, met)
+            """当前推广渠道充值用户次月留存数量"""
+            total_recharge_retained = self.db_speed_conn.count_channel_recharge_users_retained(channel, mst, met, first_day.replace('-',''), last_day.replace('-',''), nmst, nmet)
+            """当前推广渠道充值用户次月续费人数数量"""
+            total_renewals_users = self.db_speed_conn.count_channel_renewal_users(channel, mst, met, nmst, nmet)
+            """当前推广渠道充值用户次月续费金额总数"""
+            total_renewals_users_amount = self.db_speed_conn.count_channel_renewal_amount(channel, mst, met, nmst, nmet)
+            self.db_report_conn.insert_channel_recharge_monthly(last_month.replace('-',''), channel, total_recharge_users, total_recharge_amount, total_recharge_retained, total_renewals_users, total_renewals_users_amount)
