@@ -19,3 +19,4 @@ if __name__ == '__main__':
         run()
     except Exception as e:
         print(f'An error occurred: {e}')
+    logging.info("end %s" % TASK_NAME)

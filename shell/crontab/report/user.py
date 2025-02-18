@@ -587,7 +587,7 @@ class ReportUser:
         #30天前的日期
         thirty_days_ago = util.get_previous_days(30) #获取30天前的日期 比如2025-01-13
         t = util.Time(thirty_days_ago) #获取30天前的日期
-        # date = t.date.replace('-','') #当天的日期比如2025-2-12
+        date = t.date.replace('-','') #当天的日期比如2025-2-12
         st = t.get_start_time() #当天开始时间 比如2025-2-12 17:40:51
         et = t.get_end_time() #当天结束时间 比如2025-2-12 17:40:54
         # print(thirty_days_ago)
@@ -626,7 +626,7 @@ class ReportUser:
             day_15_retained = self.db_speed_conn.count_channel_active_users_by_at(channel, st, et, date2, date15, st2, et15)
             """当前推广渠道新增用户30日留存数量"""
             day_30_retained = self.db_speed_conn.count_channel_active_users_by_at(channel, st, et, date2, date_init, st2, self.end_time)
-            self.db_report_conn.insert_channel_retaind_daily(date_init,channel,new_users,day_2_retained,day_7_retained,day_15_retained,day_30_retained)
+            self.db_report_conn.insert_channel_retaind_daily(date,channel,new_users,day_2_retained,day_7_retained,day_15_retained,day_30_retained)
 
     def report_channel_recharge_by_month (self):
         logging.info(f"{'*' * 20}{sys._getframe().f_code.co_name}{'*' * 20}")
