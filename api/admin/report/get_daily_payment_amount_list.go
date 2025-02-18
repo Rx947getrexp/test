@@ -68,8 +68,13 @@ func GetDailyPaymentAmoutList(ctx *gin.Context) {
 	}
 
 	// 处理 channel 参数（手动拆分字符串）
-	if len(req.Channel) == 1 { // 如果是一个字符串，可能是"freekassa-44,freekassa-36"
-		req.Channel = strings.Split(req.Channel[0], ",") // 拆分为切片
+	if len(req.Channel) == 1 {
+		trimmed := strings.TrimSpace(req.Channel[0])
+		if trimmed == "" || trimmed == "0" { // 额外处理 "0"
+			req.Channel = []string{}
+		} else {
+			req.Channel = strings.Split(trimmed, ",")
+		}
 	}
 
 	// 查询数据
