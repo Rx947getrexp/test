@@ -55,7 +55,7 @@ func UpdateUserDeviceByClientId(ctx *gin.Context, uid int64, email string) (err 
 			global.MyLogger(ctx).Err(err).Msgf("%s update TUserDevice failed. [%s]", i18n.ErrLabelDB, email)
 			return err
 		}
-		global.MyLogger(ctx).Debug().Msgf("add TUserDevice affected: %d", affected)
+		global.MyLogger(ctx).Debug().Msgf("update TUserDevice Kicked=0 affected: %d", affected)
 	}
 	return nil
 }
