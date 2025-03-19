@@ -277,6 +277,7 @@ func Login(c *gin.Context) {
 	}
 	param.Account = strings.TrimSpace(param.Account)
 	param.Passwd = strings.TrimSpace(param.Passwd)
+
 	if param.Account == "" || param.Passwd == "" {
 		global.MyLogger(c).Warn().Msgf("%s 账号或密码为空, param: %+v", i18n.ErrLabelParams, *param)
 		response.RespFail(c, i18n.RetMsgAccountPasswordEmptyErr, nil)
@@ -299,6 +300,7 @@ func Login(c *gin.Context) {
 
 	pwdDecode := util.AesDecrypt(param.Passwd)
 	pwdMd5 := util.MD5(pwdDecode)
+
 	if userInfo.Passwd != pwdMd5 {
 		global.MyLogger(c).Warn().Msgf("%s 密码不正确, param: %+v", i18n.ErrLabelParams, *param)
 		response.RespFail(c, i18n.RetMsgPasswordIncorrect, nil)
@@ -309,6 +311,8 @@ func Login(c *gin.Context) {
 	if err != nil {
 		return
 	}
+	// 登陆成功后，老用户挽回赠送免费时长活动
+	internal.UserRecovery(c, userInfo)
 
 	// 更新失败时，不返回报错，自己内部评估如何优化
 	_ = internal.UpdateUserDeviceByClientId(c, userInfo.Id, userInfo.Email)

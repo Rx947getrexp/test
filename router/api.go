@@ -7,6 +7,7 @@ import (
 	"go-speed/api/api/ad"
 	"go-speed/api/api/config"
 	"go-speed/api/api/country"
+	"go-speed/api/api/device"
 	"go-speed/api/api/goods"
 	"go-speed/api/api/node"
 	"go-speed/api/api/order"
@@ -74,6 +75,8 @@ func ApiRoute(group *gin.RouterGroup) {
 		group.GET("order_list", api.OrderList)
 		group.GET("dev_list", api.DevList)                     // call
 		group.POST("ban_dev", api.BanDev)                      // call
+		group.POST("device_list", device.DeviceList)           // call
+		group.POST("kick_device", device.KickDevice)           // call
 		group.POST("change_network", api.ChangeNetwork)        //暂没用到
 		group.POST("connect", api.Connect)                     // call
 		group.GET("get_conf", api.GetConfig)                   // call

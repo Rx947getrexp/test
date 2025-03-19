@@ -26,6 +26,7 @@ type TUserDeviceColumns struct {
 	Os        string // 客户端设备系统os
 	CreatedAt string // 创建时间
 	UpdatedAt string // 更新时间
+	Kicked    string // 剔除状态, 0:正常，1:被剔除
 }
 
 // tUserDeviceColumns holds the columns for table t_user_device.
@@ -36,6 +37,7 @@ var tUserDeviceColumns = TUserDeviceColumns{
 	Os:        "os",
 	CreatedAt: "created_at",
 	UpdatedAt: "updated_at",
+	Kicked:    "kicked",
 }
 
 // NewTUserDeviceDao creates and returns a new DAO object for table data access.

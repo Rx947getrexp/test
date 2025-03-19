@@ -50,12 +50,12 @@ func UpdateUserDeviceByClientId(ctx *gin.Context, uid int64, email string) (err 
 		var affected int64
 		affected, err = dao.TUserDevice.Ctx(ctx).
 			Where(do.TUserDevice{UserId: uid, ClientId: clientId}).
-			Data(do.TUserDevice{UpdatedAt: gtime.Now()}).UpdateAndGetAffected()
+			Data(do.TUserDevice{Kicked: 0, UpdatedAt: gtime.Now()}).UpdateAndGetAffected()
 		if err != nil {
 			global.MyLogger(ctx).Err(err).Msgf("%s update TUserDevice failed. [%s]", i18n.ErrLabelDB, email)
 			return err
 		}
-		global.MyLogger(ctx).Debug().Msgf("add TUserDevice affected: %d", affected)
+		global.MyLogger(ctx).Debug().Msgf("update TUserDevice Kicked=0 affected: %d", affected)
 	}
 	return nil
 }

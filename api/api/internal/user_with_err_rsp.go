@@ -24,8 +24,8 @@ func CheckClientIdNumLimitsWithErrRsp(ctx *gin.Context, userInfo *entity.TUser) 
 	timeWindow := time.Now().Add(-1 * time.Hour * 30 * 24).Format("2006-01-02 15:04:05")
 	var items []entity.TUserDevice
 	err = dao.TUserDevice.Ctx(ctx).
-		Where(do.TUserDevice{UserId: userInfo.Id}).
-		WhereGTE(dao.TUserDevice.Columns().CreatedAt, timeWindow).
+		Where(do.TUserDevice{UserId: userInfo.Id, Kicked: 0}).
+		WhereGTE(dao.TUserDevice.Columns().UpdatedAt, timeWindow).
 		Scan(&items)
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("%s query TUserDevice failed. [%s]", i18n.ErrLabelDB, userInfo.Email)

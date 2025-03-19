@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go-speed/api/api/common"
+	"go-speed/api/api/internal"
 	"go-speed/dao"
 	"go-speed/global"
 	"go-speed/i18n"
@@ -77,6 +78,10 @@ func GetServerConfigWithoutRules(ctx *gin.Context) {
 	global.MyLogger(ctx).Info().Msgf(">>> req: %+v", *req)
 
 	userEntity, err = common.CheckUserByUserId(ctx, req.UserId)
+	if err != nil {
+		return
+	}
+	err = internal.CheckClientIdNumLimitsWithErrRsp(ctx, userEntity)
 	if err != nil {
 		return
 	}

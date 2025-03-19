@@ -107,6 +107,7 @@ func SaveDeviceID(ctx *gin.Context, uid int64) {
 		UserId:    uid,
 		ClientId:  deviceID,
 		Os:        os,
+		Kicked:    1,
 		CreatedAt: gtime.Now(),
 		UpdatedAt: gtime.NewFromStr("2020-01-01 00:00:00"),
 	}).InsertAndGetId()
