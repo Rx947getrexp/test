@@ -13,6 +13,8 @@ type UserInfoResponse struct {
 	MemberType  int    `json:"member_type"`
 	ExpiredTime int64  `json:"expired_time"`
 	SurplusFlow int64  `json:"surplus_flow"`
+	SpecialFlag bool   `json:"special_flag"`
+	DNS         string `json:"dns"`
 }
 
 type TeamListResponse struct {

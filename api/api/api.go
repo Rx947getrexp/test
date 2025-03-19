@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/gogf/gf/v2/database/gdb"
 	"go-speed/api"
 	"go-speed/api/api/common"
 	v2rayConfig "go-speed/api/api/config"
@@ -405,6 +406,25 @@ func UserInfo(c *gin.Context) {
 		response.RespFail(c, i18n.RetMsgAuthFailed, nil, response.CodeTokenExpired)
 		return
 	}
+
+	var items []entity.TAppDns
+	e := dao.TAppDns.Ctx(c).
+		Where(do.TAppDns{Status: 1, Level: 1}).
+		Cache(gdb.CacheOption{Duration: 10 * time.Minute}).Scan(&items)
+	if e != nil {
+		global.MyLogger(c).Err(e).Msgf(">>>>> Get TAppDns failed: %+v", e.Error())
+	}
+
+	var dnsList []string
+	for _, i := range items {
+		dnsList = append(dnsList, i.Dns)
+	}
+	var dns string
+	if len(dnsList) > 0 {
+		rand.Seed(time.Now().UnixNano())
+		dns = dnsList[rand.Intn(len(dnsList))]
+	}
+
 	res := response.UserInfoResponse{
 		Id:          user.Id,
 		Uname:       user.Uname,
@@ -412,6 +432,8 @@ func UserInfo(c *gin.Context) {
 		MemberType:  user.Level,
 		ExpiredTime: user.ExpiredTime,
 		SurplusFlow: 0,
+		SpecialFlag: geo.IsNeedDisablePaymentFeature(c, user.Email),
+		DNS:         dns,
 	}
 	response.RespOk(c, i18n.RetMsgSuccess, res)
 }
