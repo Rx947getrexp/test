@@ -1,0 +1,1 @@
+ALTER TABLE speed.t_user_device ADD COLUMN `kicked` tinyint(1) default 0 comment '剔除状态, 0:正常，1:被剔除';

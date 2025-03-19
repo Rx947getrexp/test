@@ -240,3 +240,31 @@ curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:
 select * from t_v2ray_user_traffic where email in ('alt.j9-co173v7i@yopmail.com','alt.j9-co173v7i@yopmail.com','kakyoin2929@gmail.com','cry69gry@mail.ru','vlad.ku4erov2015@gmail.com','sergey-gamzik11@mail.ru','slavamihailov222@gmail.com','Kapshanova14@gmail.com')
 
 grep 'alt.j9-co173v7i@yopmail.com\|kakyoin2929@gmail.com\|cry69gry@mail.ru\|vlad.ku4erov2015@gmail.com\|sergey-gamzik11@mail.ru\|slavamihailov222@gmail.com\|Kapshanova14@gmail.com' config.json
+
+
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13002/device_list
+
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://localhost:13002/kick_device -d '{"client_id":"123234"}'
+
+
+1）查询设备列表的接口
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://www.yyy360.xyz/app-api/device_list
+返回示例：
+{
+    "code": 200,
+    "message": "成功",
+    "data": {
+        "items": [
+            {
+                "client_id": "d3c2a8be175ef59375de3001e9cb24703852bc4f3a2f4cf269110d2f96bd4ee3",
+                "os": "Android 12",
+                "created_at": "2025-02-16 13:48:09",
+                "updated_at": "2025-02-16 13:48:09"
+            }
+        ]
+    }
+}
+
+2）剔除设备的接口：
+curl -X POST -H "Content-Type: application/json" -H "Lang: cn" http://www.yyy360.xyz/app-api/kick_device -d '{"client_id":"d3c2a8be175ef59375de3001e9cb24703852bc4f3a2f4cf269110d2f96bd4ee3"}'
+

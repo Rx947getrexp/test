@@ -18,4 +18,5 @@ type TUserDevice struct {
 	Os        interface{} // 客户端设备系统os
 	CreatedAt *gtime.Time // 创建时间
 	UpdatedAt *gtime.Time // 更新时间
+	Kicked    interface{} // 剔除状态, 0:正常，1:被剔除
 }
