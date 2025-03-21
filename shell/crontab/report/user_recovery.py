@@ -1,5 +1,7 @@
 from datetime import datetime
+import fcntl
 import logging
+import sys
 import time
 import email_service
 import log
@@ -15,6 +17,8 @@ TEST_EMAILS = [  # 测试邮箱列表（需计入限额）
     "273768414@qq.com",
     "shenfuqing@163.com"
 ]
+
+TASK_NAME = "user_recovery_task"
 
 def get_email_content():
     """
@@ -80,7 +84,12 @@ def send_bulk_emails(sender, subject, body, recipients):
                 update_send_emails_status(current_main_emails)  # ✅ 更新数据库
                 break
             except Exception as e:
+                error_msg = str(e)
                 logging.error(f"第 {batch_index+1} 批次发送失败（第 {retry_count+1} 次重试），错误信息：{str(e)}")
+                # **如果是 550 错误（超额），立即停止程序**
+                if "550" in error_msg and "limit" in error_msg:
+                    logging.critical("💥 发送配额已用完，程序立即停止！")
+                    return  # **终止整个邮件发送**
                 retry_count += 1
                 if retry_count < MAX_RETRIES:
                     time.sleep(RETRY_DELAY)
@@ -118,6 +127,15 @@ def run():
     logging.info("邮件发送任务执行完毕")
 
 if __name__ == "__main__":
+    
+    lock_file = "/tmp/%s.lock" % TASK_NAME
+    fp = open(lock_file, "w")
+    try:
+        fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except IOError:
+        logging.error("已经有一个 %s 进程在运行，本进程将退出" % TASK_NAME)
+        sys.exit(1)
+    
     log.init_logging("/shell/report/log/user_recovery.log")
     # log.init_logging("./log/user_recovery.log")
 
