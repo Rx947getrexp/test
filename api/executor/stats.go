@@ -3,7 +3,7 @@ package executor
 import (
 	"context"
 	"fmt"
-	statscmd "github.com/v2fly/v2ray-core/v5/app/stats/command"
+	statscmd "github.com/xtls/xray-core/app/stats/command"
 	"go-speed/global"
 	"google.golang.org/grpc"
 )
@@ -89,14 +89,21 @@ func QueryUserStats(conn *grpc.ClientConn, patterns []string, reset bool) ([]*st
 		}
 		defer conn.Close()
 	}
-	resp, err := statscmd.NewStatsServiceClient(conn).QueryStats(context.Background(), &statscmd.QueryStatsRequest{
-		Patterns: patterns,
-		Reset_:   reset,
-	})
-	if err != nil {
-		global.Logger.Err(err).Msg("QueryStats failed, err: " + err.Error())
-		return nil, err
+	items := make([]*statscmd.Stat, 0)
+	for _, pattern := range patterns {
+		resp, err := statscmd.NewStatsServiceClient(conn).QueryStats(context.Background(), &statscmd.QueryStatsRequest{
+			Pattern: pattern,
+			Reset_:  reset,
+		})
+		if err != nil {
+			global.Logger.Err(err).Msg("QueryStats failed, err: " + err.Error())
+			return nil, err
+		}
+		if resp != nil && len(resp.Stat) > 0 {
+			items = append(items, resp.Stat...)
+		}
 	}
-	global.Logger.Info().Msgf("QueryStats.Resp: %s", resp.String())
-	return resp.Stat, nil
+
+	global.Logger.Info().Msgf("QueryStats.Resp: %#v", items)
+	return items, nil
 }

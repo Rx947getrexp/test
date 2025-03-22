@@ -157,6 +157,12 @@ func addUserConfig(ctx *gin.Context, userEmail, userUUID, ip, tag string, userLe
 	if err != nil {
 		return gerror.Wrap(err, "add_sub failed")
 	}
+	if res == nil {
+		return gerror.Newf("add user config res is nil")
+	}
+	if res.Code != 200 {
+		return gerror.Newf("add user config res code is not 200")
+	}
 	return nil
 }
 
