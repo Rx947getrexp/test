@@ -2,17 +2,19 @@ package executor
 
 import (
 	"context"
-	"go-speed/global"
-	"go-speed/model/request"
 	"strings"
 
+	"github.com/xtls/xray-core/app/proxyman/command"
+	"github.com/xtls/xray-core/common/protocol"
+	"github.com/xtls/xray-core/common/serial"
+	"github.com/xtls/xray-core/proxy/trojan"
 	"google.golang.org/grpc"
 
-	"github.com/v2fly/v2ray-core/v5/app/proxyman/command"
-	"github.com/v2fly/v2ray-core/v5/common/protocol"
-	"github.com/v2fly/v2ray-core/v5/common/serial"
-	"github.com/v2fly/v2ray-core/v5/proxy/trojan"
+	"go-speed/global"
+	"go-speed/model/request"
 )
+
+//"github.com/v2fly/v2ray-core/v5/app/proxyman/command"
 
 const (
 	V2rayProtocolTrojan = "trojan"

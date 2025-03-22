@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	statscmd "github.com/v2fly/v2ray-core/v5/app/stats/command"
+	statscmd "github.com/xtls/xray-core/app/stats/command"
 	"go-speed/constant"
 	"go-speed/global"
 	"go-speed/model"
