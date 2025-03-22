@@ -1043,6 +1043,11 @@ class SpeedReport:
         rows = mysql_query_db(self.conn, sql)
         return [(row['email']) for row in rows]
     
+    def get_unsent_recovery_users(self, limit):
+        sql = f"""SELECT email FROM speed_report.t_user_recovery where status = 0 ORDER BY id ASC limit {limit};"""
+        rows = mysql_query_db(self.conn, sql)
+        return [(row['email']) for row in rows]
+    
     def update_recovery_emails_status(self, email_list_str):
         sql = """
         UPDATE speed_report.t_user_recovery

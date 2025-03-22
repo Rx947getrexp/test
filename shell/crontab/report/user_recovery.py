@@ -1,120 +1,145 @@
-from datetime import datetime, timedelta
+from datetime import datetime
+import fcntl
 import logging
+import sys
 import time
 import email_service
 import log
-
-from db_util import SpeedReport  # 导入 Speed 类
+from db_util import SpeedReport
 
 # 邮件发送配置
-batch_size=97 #每次发送的收件人数量上限100人每封
-daily_limit=499 #每天发送邮件总数上限500封
+BATCH_SIZE = 98  # 每批次真实用户数（确保 BATCH_SIZE + 测试邮箱数量 ≤ 100）
+DAILY_LIMIT = 500  # 每日发送上限（包含测试邮箱）
+MAX_RETRIES = 3  # 失败重试次数
+RETRY_DELAY = 60  # 失败重试等待时间（秒）
+BATCH_INTERVAL = 60 * 30  # 每批次间隔 30 分钟，防止触发反垃圾机制
+TEST_EMAILS = [  # 测试邮箱列表（需计入限额）
+    "273768414@qq.com",
+    "shenfuqing@163.com"
+]
+
+TASK_NAME = "user_recovery_task"
 
 def get_email_content():
-    # 邮件标题和正文
+    """
+    获取邮件标题和正文
+    """
     subject = "Подарок для вас – 15 дней бесплатного использования!"
-    body = "<html>"
-    body += "<body>"
-    body += "<p>Дорогой пользователь!</p>"
-    body += "<p>Мы заметили, что вы давно не пользовались нашим продуктом, и хотели бы напомнить вам о преимуществах, которые вы упускаете. В знак благодарности за ваше доверие и выбор нашего сервиса мы предоставляем вам 15 дней бесплатного использования.</p>"
-    body += "<p>Если вы уже удалили наше приложение, вы всегда можете скачать его снова по следующей ссылке: <a href=\"https://www.yyy360.xyz\">[Герой VPN]https://www.yyy360.xyz</a></p>"
-    body += "<p>Ваши 15 бесплатных дней уже активированы и ждут вас!</p>"
-    body += "<p>Если у вас возникнут какие-либо вопросы или проблемы, наша команда поддержки всегда готова помочь. Мы будем рады снова видеть вас среди наших пользователей!</p>"
-    body += "<p>С уважением,  </p>"
-    body += "<p>Команда [Герой VPN]</p>"
-    body += "</body>"
-    body += "</html>"
-    # 返回邮件标题和正文
+    body = """
+    <html>
+    <body>
+        <p>Дорогой пользователь!</p>
+        <p>Мы заметили, что вы давно не пользовались нашим продуктом, и хотели бы напомнить вам о преимуществах, которые вы упускаете. В знак благодарности за ваше доверие и выбор нашего сервиса мы предоставляем вам 15 дней бесплатного использования.</p>
+        <p>Если вы уже удалили наше приложение, вы всегда можете скачать его снова по следующей ссылке: <a href="https://www.yyy360.xyz">[Герой VPN]https://www.yyy360.xyz</a></p>
+        <p>Ваши 15 бесплатных дней уже активированы и ждут вас!</p>
+        <p>Если у вас возникнут какие-либо вопросы или проблемы, наша команда поддержки всегда готова помочь. Мы будем рады снова видеть вас среди наших пользователей!</p>
+        <p>С уважением,</p>
+        <p>Команда [Герой VPN]</p>
+    </body>
+    </html>
+    """
     return subject, body
 
-def send_bulk_emails(sender, subject, body, recipients):
-    """
-    分批次发送邮件，遵循服务商限制。
-    
-    :param sender: EmailSender 对象
-    :param subject: 邮件主题
-    :param body: 邮件正文
-    :param recipients: 收件人列表
-    :param batch_size: 每批次的收件人数量限制（默认100）
-    :param daily_limit: 每日邮件总数限制（默认500）
-    """
-    total_recipients = len(recipients)
-    total_batches = (total_recipients + batch_size - 1) // batch_size
-    sent_count = 0  # 当前已发送的邮件计数
-
-    for batch_index in range(total_batches):
-        # 获取当前批次的收件人
-        start = batch_index * batch_size
-        end = min(start + batch_size, total_recipients)
-        current_batch = recipients[start:end]
-
-        try:
-            # 检查是否达到每日限制
-            if sent_count >= daily_limit:
-                # logging.info(f"每日发送限制已达 {daily_limit} 封，程序暂停至次日...")
-                logging.info(f"Daily sending limit of {daily_limit} emails reached, the program will pause until the next day...")
-                time.sleep(24 * 60 * 60)  # 暂停 24 小时
-
-            # 发送当前批次的邮件
-            # logging.info(f"正在发送第 {batch_index + 1}/{total_batches} 批次...")
-            logging.info(f"Sending batch {batch_index + 1}/{total_batches}...")
-            test_emails = ["273768414@qq.com", "shenfuqing@163.com"]  # 跟踪测试发送
-            current_batch.extend(test_emails)
-            # print(sender, subject, body, current_batch)
-            sender.send_email_tls(subject, body, current_batch)
-
-            sent_count += 1  # 增加已发送邮件计数
-            # logging.info(f"成功发送第 {batch_index + 1} 批次邮件，当前已发送 {sent_count} 封邮件。")
-            logging.info(f"Successfully sent batch {batch_index + 1} emails, a total of {sent_count} emails sent so far.")
-
-            update_send_emails_status(current_batch)
-
-        except Exception as e:
-            # logging.error(f"发送第 {batch_index + 1} 批次邮件时发生错误: {e}")
-            logging.error(f"An error occurred while sending batch {batch_index + 1} emails: {e}")
-            #continue  # 跳过错误，继续发送后续批次
-        
-        # 如果需要，可以设置发送间隔，避免触发反垃圾邮件机制
-        time.sleep(60 * 30)
-
-# 获取需要发送的用户邮件地址
 def get_recovery_users():
-    # 获取需要发送的用户邮件
-    recipients = SpeedReport().get_recovery_users()  # 获取需要发送的用户邮件
-    return recipients
+    """获取需要发送挽回邮件的用户列表，每天最多获取 500 个"""
+    return SpeedReport().get_unsent_recovery_users(limit=490)  # ✅ 获取 500 个（含 10 测试）
 
 def update_send_emails_status(emails):
-    # 将电子邮件列表转换成SQL IN子句格式
+    """更新邮件发送状态"""
+    if not emails:
+        return
     try:
-        # 将电子邮件列表转换成SQL IN子句格式
         email_list_str = "'" + "','".join(emails) + "'"
         SpeedReport().update_recovery_emails_status(email_list_str)
     except Exception as e:
-        # logging.error(f"更新电子邮件状态时发生错误: {e}")
-        logging.error(f"An error occurred while updating email status: {e}")
+        logging.error(f"更新数据库状态失败：{str(e)}")
+
+def send_bulk_emails(sender, subject, body, recipients):
+    """
+    分批次发送邮件，每批 100 封（98 个真实用户 + 2 个测试邮箱），每天最多 5 批次（共 500 封）
+    """
+    total_recipients = min(len(recipients), 500)  # ✅ 限制真实用户最多 500
+    total_batches = min((total_recipients + 97) // 98, 5)  # ✅ 最多 5 批次
+    sent_count = 0  # 记录已发送数量（包含测试邮箱）
+
+    for batch_index in range(total_batches):
+        start = batch_index * 98
+        end = min(start + 98, total_recipients)
+        current_main_emails = recipients[start:end]
+
+        current_batch = current_main_emails + TEST_EMAILS  # ✅ 每批加 2 个测试邮箱
+        batch_size = len(current_batch)
+
+        logging.info(f"正在发送第 {batch_index+1}/{total_batches} 批次：{batch_size} 封邮件")
+
+        # 发送重试逻辑
+        retry_count = 0
+        while retry_count < MAX_RETRIES:
+            try:
+                sender.send_email_tls(subject, body, current_batch)
+                sent_count += batch_size  
+
+                logging.info(f"成功发送 {batch_size} 封邮件，累计已发送：{sent_count}/500")
+
+                update_send_emails_status(current_main_emails)  # ✅ 更新数据库
+                break
+            except Exception as e:
+                error_msg = str(e)
+                logging.error(f"第 {batch_index+1} 批次发送失败（第 {retry_count+1} 次重试），错误信息：{str(e)}")
+                # **如果是 550 错误（超额），立即停止程序**
+                if "550" in error_msg and "limit" in error_msg:
+                    logging.critical("💥 发送配额已用完，程序立即停止！")
+                    return  # **终止整个邮件发送**
+                retry_count += 1
+                if retry_count < MAX_RETRIES:
+                    time.sleep(RETRY_DELAY)
+                else:
+                    logging.error(f"第 {batch_index+1} 批次在 {MAX_RETRIES} 次尝试后仍发送失败")
+
+        if sent_count >= 500:
+            logging.info("已达到每日上限 500，停止后续发送")
+            break
+
+        logging.info(f"等待 {BATCH_INTERVAL} 秒后发送下一批次...")
+        time.sleep(BATCH_INTERVAL)  # ✅ 控制间隔
 
 def run():
-    # 开始执行任务
-    logging.info("=" * 10 + "sending emails" + "=" * 10)
-    # 邮件发送配置信息
-    sender = email_service.EmailSender(username="heronet@heronet.shop", password="pingguoqm23", hostname="smtpout.secureserver.net", nickname="Герой VPN")
-    # 获取邮件标题和正文
+    """主运行函数"""
+    logging.info("========== 开始执行用户挽回邮件发送任务 ==========")
+
+    # 初始化邮件服务
+    sender = email_service.EmailSender(
+        username="heronet@heronet.shop",
+        password="pingguoqm23",
+        hostname="smtpout.secureserver.net",
+        nickname="Герой VPN"
+    )
+
+    # 获取邮件内容和收件人
     subject, body = get_email_content()
-    # 获取需要发送的用户邮件
     recipients = get_recovery_users()
 
-    if len(recipients) == 0:
-        logging.info("No users found to send emails.")
+    if not recipients:
+        logging.info("未找到需要发送邮件的用户")
         return
-    # recipients = ["pmm73219@gmail.com", "273768414@qq.com", "shenfuqing@163.com", "mmp73219@outlook.com"] #测试发送
-    # 分批次发送邮件，遵循服务商限制，使用 TLS
-    send_bulk_emails(sender, subject, body, recipients)
 
-# 示例用法
+    send_bulk_emails(sender, subject, body, recipients)
+    logging.info("邮件发送任务执行完毕")
+
 if __name__ == "__main__":
+    
+    lock_file = "/tmp/%s.lock" % TASK_NAME
+    fp = open(lock_file, "w")
+    try:
+        fcntl.lockf(fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except IOError:
+        logging.error("已经有一个 %s 进程在运行，本进程将退出" % TASK_NAME)
+        sys.exit(1)
+    
     log.init_logging("/shell/report/log/user_recovery.log")
+    # log.init_logging("./log/user_recovery.log")
+
     try:
         run()
     except Exception as e:
-        # logging.error(f"发生错误: {e}")
-        logging.error(f"An error occurred: {e}")
+        logging.critical(f"程序发生严重错误：{str(e)}", exc_info=True)
