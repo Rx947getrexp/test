@@ -7,8 +7,8 @@ import (
 	"go-speed/global"
 	"go-speed/model/request"
 
-	"github.com/v2fly/v2ray-core/v5/app/proxyman/command"
-	"github.com/v2fly/v2ray-core/v5/common/serial"
+	"github.com/xtls/xray-core/app/proxyman/command"
+	"github.com/xtls/xray-core/common/serial"
 	"google.golang.org/grpc"
 )
 
