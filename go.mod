@@ -26,7 +26,6 @@ require (
 	github.com/shopspring/decimal v1.2.0
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/viper v1.14.0
-	github.com/v2fly/v2ray-core/v5 v5.11.0
 	github.com/xtls/xray-core v1.250306.0
 	golang.org/x/crypto v0.36.0
 	golang.org/x/exp v0.0.0-20240531132922-fd00a4e0eefc
@@ -39,7 +38,6 @@ require (
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/BurntSushi/toml v1.3.2 // indirect
-	github.com/adrg/xdg v0.4.0 // indirect
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/clbanning/mxj/v2 v2.7.0 // indirect
@@ -60,7 +58,6 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.15.5 // indirect
 	github.com/goccy/go-json v0.9.11 // indirect
-	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/grokify/html-strip-tags-go v0.1.0 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
