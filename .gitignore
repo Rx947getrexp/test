@@ -18,6 +18,7 @@ public/
 manifest/.DS_Store
 manifest/geo/.DS_Store
 
+cmd/go-api/geo
 cmd/go-api/go-api
 cmd/go-api/go-api-mac
 cmd/go-admin/go-admin
