@@ -15,6 +15,7 @@ type UserInfoResponse struct {
 	SurplusFlow int64  `json:"surplus_flow"`
 	SpecialFlag bool   `json:"special_flag"`
 	DNS         string `json:"dns"`
+	Timestamp   int64  `json:"timestamp"`
 }
 
 type TeamListResponse struct {

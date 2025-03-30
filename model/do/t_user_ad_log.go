@@ -24,4 +24,5 @@ type TUserAdLog struct {
 	Result     interface{} //
 	ReportTime interface{} // 提交时间
 	CreatedAt  *gtime.Time // 记录创建时间
+	AppName    interface{} // app_name
 }

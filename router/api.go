@@ -5,6 +5,7 @@ import (
 	"go-speed/api/admin/official_docs"
 	"go-speed/api/api"
 	"go-speed/api/api/ad"
+	"go-speed/api/api/app"
 	"go-speed/api/api/config"
 	"go-speed/api/api/country"
 	"go-speed/api/api/device"
@@ -51,6 +52,7 @@ func ApiRoute(group *gin.RouterGroup) {
 	group.POST("pay_notify", order.PayNotify)
 	group.POST("goods_list", goods.GoodsList)
 	group.POST("payment_channel_list", order.PaymentChannelList)
+	group.POST("app_version", app.AppVersion)
 
 	//签名验证
 	switchStateGroup := group.Group("switch")

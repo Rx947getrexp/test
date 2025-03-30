@@ -194,7 +194,7 @@ curl -X POST -H "Content-Type: application/json" -H "Lang: cn" https://beiyo.xyz
 ## 管理后台
 ### 支付渠道列表
 curl -X POST -H "Lang: cn" http://localhost:13001/payment_channel/list
-
+curl -XPOST  -H "Lang: cn" https://keeperpro.xyz/app-api/app_version
 
 ### 修改支付渠道配置接口
 curl -X POST -H "Lang: cn" -H "Content-Type: application/json" http://localhost:13001/payment_channel/edit -d '{"ChannelId":"usd","payment_qr_code":"qr-123","customer_service_info":{"phone":"18118811881","working_hours":"10:00~20:00"}}'

@@ -48,6 +48,7 @@ func ReportUserADLog(ctx *gin.Context) {
 		Result:     req.Result,
 		ReportTime: req.ReportTime,
 		CreatedAt:  gtime.Now(),
+		AppName:    global.GetAppVersion(ctx),
 	}).InsertAndGetId()
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("insert ad log failed")

@@ -27,4 +27,5 @@ type TUserOpLog struct {
 	HttpCode     interface{} // HTTP状态码
 	TraceId      interface{} // TraceId
 	UserId       interface{} // 用户uid
+	AppName      interface{} // app_name
 }

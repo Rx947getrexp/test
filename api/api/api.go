@@ -434,6 +434,7 @@ func UserInfo(c *gin.Context) {
 		SurplusFlow: 0,
 		SpecialFlag: geo.IsNeedDisablePaymentFeature(c, user.Email),
 		DNS:         dns,
+		Timestamp:   time.Now().Unix(),
 	}
 	response.RespOk(c, i18n.RetMsgSuccess, res)
 }
