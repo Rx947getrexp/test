@@ -36,3 +36,9 @@ type ApplePayConfig struct {
 	Environment string `mapstructure:"environment"`
 	BundleId    string `mapstructure:"bundle_id"`
 }
+
+type RussNewPay struct {
+	MerchantNumber string `mapstructure:"merchant_number"`
+	SuccessUrl     string `mapstructure:"success_url"`
+	FailedUrl      string `mapstructure:"failed_url"`
+}

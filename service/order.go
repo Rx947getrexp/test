@@ -14,6 +14,7 @@ import (
 	"go-speed/util/pay/applepay"
 	"go-speed/util/pay/freekassa"
 	"go-speed/util/pay/pnsafepay"
+	russ_pay "go-speed/util/pay/russ-pay"
 	"go-speed/util/pay/russpay"
 	"go-speed/util/pay/upay"
 	"go-speed/util/pay/webmoney"
@@ -233,6 +234,30 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string, notifyData interface{}) (
 		if resp != nil &&
 			strings.ToLower(resp.PaymentStatus) == strings.ToLower("SUCCESSFUL") &&
 			resp.BillingNumber == payOrder.OrderData {
+			resultStatus = constant.ReturnStatusSuccess
+			orderRealityAmount = payOrder.OrderAmount
+		} else {
+			return constant.ReturnStatusWaiting, nil
+		}
+	case constant.PayChannelRussNewPayCard, constant.PayChannelRussNewPaySBP:
+		var resp *russ_pay.QueryPaymentOrderRes
+		resp, err = russ_pay.QueryOrder(ctx, russ_pay.QueryOrderReq{MerchantOrderID: orderNo})
+		if err != nil {
+			global.MyLogger(ctx).Err(err).Msgf("russ-new-pay failed")
+			return constant.ReturnStatusWaiting, err
+		}
+
+		if resp != nil && strings.ToLower(resp.Data.Status) == "success" {
+			var pass bool
+			pass, err = CheckAmount(ctx, resp.Data.DepositAmount, payOrder.OrderData)
+			if err != nil {
+				return constant.ReturnStatusWaiting, err
+			}
+			if !pass {
+				global.MyLogger(ctx).Info().Msgf("$$$$$$$$$$$$$$ OrderNo: %s, waiting to pay", orderNo)
+				return constant.ReturnStatusWaiting, nil
+			}
+
 			resultStatus = constant.ReturnStatusSuccess
 			orderRealityAmount = payOrder.OrderAmount
 		} else {

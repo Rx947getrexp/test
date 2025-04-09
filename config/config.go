@@ -15,4 +15,5 @@ type Server struct {
 	ApplePayConfig  ApplePayConfig  `mapstructure:"applepayconfig"`
 	ADConfig        AD              `mapstructure:"adconfig"`
 	TestEnv         string          `mapstructure:"test_env"`
+	RussNewPay      RussNewPay      `mapstructure:"russ_new_pay"`
 }

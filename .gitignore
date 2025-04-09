@@ -35,3 +35,4 @@ cmd/go-user-v2ray-config/go-user-v2ray-config
 cmd/go-tools/speedctl
 cmd/go-tools/speedctl-mac
 cmd/go-executor/executor
+test/

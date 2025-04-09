@@ -57,6 +57,7 @@ func doSyncPayOrderStatus() {
 				constant.PayChannelFreekassa_36, constant.PayChannelFreekassa_43,
 				constant.PayChannelFreekassa_44,
 				constant.PayChannelRussPayBankCard, constant.PayChannelRussPaySBP, constant.PayChannelRussPaySBER,
+				constant.PayChannelRussNewPayCard, constant.PayChannelRussNewPaySBP,
 			},
 			Status: []string{constant.ParOrderStatusInit, constant.ParOrderStatusUnpaid},
 		}).
