@@ -32,7 +32,7 @@ func PromotionDnsEdit(c *gin.Context) {
 
 	if err = c.ShouldBind(req); err != nil {
 		global.Logger.Err(err).Msg(err.Error())
-		response.ResFail(c, "绑定参数失败")
+		response.RespFail(c, "绑定参数失败", nil)
 		return
 	}
 

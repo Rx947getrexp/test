@@ -62,3 +62,17 @@ type PromotionDnsResponse struct {
 	Total int               `json:"total" dc:"数据总条数"`
 	List  []PromotionDnsRes `json:"list" dc:"数据明细"`
 }
+
+type PromotionShopRes struct {
+	TitleCn string `form:"title_cn" json:"title" dc:"商店标题(中文)"`
+	TitleEn string `form:"title_en" json:"title_en" dc:"商店标题(英文)"`
+	TitleRu string `form:"title_ru" json:"title_ru" dc:"商店标题(俄语)"`
+	Type    string `form:"type" json:"type" dc:"商店类型，苹果：ios，安卓：android"`
+	Url     string `form:"url" json:"url" dc:"商店地址"`
+	Cover   string `form:"cover" json:"cover" dc:"商店图标"`
+}
+
+type PromotionShopResponse struct {
+	Total int                `json:"total" dc:"数据总条数"`
+	List  []PromotionShopRes `json:"list" dc:"数据明细"`
+}

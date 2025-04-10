@@ -11,6 +11,7 @@ import (
 	"go-speed/api/admin/payment_channel"
 	"go-speed/api/admin/promotion"
 	"go-speed/api/admin/promotion_dns"
+	"go-speed/api/admin/promotion_shop"
 	"go-speed/api/admin/report"
 	"go-speed/api/admin/vip"
 
@@ -195,7 +196,6 @@ func AdminRoute(group *gin.RouterGroup) {
 		machineGroup.POST("manager", node.NodeManager) // 节点机器上下架，监控机器专用接口
 
 		//支付通道管理
-
 		paymentChannelGroup := group.Group("payment_channel")
 		paymentChannelGroup.POST("list", payment_channel.PaymentChannelList)
 		paymentChannelGroup.POST("edit", payment_channel.PaymentChannelModify)
@@ -221,6 +221,12 @@ func AdminRoute(group *gin.RouterGroup) {
 		promotionDnsGroup.POST("add", promotion_dns.PromotionDnsAdd)
 		promotionDnsGroup.POST("edit", promotion_dns.PromotionDnsEdit)
 		promotionDnsGroup.POST("del", promotion_dns.PromotionDnsDelete)
+
+		// 推广商店地址管理
+		promotionShopGroup := group.Group("promotion_shop")
+		promotionShopGroup.GET("list", promotion_shop.PromotionShopList)
+		promotionShopGroup.GET("add", promotion_shop.PromotionShopAdd)
+		promotionShopGroup.GET("edit", promotion_shop.PromotionShopEdit)
 
 		// 广告系统
 		advertisementGroup := group.Group("advertisement")

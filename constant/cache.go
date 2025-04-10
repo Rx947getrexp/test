@@ -16,3 +16,9 @@ const (
 	PromotionDnsMappingCacheKey   = "promotionDnsMappingCacheKey:"
 	PromotionDnsMappingExpiration = 24 * time.Hour
 )
+
+// 获取后台配置的商店列表 缓存配置
+const (
+	PromotionStoreCacheKey   = "promotionStoreCacheKey:"
+	PromotionStoreExpiration = 24 * time.Hour
+)

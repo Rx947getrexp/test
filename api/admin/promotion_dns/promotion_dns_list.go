@@ -55,7 +55,7 @@ func PromotionDnsList(c *gin.Context) {
 
 	if err = c.ShouldBind(req); err != nil {
 		global.Logger.Err(err).Msg(err.Error())
-		response.ResFail(c, "绑定参数失败")
+		response.RespFail(c, "绑定参数失败", nil)
 		return
 	}
 
@@ -121,7 +121,7 @@ func PromotionDnsList(c *gin.Context) {
 	err = model.Order(req.OrderBy, req.OrderType).Page(req.Page, size).Scan(&entities)
 	if err != nil {
 		global.Logger.Err(err).Msg(err.Error())
-		response.ResFail(c, "查询数据失败")
+		response.RespFail(c, "查询数据失败", nil)
 		return
 	}
 
@@ -148,7 +148,4 @@ func PromotionDnsList(c *gin.Context) {
 		Total: total,
 		List:  items,
 	})
-}
-
-func PromotionDnsListCacheReset(c *gin.Context) {
 }

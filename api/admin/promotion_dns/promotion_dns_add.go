@@ -31,7 +31,7 @@ func PromotionDnsAdd(c *gin.Context) {
 
 	if err = c.ShouldBind(req); err != nil {
 		global.Logger.Err(err).Msg(err.Error())
-		response.ResFail(c, "绑定参数失败")
+		response.RespFail(c, "绑定参数失败", nil)
 		return
 	}
 
@@ -63,8 +63,8 @@ func PromotionDnsAdd(c *gin.Context) {
 	}).InsertAndGetId()
 
 	if err != nil || lastInsertId == 0 {
-		global.MyLogger(c).Err(err).Msgf("AddVps添加数据失败，error: %v", err)
-		response.RespFail(c, "AddVps添加数据失败", nil)
+		global.MyLogger(c).Err(err).Msgf("添加数据失败，error: %v", err)
+		response.RespFail(c, "添加数据失败", nil)
 		return
 	}
 
