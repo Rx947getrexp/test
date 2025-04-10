@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"go-speed/util"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -33,6 +34,8 @@ var alarmReceiver = []string{
 	"pmm73219@gmail.com",
 	"hs.alarm@outlook.com",
 }
+
+var nodeOfflineStatus = make(map[string]bool) // true 表示已下架
 
 func getConfig(c string) (out []string) {
 	for _, v := range strings.Split(c, ",") {
@@ -280,11 +283,28 @@ func doDialNodeServer(dnsList []string) {
 		}
 		global.Logger.Info().Msgf("@@@@@@@@@@@@@@@@@@@@@@@ dns: %s, errCounterNodeServerDNS: %d", dns, errCounterNodeServerDNS[dns])
 
+		// 老逻辑新增下架机器逻辑，老代码注释
+		// if errCounterNodeServerDNS[dns] > 5 {
+		// 	if e := sendAlarm(DialTypeNode, dns, err); e == nil {
+		// 		errCounterNodeServerDNS[dns] = 3
+		// 	}
+		// }
+
 		if errCounterNodeServerDNS[dns] > 5 {
-			if e := sendAlarm(DialTypeNode, dns, err); e == nil {
-				errCounterNodeServerDNS[dns] = 3
+			if !nodeOfflineStatus[dns] { // 之前未下架，触发下架
+				if e := sendAlarm(DialTypeNode, dns, err); e == nil {
+					ok := updateNodeStatus(dns, 2) // 2 表示下架
+					if ok {
+						nodeOfflineStatus[dns] = true
+						global.Logger.Warn().Msgf("节点 %s 下架成功", dns)
+					} else {
+						global.Logger.Error().Msgf("节点 %s 下架接口调用失败", dns)
+					}
+					errCounterNodeServerDNS[dns] = 3
+				}
 			}
 		}
+
 	}
 	for k, v := range errCounterNodeServerDNS {
 		if v > 0 {
@@ -292,14 +312,55 @@ func doDialNodeServer(dnsList []string) {
 		}
 	}
 
+	// 老的逻辑新增自动上架逻辑，老代码先注释
+	// if !failedFlag {
+	// 	dialNodeSuccessTimes++
+	// }
 	if !failedFlag {
 		dialNodeSuccessTimes++
+		for _, dns := range dnsList {
+			if nodeOfflineStatus[dns] { // 如果是下架状态
+				ok := updateNodeStatus(dns, 1) // 1 表示上架
+				if ok {
+					nodeOfflineStatus[dns] = false
+					global.Logger.Warn().Msgf("节点 %s 上架成功", dns)
+				} else {
+					global.Logger.Error().Msgf("节点 %s 上架接口调用失败", dns)
+				}
+			}
+		}
 	}
+
 	if dialNodeSuccessTimes%(120) == 0 {
 		sendSuccessNotify(DialTypeNode)
 	}
 	global.Logger.Info().Msgf("--------------- doDialNodeServer [dialNodeTimes: %d, dialNodeSuccessTimes: %d] end --------------", dialNodeTimes, dialNodeSuccessTimes)
 	global.Logger.Info().Msgf("################################################################################")
+}
+
+// 机器上架下架
+func updateNodeStatus(dns string, status int) bool {
+	url := "https://www.eigrrht.xyz/go-api/machine/manager"
+	payload := fmt.Sprintf(`{"server": "%s", "status": %d}`, dns, status)
+
+	req, err := http.NewRequest("POST", url, strings.NewReader(payload))
+	if err != nil {
+		global.Logger.Error().Msgf("构造请求失败: %s", err.Error())
+		return false
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		global.Logger.Error().Msgf("请求接口失败: %s", err.Error())
+		return false
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	global.Logger.Info().Msgf("接口响应: %s", string(body))
+	return resp.StatusCode == 200
 }
 
 // ps -ef | grep go-monitor | grep -v 'grep' | awk '{print $2}' | xargs kill && cd /wwwroot/go/go-monitor/ && cp -rf backup/go-monitor ./ && ./restart.sh

@@ -50,3 +50,15 @@ type ListNodeForReport struct {
 type NodeItem struct {
 	Ip string `json:"ip"`
 }
+
+type PromotionDnsRes struct {
+	Dns            string `json:"dns" dc:"机器域名"`
+	AndroidChannel string `json:"android_channel" dc:"安卓渠道"`
+	WinChannel     string `json:"win_channel" dc:"windows电脑渠道"`
+	MacChannel     string `json:"mac_channel" dc:"苹果电脑渠道"`
+}
+
+type PromotionDnsResponse struct {
+	Total int               `json:"total" dc:"数据总条数"`
+	List  []PromotionDnsRes `json:"list" dc:"数据明细"`
+}
