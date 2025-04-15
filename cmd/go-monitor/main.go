@@ -305,16 +305,16 @@ func doDialNodeServer(dnsList []string) {
 		// 	}
 		// }
 		if errCounterNodeServerDNS[dns] > 5 {
-			if !nodeOfflineStatus[dns] {
-				// 1. 发告警邮件
-				if e := sendAlarm(DialTypeNode, dns, err); e == nil {
-					errCounterNodeServerDNS[dns] = 3
-				}
+			// 一直发告警邮件（即使已经下架，除非恢复）
+			if e := sendAlarm(DialTypeNode, dns, err); e == nil {
+				errCounterNodeServerDNS[dns] = 3
+			}
 
-				// 2. 通知应用服务器节点异常
+			// 只上报一次“下架”状态（除非恢复）
+			if !nodeOfflineStatus[dns] {
 				if e := reportNodeStatus(dns, 2); e == nil {
-					global.Logger.Info().Msgf("节点 %s 上报异常状态成功", dns)
 					nodeOfflineStatus[dns] = true
+					global.Logger.Info().Msgf("节点 %s 上报异常状态成功", dns)
 				} else {
 					global.Logger.Error().Msgf("节点 %s 上报异常状态失败: %s", dns, e.Error())
 				}

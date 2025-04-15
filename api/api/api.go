@@ -1856,21 +1856,16 @@ func GetPromotionDnsMapping(c *gin.Context) {
 	}
 
 	// **缓存数据到 Redis**
-	// cacheResponse := response.PromotionDnsResponse{
-	// 	Total: total,
-	// 	List:  items,
-	// }
+	cacheResponse := response.PromotionDnsResponse{
+		Total: total,
+		List:  items,
+	}
 	// cacheBytes, _ := json.Marshal(cacheResponse)
 	// //缓存有效期24小时，后台新增修改时都会清除刷新缓存
 	// redisClient.Set(c, cacheKey, cacheBytes, constant.PromotionDnsMappingExpiration)
 
 	// 返回数据
-	// response.RespOk(c, i18n.RetMsgSuccess, cacheResponse)
-
-	response.RespOk(c, i18n.RetMsgSuccess, response.PromotionDnsResponse{
-		Total: total,
-		List:  items,
-	})
+	response.RespOk(c, i18n.RetMsgSuccess, cacheResponse)
 }
 
 // 官网接口，下载页面的各个商店的推广链接
@@ -1880,7 +1875,7 @@ func GetPromotionShopMapping(c *gin.Context) {
 		entities []entity.TAppStore
 		total    int
 	)
-	//优先从Redis缓存中取映射表数据
+	// //优先从Redis缓存中取映射表数据
 	// cacheKey := constant.PromotionStoreCacheKey
 	// redisClient := global.Redis
 	// cachedData, err := redisClient.Get(c, cacheKey).Result()
@@ -1925,20 +1920,14 @@ func GetPromotionShopMapping(c *gin.Context) {
 	}
 
 	// // **缓存数据到 Redis**
-	// cacheResponse := response.PromotionShopResponse{
-	// 	Total: total,
-	// 	List:  items,
-	// }
+	cacheResponse := response.PromotionShopResponse{
+		Total: total,
+		List:  items,
+	}
 	// cacheBytes, _ := json.Marshal(cacheResponse)
 	// //缓存有效期24小时，后台新增修改时都会清除刷新缓存
 	// redisClient.Set(c, cacheKey, cacheBytes, constant.PromotionStoreExpiration)
 
 	// 返回数据
-	// response.RespOk(c, i18n.RetMsgSuccess, cacheResponse)
-
-	response.RespOk(c, i18n.RetMsgSuccess, response.PromotionShopResponse{
-		Total: total,
-		List:  items,
-	})
-
+	response.RespOk(c, i18n.RetMsgSuccess, cacheResponse)
 }
