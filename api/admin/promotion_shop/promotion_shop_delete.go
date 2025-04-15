@@ -14,7 +14,7 @@ type PromotionShopDeleteRequest struct {
 	Id int64 `form:"id" binding:"required" json:"id" dc:"自增id"`
 }
 
-func PromotionDnsDelete(c *gin.Context) {
+func PromotionShopDelete(c *gin.Context) {
 	// 定义局部变量
 	var (
 		err error

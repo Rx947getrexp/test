@@ -103,7 +103,7 @@ func PromotionShopList(c *gin.Context) {
 	err = model.Order(req.OrderBy, req.OrderType).Page(req.Page, size).Scan(&entities)
 	if err != nil {
 		global.Logger.Err(err).Msg(err.Error())
-		response.ResFail(c, "查询数据失败")
+		response.RespFail(c, "查询数据失败", nil)
 		return
 	}
 

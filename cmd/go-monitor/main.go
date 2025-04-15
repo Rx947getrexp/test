@@ -2,6 +2,9 @@ package main
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"go-speed/util"
@@ -14,9 +17,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gogf/gf/v2/os/glog"
+	"golang.org/x/exp/rand"
 
 	"go-speed/global"
 	"go-speed/initialize"
+	"go-speed/model/response"
 	"go-speed/service"
 	"go-speed/service/email"
 )
@@ -36,6 +41,7 @@ var alarmReceiver = []string{
 }
 
 var nodeOfflineStatus = make(map[string]bool) // true 表示已下架
+const secretKey = "@hsspeed2025#"
 
 func getConfig(c string) (out []string) {
 	for _, v := range strings.Split(c, ",") {
@@ -280,27 +286,37 @@ func doDialNodeServer(dnsList []string) {
 			errCounterNodeServerDNS[dns]++
 		} else {
 			errCounterNodeServerDNS[dns] = 0
+			if nodeOfflineStatus[dns] {
+				global.Logger.Info().Msgf("节点 %s 已恢复，准备上报正常状态", dns)
+				// 通知应用服务器节点已经正常
+				if e := reportNodeStatus(dns, 1); e == nil {
+					nodeOfflineStatus[dns] = false
+					global.Logger.Info().Msgf("节点 %s 上报正常状态成功", dns)
+				} else {
+					global.Logger.Error().Msgf("节点 %s 上报正常状态失败: %s", dns, e.Error())
+				}
+			}
 		}
 		global.Logger.Info().Msgf("@@@@@@@@@@@@@@@@@@@@@@@ dns: %s, errCounterNodeServerDNS: %d", dns, errCounterNodeServerDNS[dns])
 
-		// 老逻辑新增下架机器逻辑，老代码注释
 		// if errCounterNodeServerDNS[dns] > 5 {
 		// 	if e := sendAlarm(DialTypeNode, dns, err); e == nil {
 		// 		errCounterNodeServerDNS[dns] = 3
 		// 	}
 		// }
-
 		if errCounterNodeServerDNS[dns] > 5 {
-			if !nodeOfflineStatus[dns] { // 之前未下架，触发下架
+			if !nodeOfflineStatus[dns] {
+				// 1. 发告警邮件
 				if e := sendAlarm(DialTypeNode, dns, err); e == nil {
-					ok := updateNodeStatus(dns, 2) // 2 表示下架
-					if ok {
-						nodeOfflineStatus[dns] = true
-						global.Logger.Warn().Msgf("节点 %s 下架成功", dns)
-					} else {
-						global.Logger.Error().Msgf("节点 %s 下架接口调用失败", dns)
-					}
 					errCounterNodeServerDNS[dns] = 3
+				}
+
+				// 2. 通知应用服务器节点异常
+				if e := reportNodeStatus(dns, 2); e == nil {
+					global.Logger.Info().Msgf("节点 %s 上报异常状态成功", dns)
+					nodeOfflineStatus[dns] = true
+				} else {
+					global.Logger.Error().Msgf("节点 %s 上报异常状态失败: %s", dns, e.Error())
 				}
 			}
 		}
@@ -312,23 +328,8 @@ func doDialNodeServer(dnsList []string) {
 		}
 	}
 
-	// 老的逻辑新增自动上架逻辑，老代码先注释
-	// if !failedFlag {
-	// 	dialNodeSuccessTimes++
-	// }
 	if !failedFlag {
 		dialNodeSuccessTimes++
-		for _, dns := range dnsList {
-			if nodeOfflineStatus[dns] { // 如果是下架状态
-				ok := updateNodeStatus(dns, 1) // 1 表示上架
-				if ok {
-					nodeOfflineStatus[dns] = false
-					global.Logger.Warn().Msgf("节点 %s 上架成功", dns)
-				} else {
-					global.Logger.Error().Msgf("节点 %s 上架接口调用失败", dns)
-				}
-			}
-		}
 	}
 
 	if dialNodeSuccessTimes%(120) == 0 {
@@ -339,28 +340,79 @@ func doDialNodeServer(dnsList []string) {
 }
 
 // 机器上架下架
-func updateNodeStatus(dns string, status int) bool {
-	url := "https://www.eigrrht.xyz/go-api/machine/manager"
-	payload := fmt.Sprintf(`{"server": "%s", "status": %d}`, dns, status)
+func reportNodeStatus(dns string, status int) error {
+	timestamp := fmt.Sprintf("%d", time.Now().Unix())
+	nonce := randomString(12)
 
-	req, err := http.NewRequest("POST", url, strings.NewReader(payload))
-	if err != nil {
-		global.Logger.Error().Msgf("构造请求失败: %s", err.Error())
-		return false
+	payloadMap := map[string]interface{}{
+		"server": dns,
+		"status": status, // 1 = 正常，2 = 异常
 	}
-	req.Header.Set("Content-Type", "application/json")
+	payloadBytes, _ := json.Marshal(payloadMap)
+	payload := string(payloadBytes)
 
-	client := &http.Client{}
+	signature := makeSignature(secretKey, timestamp, nonce, payload)
+
+	req, err := http.NewRequest("POST", "https://www.eigrrht.xyz/go-admin/machine/report_node_status", strings.NewReader(payload))
+	if err != nil {
+		global.Logger.Error().Msgf("构造上报请求失败: %s", err.Error())
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Timestamp", timestamp)
+	req.Header.Set("X-Nonce", nonce)
+	req.Header.Set("X-Signature", signature)
+
+	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		global.Logger.Error().Msgf("请求接口失败: %s", err.Error())
-		return false
+		global.Logger.Error().Msgf("上报请求失败: %s", err.Error())
+		return err
 	}
 	defer resp.Body.Close()
 
 	body, _ := io.ReadAll(resp.Body)
-	global.Logger.Info().Msgf("接口响应: %s", string(body))
-	return resp.StatusCode == 200
+	global.Logger.Info().Msgf("上报返回状态: %d, 内容: %s", resp.StatusCode, string(body))
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("上报失败，状态码：%d", resp.StatusCode)
+	}
+	// 解析 Data 字段中的 JSON
+	var dataResponse response.Response
+	err = json.Unmarshal(body, &dataResponse)
+	if err != nil {
+		global.Logger.Error().Msgf("解析 Data 字段失败: %s", err.Error())
+		return err
+	}
+
+	// 判断嵌套的 Code 是否为 1
+	if dataResponse.Code != 1 {
+		global.Logger.Error().Msgf("response.Code != 1，code:%d", dataResponse.Code)
+		return fmt.Errorf("上报失败，code: %d", dataResponse.Code)
+	}
+
+	// 如果 code 为 1，表示上报成功
+	global.Logger.Info().Msgf("节点 %s 上报成功", dns)
+	return nil
+}
+
+// 生成签名
+func makeSignature(secret, timestamp, nonce, payload string) string {
+	data := timestamp + nonce + payload
+	mac := hmac.New(sha256.New, []byte(secret))
+	mac.Write([]byte(data))
+	return hex.EncodeToString(mac.Sum(nil))
+}
+
+// 随机字符串
+func randomString(length int) string {
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[rand.Intn(len(charset))]
+	}
+	return string(b)
 }
 
 // ps -ef | grep go-monitor | grep -v 'grep' | awk '{print $2}' | xargs kill && cd /wwwroot/go/go-monitor/ && cp -rf backup/go-monitor ./ && ./restart.sh

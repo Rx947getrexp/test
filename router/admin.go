@@ -37,6 +37,7 @@ func AdminRoute(group *gin.RouterGroup) {
 	group.GET("get_channel_user_recharge_day_list", admin.GetChannelUserRecharge)
 	group.GET("get_channel_user_recharge_month_list", admin.GetChannelUserRechargeByMonth)
 	group.GET("get_user_op_log_list", report.GetUserOpLogList)
+	group.POST("report_node_status", node.ReportNodeStatus) //上报节点状态
 
 	group.GET("reset_cache_test", admin.ResetCache) //刷新缓存
 
@@ -190,10 +191,9 @@ func AdminRoute(group *gin.RouterGroup) {
 		servingCountryGroup.POST("edit", country.ServingCountryModify) // 修改国家信息
 
 		machineGroup := group.Group("machine")
-		machineGroup.GET("list", node.NodeList)        // 查询机器列表
-		machineGroup.POST("add", node.NodeCreate)      // 添加机器
-		machineGroup.POST("edit", node.NodeModify)     // 修改机器信息
-		machineGroup.POST("manager", node.NodeManager) // 节点机器上下架，监控机器专用接口
+		machineGroup.GET("list", node.NodeList)    // 查询机器列表
+		machineGroup.POST("add", node.NodeCreate)  // 添加机器
+		machineGroup.POST("edit", node.NodeModify) // 修改机器信息
 
 		//支付通道管理
 		paymentChannelGroup := group.Group("payment_channel")
@@ -225,8 +225,9 @@ func AdminRoute(group *gin.RouterGroup) {
 		// 推广商店地址管理
 		promotionShopGroup := group.Group("promotion_shop")
 		promotionShopGroup.GET("list", promotion_shop.PromotionShopList)
-		promotionShopGroup.GET("add", promotion_shop.PromotionShopAdd)
-		promotionShopGroup.GET("edit", promotion_shop.PromotionShopEdit)
+		promotionShopGroup.POST("add", promotion_shop.PromotionShopAdd)
+		promotionShopGroup.POST("edit", promotion_shop.PromotionShopEdit)
+		promotionShopGroup.POST("del", promotion_shop.PromotionShopDelete)
 
 		// 广告系统
 		advertisementGroup := group.Group("advertisement")

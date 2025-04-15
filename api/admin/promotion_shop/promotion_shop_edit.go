@@ -12,7 +12,7 @@ import (
 )
 
 type PromotionShopEditRequest struct {
-	Id      int64  `form:"id" binding:"required" json:"id" dc:"机器id"`
+	Id      int64  `form:"id" binding:"required" json:"id" dc:"自增id"`
 	TitleCn string `form:"title_cn" json:"title_cn" dc:"商店标题(中文)"`
 	TitleEn string `form:"title_en" json:"title_en" dc:"商店标题(英文)"`
 	TitleRu string `form:"title_ru" json:"title_ru" dc:"商店标题(俄语)"`

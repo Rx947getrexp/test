@@ -1,11 +1,22 @@
 package node
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
 	"go-speed/dao"
 	"go-speed/global"
 	"go-speed/i18n"
 	"go-speed/model/do"
 	"go-speed/model/response"
+	"go-speed/service"
+	"io"
+	"math"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gogf/gf/v2/os/gtime"
@@ -13,33 +24,143 @@ import (
 
 type NodeManagerReq struct {
 	Server string `form:"server" binding:"required" json:"server" dc:"公网域名"`
-	Status int    `form:"status" binding:"required" json:"status" dc:"状态。1-已上架；2-已下架"`
+	Status int    `form:"status" binding:"required" json:"status" dc:"状态。1-正常；2-异常"`
 }
 
-func NodeManager(c *gin.Context) {
+const (
+	secretKey      = "@hsspeed2025#"
+	timeoutSeconds = 300 // 5 分钟
+)
+
+var nodeDebounceCache = make(map[string]time.Time)
+var debounceMutex sync.Mutex
+
+const debounceDuration = 5 * time.Minute
+
+func ReportNodeStatus(c *gin.Context) {
+
 	ip := c.ClientIP()
 	if ip != "185.22.154.21" {
 		global.Logger.Warn().Msgf("非法请求IP:%v", ip)
 		response.RespFail(c, i18n.RetMsgOperateFailed, nil)
 		return
 	}
+
+	timestamp := c.GetHeader("X-Timestamp")
+	nonce := c.GetHeader("X-Nonce")
+	signature := c.GetHeader("X-Signature")
+
+	bodyBytes, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		global.Logger.Warn().Msgf("读取请求体失败:%s", err.Error())
+		response.RespFail(c, i18n.RetMsgOperateFailed, nil)
+		return
+	}
+	// 检查时间戳有效性
+	tsInt, err := strconv.ParseInt(timestamp, 10, 64)
+	if err != nil || math.Abs(float64(time.Now().Unix()-tsInt)) > timeoutSeconds {
+		global.Logger.Warn().Msgf("X-Timestamp 已过期:%s", timestamp)
+		response.RespFail(c, i18n.RetMsgOperateFailed, nil)
+		return
+	}
+	// 校验签名
+	if !checkSignature(secretKey, timestamp, nonce, string(bodyBytes), signature) {
+		global.Logger.Warn().Msgf("签名验证失败:%s", err.Error())
+		response.RespFail(c, i18n.RetMsgOperateFailed, nil)
+		return
+	}
+
+	c.Request.Body = io.NopCloser(strings.NewReader(string(bodyBytes)))
+
 	req := new(NodeManagerReq)
 	if err := c.ShouldBind(req); err != nil {
 		global.Logger.Err(err).Msgf("参数校验失败，err:%v", err.Error())
 		response.RespFail(c, i18n.RetMsgParamInvalid, nil)
 		return
 	}
-	_, err := dao.TNode.Ctx(c).Where("server", req.Server).Data(do.TNode{
-		Status:    req.Status,
-		UpdatedAt: gtime.Now(),
-	}).Update()
 
-	if err != nil {
-		global.Logger.Err(err).Msgf("更新节点状态失败，err:%v", err.Error())
-		response.RespFail(c, "更新节点状态失败", nil)
+	// === 防抖逻辑 ===
+	debounceMutex.Lock()
+	lastHandled, exists := nodeDebounceCache[req.Server]
+	if exists && time.Since(lastHandled) < debounceDuration {
+		debounceMutex.Unlock()
+		global.Logger.Warn().Msgf("节点 %s 操作过于频繁，上次处理时间: %v", req.Server, lastHandled)
+		response.RespFail(c, i18n.RetMsgParamInvalid, nil)
 		return
 	}
+	nodeDebounceCache[req.Server] = time.Now()
+	debounceMutex.Unlock()
 
-	response.RespOk(c, i18n.RetMsgSuccess, nil)
+	// 拨测
+	ctx, _ := gin.CreateTestContext(nil)
+	defer ctx.Done()
+	_, probeErr := service.GetSysStatsByIp(ctx, req.Server)
 
+	switch req.Status {
+	case 1: //上报节点正常
+		if probeErr != nil {
+			// c.JSON(http.StatusOK, gin.H{"msg": "拨测失败，节点未恢复，忽略上报"})
+			global.Logger.Err(err).Msgf("拨测失败，节点未恢复，忽略上报，err:%v", err.Error())
+			response.RespFail(c, i18n.RetMsgParamInvalid, nil)
+			return
+		}
+		err = updateNodeStatus(c, req.Server, 1)
+		if err != nil {
+			global.Logger.Err(err).Msgf("更新节点状态失败，err:%v", err.Error())
+			response.RespFail(c, i18n.RetMsgOperateFailed, nil)
+			return
+		}
+
+		global.Logger.Info().Msgf("节点 %s 已恢复，已上线", req.Server)
+		response.RespOk(c, i18n.RetMsgSuccess, &response.Response{
+			Code: 1,
+		})
+
+	case 2: //上报节点异常
+		// 如果节点是正常的，直接返回正常
+		if probeErr == nil {
+			response.RespOk(c, i18n.RetMsgSuccess, nil)
+			return
+		}
+		err = updateNodeStatus(c, req.Server, 2) //下架机器
+		// c.JSON(http.StatusOK, gin.H{"msg": "节点异常已确认，已下架"})
+		if err != nil {
+			global.Logger.Err(err).Msgf("更新节点状态失败，err:%v", err.Error())
+			response.RespFail(c, i18n.RetMsgOperateFailed, nil)
+			return
+		}
+		global.Logger.Info().Msgf("节点 %s 异常已确认，已下架", req.Server)
+		response.RespOk(c, i18n.RetMsgSuccess, &response.Response{
+			Code: 1,
+		})
+
+	default:
+		response.RespFail(c, i18n.RetMsgOperateFailed, nil)
+	}
+}
+
+// 签名校验
+func checkSignature(secret, timestamp, nonce, payload, sig string) bool {
+	data := timestamp + nonce + payload
+	mac := hmac.New(sha256.New, []byte(secret))
+	mac.Write([]byte(data))
+	expectedSig := hex.EncodeToString(mac.Sum(nil))
+	return expectedSig == sig
+}
+
+// 机器上下架
+func updateNodeStatus(c *gin.Context, dns string, status int) error {
+	if dns == "" || status == 0 {
+		global.Logger.Warn().Msgf("参数异常：dns[%s],status[%s]", dns, status)
+		return fmt.Errorf("参数异常：dns[%s],status[%s]", dns, status)
+	}
+	_, err := dao.TNode.Ctx(c).Where("server", dns).Data(do.TNode{
+		Status:    status,
+		UpdatedAt: gtime.Now(),
+	}).Update()
+	if err != nil {
+		global.Logger.Err(err).Msgf("更新节点状态失败，err:%v", err.Error())
+		return err
+	}
+	return nil
 }

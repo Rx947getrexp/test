@@ -106,6 +106,7 @@ const (
 	RetMesEmailSendLimit            = "邮件已发送，请5分钟后再试，若未找到邮件，可能被误标记为垃圾邮件，请检查邮箱内的垃圾邮件。"
 	RetMsgGetV2rayConfigFailed      = "获取配置失败，请稍后重试或者联系客服人员处理。"
 	RetMsgAccountExpiredV2          = "您的帐户已过期。请购买会员或者观看广告获取免费使用时间。"
+	RetMsgNoAvailableNode           = "未找到任何可用节点。"
 )
 
 func Init() {
@@ -305,6 +306,10 @@ func Init() {
 		LangEN: "Token invalid.",
 		LangRU: "Token недействителен.",
 	}
+	ReturnMsgMap[RetMsgNoAvailableNode] = map[string]string{
+		LangEN: "No available nodes found.",
+		LangRU: "Доступные узлы не найдены.",
+	}
 }
 
 func initCode() {
@@ -345,6 +350,7 @@ func initCode() {
 		RetMsgEmailNotReg:        4002, // = "邮箱地址未注册。"
 		RetMsgAccountNotExist:    4002, // = "账号不存在。"
 		RetMsgQueryResultIsEmpty: 4003, // = "查询结果为空。"
+		RetMsgNoAvailableNode:    4004, // = "没有可用节点。"
 
 		RetMsgEmailHasRegErr:            5000, // = "该邮箱已注册。"
 		RetMsgReachedDevicesLimit:       5001, // = "达到登录设备上限。"
