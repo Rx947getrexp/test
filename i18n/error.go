@@ -106,7 +106,7 @@ const (
 	RetMesEmailSendLimit            = "邮件已发送，请5分钟后再试，若未找到邮件，可能被误标记为垃圾邮件，请检查邮箱内的垃圾邮件。"
 	RetMsgGetV2rayConfigFailed      = "获取配置失败，请稍后重试或者联系客服人员处理。"
 	RetMsgAccountExpiredV2          = "您的帐户已过期。请购买会员或者观看广告获取免费使用时间。"
-	RetMsgNoAvailableNode           = "未找到任何可用节点。"
+	RetMsgNoAvailableNode           = "未找到任何可用节点，请更好国家重试。"
 )
 
 func Init() {
@@ -307,8 +307,8 @@ func Init() {
 		LangRU: "Token недействителен.",
 	}
 	ReturnMsgMap[RetMsgNoAvailableNode] = map[string]string{
-		LangEN: "No available nodes found.",
-		LangRU: "Доступные узлы не найдены.",
+		LangEN: "No available nodes found. Please try a different country.",
+		LangRU: "Не найдено доступных узлов. Пожалуйста, попробуйте другую страну.",
 	}
 }
 

@@ -200,7 +200,7 @@ func chooseCountryForUser(ctx *gin.Context, userId uint64, countryName string) (
 		return
 	}
 
-	// 如果 fallback 后依然没有找到任何节点，则返回失败
+	// 如果没有找到任何节点，则返回失败
 	if len(nodeEntities) == 0 {
 		global.MyLogger(ctx).Warn().Msg("未找到任何可用节点")
 		response.RespFail(ctx, i18n.RetMsgNoAvailableNode, nil)
