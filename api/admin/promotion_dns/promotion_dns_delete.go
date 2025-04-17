@@ -5,7 +5,6 @@ import (
 	"go-speed/global"
 	"go-speed/i18n"
 	"go-speed/model/response"
-	"go-speed/service"
 
 	"github.com/gin-gonic/gin"
 )
@@ -33,8 +32,6 @@ func PromotionDnsDelete(c *gin.Context) {
 		response.RespFail(c, "删除数据失败", nil)
 		return
 	}
-
-	service.ResetPromotionDnsCache()
 
 	// 返回成功
 	response.RespOk(c, i18n.RetMsgSuccess, nil)

@@ -67,8 +67,6 @@ func PromotionShopAdd(c *gin.Context) {
 		return
 	}
 
-	service.ResetPromotionShopCache()
-
 	// 返回成功响应
 	response.RespOk(c, i18n.RetMsgSuccess, nil)
 }

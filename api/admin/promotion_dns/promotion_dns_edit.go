@@ -92,8 +92,6 @@ func PromotionDnsEdit(c *gin.Context) {
 		return
 	}
 
-	service.ResetPromotionDnsCache()
-
 	// 返回成功
 	response.RespOk(c, i18n.RetMsgSuccess, nil)
 }
