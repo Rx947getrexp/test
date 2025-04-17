@@ -167,5 +167,66 @@ func updateNodeStatus(c *gin.Context, dns string, status int) error {
 		global.Logger.Err(err).Msgf("更新节点状态失败，err:%v", err.Error())
 		return err
 	}
+	// === 更新国家状态 ===
+	if err := updateCountryStatusByNode(c, dns); err != nil {
+		global.Logger.Err(err).Msgf("更新国家状态失败，err:%v", err.Error())
+		// 不中断主逻辑，国家状态失败只做日志记录
+	}
+	return nil
+}
+
+// 国家自动上下架
+func updateCountryStatusByNode(c *gin.Context, nodeServer string) error {
+	// 查出该节点的信息，拿到国家字段
+	node, err := dao.TNode.Ctx(c).Where("server", nodeServer).One()
+	if err != nil || node.IsEmpty() {
+		global.Logger.Err(err).Msgf("获取节点信息失败：%v", err)
+		return fmt.Errorf("节点不存在")
+	}
+
+	country := node["country"].String() // 获取country
+	if country == "" {
+		global.Logger.Warn().Msgf("节点 [%s] 获取国家失败", nodeServer)
+		return fmt.Errorf("节点 [%s] 获取国家失败", nodeServer)
+	}
+
+	// 查出该国家下是否有“至少一个”状态正常的节点
+	count, err := dao.TNode.Ctx(c).
+		Where("country", country).
+		Where("status", 1).
+		Count()
+	if err != nil {
+		global.Logger.Err(err).Msgf("统计国家下节点状态失败：%v", err)
+		return err
+	}
+
+	// 更新国家状态
+	newStatus := 2 // 默认下架
+	if count > 0 {
+		newStatus = 1 // 有至少一个正常节点
+	}
+
+	// 先获取状态，看是不是要更新
+	current, err := dao.TServingCountry.Ctx(c).Fields("status").Where("name", country).Value()
+	if err != nil {
+		global.Logger.Err(err).Msgf("查询国家当前状态失败：%v", err)
+		return err
+	}
+	if current.Int() == newStatus {
+		return nil // 无需更新
+	}
+
+	// 实施更新（上下架）
+	_, err = dao.TServingCountry.Ctx(c).Where("name", country).Data(do.TServingCountry{
+		Status:    newStatus,
+		UpdatedAt: gtime.Now(),
+	}).Update()
+
+	if err != nil {
+		global.Logger.Err(err).Msgf("更新国家状态失败：%v", err)
+		return err
+	}
+
+	global.Logger.Info().Msgf("国家 [%s] 状态已更新为 %d", country, newStatus)
 	return nil
 }

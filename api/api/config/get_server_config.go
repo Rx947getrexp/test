@@ -200,42 +200,6 @@ func chooseCountryForUser(ctx *gin.Context, userId uint64, countryName string) (
 		return
 	}
 
-	// 如果选定国家下没有任何可用节点，则进行 fallback 逻辑
-	if len(nodeEntities) == 0 {
-		global.MyLogger(ctx).Warn().Msgf(">>>>>>>>> winCountry (%s) 下无可用节点，尝试回退选择其他国家", winCountry)
-		// 从剩下的国家中按优先顺序继续选择
-		// 定义备选国家列表，用于 fallback，顺序：preferred -> recommend -> weight
-		candidateCountries := []string{}
-		// 如果首选国家非当前已尝试国家，则加入候选列表
-		if preferredCountry != "" && preferredCountry != winCountry {
-			candidateCountries = append(candidateCountries, preferredCountry)
-		}
-		// 如果推荐国家非当前已尝试国家，则加入候选列表
-		if recommendCountry != "" && recommendCountry != winCountry {
-			candidateCountries = append(candidateCountries, recommendCountry)
-		}
-		// 如果权重最高国家非当前已尝试国家，则加入候选列表
-		if weightCountry != "" && weightCountry != winCountry {
-			candidateCountries = append(candidateCountries, weightCountry)
-		}
-		// 遍历候选国家，依次查找有可用节点的国家
-		for _, fallbackCountry := range candidateCountries {
-			var fallbackNodes []entity.TNode
-			err = dao.TNode.Ctx(ctx).Where(do.TNode{
-				CountryEn: fallbackCountry,
-				Status:    1,
-			}).Scan(&fallbackNodes)
-			if err != nil {
-				global.MyLogger(ctx).Err(err).Msgf("查询备选国家(%s)节点失败", fallbackCountry)
-				continue
-			}
-			if len(fallbackNodes) > 0 {
-				winCountry = fallbackCountry
-				nodeEntities = fallbackNodes
-				break
-			}
-		}
-	}
 	// 如果 fallback 后依然没有找到任何节点，则返回失败
 	if len(nodeEntities) == 0 {
 		global.MyLogger(ctx).Warn().Msg("未找到任何可用节点")
