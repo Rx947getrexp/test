@@ -1813,18 +1813,6 @@ func GetPromotionDnsMapping(c *gin.Context) {
 		entities []entity.TPromotionDns
 		total    int
 	)
-	// //优先从Redis缓存中取映射表数据
-	// cacheKey := constant.PromotionDnsMappingCacheKey
-	// redisClient := global.Redis
-	// cachedData, err := redisClient.Get(c, cacheKey).Result()
-	// if err == nil {
-	// 	// **命中缓存，直接返回**
-	// 	var cacheResponse response.PromotionDnsResponse
-	// 	if err := json.Unmarshal([]byte(cachedData), &cacheResponse); err == nil {
-	// 		response.RespOk(c, i18n.RetMsgSuccess, cacheResponse)
-	// 		return
-	// 	}
-	// }
 
 	// 查询数据库
 	model := dao.TPromotionDns.Ctx(c).Where("status", 1)
@@ -1837,7 +1825,7 @@ func GetPromotionDnsMapping(c *gin.Context) {
 		return
 	}
 
-	err = model.Limit(constant.MaxPageSize).Scan(&entities)
+	err = model.Scan(&entities)
 	if err != nil {
 		global.MyLogger(c).Err(err).Msgf("GetPromotionDnsMapping DB failed. Error: %v", err)
 		response.RespFail(c, i18n.RetMsgDBErr, nil)
@@ -1855,17 +1843,11 @@ func GetPromotionDnsMapping(c *gin.Context) {
 		})
 	}
 
-	// **缓存数据到 Redis**
-	cacheResponse := response.PromotionDnsResponse{
+	// 返回数据
+	response.RespOk(c, i18n.RetMsgSuccess, response.PromotionDnsResponse{
 		Total: total,
 		List:  items,
-	}
-	// cacheBytes, _ := json.Marshal(cacheResponse)
-	// //缓存有效期24小时，后台新增修改时都会清除刷新缓存
-	// redisClient.Set(c, cacheKey, cacheBytes, constant.PromotionDnsMappingExpiration)
-
-	// 返回数据
-	response.RespOk(c, i18n.RetMsgSuccess, cacheResponse)
+	})
 }
 
 // 官网接口，下载页面的各个商店的推广链接
@@ -1875,18 +1857,6 @@ func GetPromotionShopMapping(c *gin.Context) {
 		entities []entity.TAppStore
 		total    int
 	)
-	// //优先从Redis缓存中取映射表数据
-	// cacheKey := constant.PromotionStoreCacheKey
-	// redisClient := global.Redis
-	// cachedData, err := redisClient.Get(c, cacheKey).Result()
-	// if err == nil {
-	// 	// **命中缓存，直接返回**
-	// 	var cacheResponse response.PromotionDnsResponse
-	// 	if err := json.Unmarshal([]byte(cachedData), &cacheResponse); err == nil {
-	// 		response.RespOk(c, i18n.RetMsgSuccess, cacheResponse)
-	// 		return
-	// 	}
-	// }
 
 	// 查询数据库
 	model := dao.TAppStore.Ctx(c).Where("status", 1)
@@ -1899,7 +1869,7 @@ func GetPromotionShopMapping(c *gin.Context) {
 		return
 	}
 
-	err = model.Limit(constant.MaxPageSize).Scan(&entities)
+	err = model.Scan(&entities)
 	if err != nil {
 		global.MyLogger(c).Err(err).Msgf("GetPromotionShopMapping DB failed. Error: %v", err)
 		response.RespFail(c, i18n.RetMsgDBErr, nil)
@@ -1919,15 +1889,9 @@ func GetPromotionShopMapping(c *gin.Context) {
 		})
 	}
 
-	// // **缓存数据到 Redis**
-	cacheResponse := response.PromotionShopResponse{
+	// 返回数据
+	response.RespOk(c, i18n.RetMsgSuccess, response.PromotionShopResponse{
 		Total: total,
 		List:  items,
-	}
-	// cacheBytes, _ := json.Marshal(cacheResponse)
-	// //缓存有效期24小时，后台新增修改时都会清除刷新缓存
-	// redisClient.Set(c, cacheKey, cacheBytes, constant.PromotionStoreExpiration)
-
-	// 返回数据
-	response.RespOk(c, i18n.RetMsgSuccess, cacheResponse)
+	})
 }

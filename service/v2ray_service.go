@@ -3,17 +3,20 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	statscmd "github.com/xtls/xray-core/app/stats/command"
 	"go-speed/constant"
+	"go-speed/dao"
 	"go-speed/global"
 	"go-speed/model"
+	"go-speed/model/do"
 	"go-speed/model/entity"
 	"go-speed/model/request"
 	"go-speed/model/response"
 	"go-speed/util"
-	"google.golang.org/grpc"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	statscmd "github.com/xtls/xray-core/app/stats/command"
+	"google.golang.org/grpc"
 )
 
 func InsertUserUuid(user *model.TUser, nodeId int64) (bool, error) {
@@ -149,4 +152,33 @@ func GetUserTraffic(ctx *gin.Context, email, ip string) (items []response.UserTr
 		return
 	}
 	return resp.Items, nil
+}
+
+// 通过dns获取节点IP
+func GetNodeIpByServer(c *gin.Context, server string) (nodeIp string, err error) {
+
+	if server == "" {
+		global.Logger.Info().Msg("GetNodeIpByServer: server is empty")
+		return "", fmt.Errorf("server is empty")
+	}
+	// 定义结构体接收查询结果
+	var result struct {
+		Ip string `json:"ip"`
+	}
+	err = dao.TNodeDns.Ctx(c).Where(do.TNodeDns{
+		Dns:    server,
+		Status: 1,
+	}).Limit(1).Scan(&result)
+
+	if err != nil {
+		global.Logger.Error().Err(err).Msg("GetNodeIpByServer DB error")
+		return "", err
+	}
+
+	if result.Ip == "" {
+		global.Logger.Info().Msgf("No IP found for server: %s", server)
+		return "", fmt.Errorf("no IP found for server: %s", server)
+	}
+
+	return result.Ip, nil
 }

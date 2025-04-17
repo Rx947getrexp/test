@@ -79,29 +79,35 @@ func ReportNodeStatus(c *gin.Context) {
 		return
 	}
 
+	// 通过dns获取节点IP
+	nodeIp, err := service.GetNodeIpByServer(c, req.Server)
+	if err != nil {
+		response.RespFail(c, i18n.RetMsgOperateFailed, nil)
+		return
+	}
+
 	// === 防抖逻辑 ===
 	debounceMutex.Lock()
-	lastHandled, exists := nodeDebounceCache[req.Server]
+	lastHandled, exists := nodeDebounceCache[nodeIp]
 	if exists && time.Since(lastHandled) < debounceDuration {
 		debounceMutex.Unlock()
 		global.Logger.Warn().Msgf("节点 %s 操作过于频繁，上次处理时间: %v", req.Server, lastHandled)
-		response.RespFail(c, i18n.RetMsgParamInvalid, nil)
+		response.RespFail(c, i18n.RetMsgOperateFailed, nil)
 		return
 	}
-	nodeDebounceCache[req.Server] = time.Now()
+	nodeDebounceCache[nodeIp] = time.Now()
 	debounceMutex.Unlock()
 
 	// 拨测
 	ctx, _ := gin.CreateTestContext(nil)
 	defer ctx.Done()
-	_, probeErr := service.GetSysStatsByIp(ctx, req.Server)
+	_, probeErr := service.GetSysStatsByIp(ctx, nodeIp) //通过节点ip ping节点状态
 
 	switch req.Status {
 	case 1: //上报节点正常
 		if probeErr != nil {
-			// c.JSON(http.StatusOK, gin.H{"msg": "拨测失败，节点未恢复，忽略上报"})
 			global.Logger.Err(err).Msgf("拨测失败，节点未恢复，忽略上报，err:%v", err.Error())
-			response.RespFail(c, i18n.RetMsgParamInvalid, nil)
+			response.RespFail(c, i18n.RetMsgOperateFailed, nil)
 			return
 		}
 		err = updateNodeStatus(c, req.Server, 1)
@@ -123,7 +129,6 @@ func ReportNodeStatus(c *gin.Context) {
 			return
 		}
 		err = updateNodeStatus(c, req.Server, 2) //下架机器
-		// c.JSON(http.StatusOK, gin.H{"msg": "节点异常已确认，已下架"})
 		if err != nil {
 			global.Logger.Err(err).Msgf("更新节点状态失败，err:%v", err.Error())
 			response.RespFail(c, i18n.RetMsgOperateFailed, nil)

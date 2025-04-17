@@ -63,7 +63,7 @@ func main() {
 	)
 
 	if len(apiServerDNSList) == 0 || len(nodeServerDNSList) == 0 {
-		global.Logger.Fatal().Msgf("apiServerDNSList or nodeServerDNSList is empty")
+		global.Logger.Fatal().Msgf("apiServerDNSList [%s] or nodeServerDNSList [%s] is empty", apiServerDNSList, nodeServerDNSList)
 	}
 
 	for _, dns := range apiServerDNSList {
@@ -353,7 +353,7 @@ func reportNodeStatus(dns string, status int) error {
 
 	signature := makeSignature(secretKey, timestamp, nonce, payload)
 
-	req, err := http.NewRequest("POST", "https://www.eigrrht.xyz/go-admin/machine/report_node_status", strings.NewReader(payload))
+	req, err := http.NewRequest("POST", fmt.Sprintf("https://%s/go-admin/machine/report_node_status", getRandomDNS()), strings.NewReader(payload))
 	if err != nil {
 		global.Logger.Error().Msgf("构造上报请求失败: %s", err.Error())
 		return err
@@ -413,6 +413,16 @@ func randomString(length int) string {
 		b[i] = charset[rand.Intn(len(charset))]
 	}
 	return string(b)
+}
+
+// 获取随机的DNS
+func getRandomDNS() string {
+	domainDnsList := global.Config.System.DomainDnsList
+	dnsArr := strings.Split(domainDnsList, ",")
+	if len(dnsArr) == 0 {
+		return ""
+	}
+	return strings.TrimSpace(dnsArr[rand.Intn(len(dnsArr))])
 }
 
 // ps -ef | grep go-monitor | grep -v 'grep' | awk '{print $2}' | xargs kill && cd /wwwroot/go/go-monitor/ && cp -rf backup/go-monitor ./ && ./restart.sh
