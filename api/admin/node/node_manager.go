@@ -99,7 +99,7 @@ func ReportNodeStatus(c *gin.Context) {
 	lastHandled, exists := nodeDebounceCache[nodeIp]
 	if exists && time.Since(lastHandled) < debounceDuration {
 		debounceMutex.Unlock()
-		global.Logger.Warn().Msgf("节点 %s 操作过于频繁，上次处理时间: %v", req.Server, lastHandled)
+		global.Logger.Warn().Msgf("节点 %s 操作过于频繁，上次处理时间: %v", nodeIp, lastHandled)
 		response.RespFail(c, i18n.RetMsgOperateFailed, nil)
 		return
 	}
@@ -118,14 +118,13 @@ func ReportNodeStatus(c *gin.Context) {
 			response.RespFail(c, i18n.RetMsgOperateFailed, nil)
 			return
 		}
-		err = updateNodeStatus(c, req.Server, NodeStatusActive)
+		err = updateNodeStatus(c, nodeIp, NodeStatusActive)
 		if err != nil {
 			global.Logger.Err(err).Msgf("更新节点状态失败，err:%v", err.Error())
 			response.RespFail(c, i18n.RetMsgOperateFailed, nil)
 			return
 		}
-
-		global.Logger.Info().Msgf("节点 %s 已恢复，已上线", req.Server)
+		global.Logger.Info().Msgf("节点 %s 已恢复，已上线", nodeIp)
 		response.RespOk(c, i18n.RetMsgSuccess, &response.Response{
 			Code: 1,
 		})
@@ -136,13 +135,13 @@ func ReportNodeStatus(c *gin.Context) {
 			response.RespOk(c, i18n.RetMsgSuccess, nil)
 			return
 		}
-		err = updateNodeStatus(c, req.Server, NodeStatusInactive) //下架机器
+		err = updateNodeStatus(c, nodeIp, NodeStatusInactive) //下架机器
 		if err != nil {
 			global.Logger.Err(err).Msgf("更新节点状态失败，err:%v", err.Error())
 			response.RespFail(c, i18n.RetMsgOperateFailed, nil)
 			return
 		}
-		global.Logger.Info().Msgf("节点 %s 异常已确认，已下架", req.Server)
+		global.Logger.Info().Msgf("节点 %s 异常已确认，已下架", nodeIp)
 		response.RespOk(c, i18n.RetMsgSuccess, &response.Response{
 			Code: 1,
 		})
@@ -162,12 +161,12 @@ func checkSignature(secret, timestamp, nonce, payload, sig string) bool {
 }
 
 // 机器上下架
-func updateNodeStatus(c *gin.Context, dns string, status int) error {
-	if dns == "" || status == 0 {
-		global.Logger.Warn().Msgf("参数异常：dns[%s],status[%s]", dns, status)
-		return fmt.Errorf("参数异常：dns[%s],status[%s]", dns, status)
+func updateNodeStatus(c *gin.Context, ip string, status int) error {
+	if ip == "" || status == 0 {
+		global.Logger.Warn().Msgf("参数异常：ip[%s],status[%s]", ip, status)
+		return fmt.Errorf("参数异常：ip[%s],status[%s]", ip, status)
 	}
-	_, err := dao.TNode.Ctx(c).Where(do.TNode{Server: dns}).Data(do.TNode{
+	_, err := dao.TNode.Ctx(c).Where(do.TNode{Ip: ip}).Data(do.TNode{
 		Status:    status,
 		UpdatedAt: gtime.Now(),
 	}).Update()
@@ -176,7 +175,7 @@ func updateNodeStatus(c *gin.Context, dns string, status int) error {
 		return err
 	}
 	// === 更新国家状态 ===
-	if err := updateCountryStatusByNode(c, dns); err != nil {
+	if err := updateCountryStatusByNode(c, ip); err != nil {
 		global.Logger.Err(err).Msgf("更新国家状态失败，err:%v", err.Error())
 		// 不中断主逻辑，国家状态失败只做日志记录
 	}
@@ -184,27 +183,26 @@ func updateNodeStatus(c *gin.Context, dns string, status int) error {
 }
 
 // 国家自动上下架
-func updateCountryStatusByNode(c *gin.Context, nodeServer string) error {
+func updateCountryStatusByNode(c *gin.Context, ip string) error {
 	// 查询节点的国家字段
 	countryVal, err := dao.TNode.Ctx(c).
 		Fields("country").
-		Where(do.TNode{Server: nodeServer}).
+		Where(do.TNode{Ip: ip}).
 		Value()
-
 	if err != nil {
-		global.Logger.Err(err).Msgf("查询节点 [%s] 信息失败：%v", nodeServer, err)
+		global.Logger.Err(err).Msgf("查询节点 [%s] 信息失败：%v", ip, err)
 		return err
 	}
 
 	country := strings.TrimSpace(countryVal.String())
 	if country == "" {
-		global.Logger.Warn().Msgf("节点 [%s] 获取国家失败", nodeServer)
-		return fmt.Errorf("节点 [%s] 获取国家失败", nodeServer)
+		global.Logger.Warn().Msgf("节点 [%s] 获取国家失败", ip)
+		return fmt.Errorf("节点 [%s] 获取国家失败", ip)
 	}
 
 	// 查出该国家下是否有“至少一个”状态正常的节点
 	count, err := dao.TNode.Ctx(c).
-		Where(do.TNode{Status: 1, Country: country}).
+		Where(do.TNode{Status: NodeStatusActive, Country: country}).
 		Count()
 	if err != nil {
 		global.Logger.Err(err).Msgf("统计国家下节点状态失败：%v", err)
@@ -222,6 +220,7 @@ func updateCountryStatusByNode(c *gin.Context, nodeServer string) error {
 		Fields("status").
 		Where(do.TServingCountry{Name: country}).
 		Value()
+
 	if err != nil {
 		global.Logger.Err(err).Msgf("查询国家当前状态失败：%v", err)
 		return err
