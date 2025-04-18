@@ -5,6 +5,7 @@ import (
 	"go-speed/dao"
 	"go-speed/global"
 	"go-speed/i18n"
+	"go-speed/model/do"
 	"go-speed/model/entity"
 	"go-speed/model/response"
 
@@ -81,32 +82,34 @@ func PromotionDnsList(c *gin.Context) {
 	// 初始化模型查询
 	model := dao.TPromotionDns.Ctx(c)
 
+	where := do.TPromotionDns{}
+
 	if req.Dns != "" {
-		model = model.Where("dns", req.Dns)
+		where.Dns = req.Dns
 	}
 
 	if req.Ip != "" {
-		model = model.Where("ip", req.Ip)
+		where.Ip = req.Ip
 	}
 
 	if req.Status > 0 {
-		model = model.Where("status", req.Status)
+		where.Status = req.Status
 	}
 
 	if req.MacChannel != "" {
-		model = model.Where("mac_channel", req.MacChannel)
+		where.MacChannel = req.MacChannel
 	}
 
 	if req.WinChannel != "" {
-		model = model.Where("win_channel", req.WinChannel)
+		where.WinChannel = req.WinChannel
 	}
 
 	if req.AndroidChannel != "" {
-		model = model.Where("android_channel", req.AndroidChannel)
+		where.AndroidChannel = req.AndroidChannel
 	}
 
 	if req.Promoter != "" {
-		model = model.Where("promoter", req.Promoter)
+		where.Promoter = req.Promoter
 	}
 
 	// 查询总记录数

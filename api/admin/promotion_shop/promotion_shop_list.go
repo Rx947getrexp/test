@@ -5,6 +5,7 @@ import (
 	"go-speed/dao"
 	"go-speed/global"
 	"go-speed/i18n"
+	"go-speed/model/do"
 	"go-speed/model/entity"
 	"go-speed/model/response"
 
@@ -76,20 +77,22 @@ func PromotionShopList(c *gin.Context) {
 
 	// 初始化模型查询
 	model := dao.TAppStore.Ctx(c)
+
+	where := do.TAppStore{}
 	if req.Id != 0 {
-		model = model.Where("id", req.Id)
+		where.Id = req.Id
 	}
 	if req.Type != "" {
-		model = model.Where("type", req.Type)
+		where.Type = req.Type
 	}
 	if req.Url != "" {
-		model = model.Where("url", req.Url)
+		where.Url = req.Url
 	}
 	if req.Cover != "" {
-		model = model.Where("cover", req.Cover)
+		where.Cover = req.Cover
 	}
 	if req.Status != 0 {
-		model = model.Where("status", req.Status)
+		where.Status = req.Status
 	}
 	// 查询总记录数
 	total, err := model.Count()

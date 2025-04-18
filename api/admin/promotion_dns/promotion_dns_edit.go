@@ -4,6 +4,7 @@ import (
 	"go-speed/dao"
 	"go-speed/global"
 	"go-speed/i18n"
+	"go-speed/model/do"
 	"go-speed/model/response"
 	"go-speed/service"
 
@@ -85,7 +86,7 @@ func PromotionDnsEdit(c *gin.Context) {
 	}
 
 	// 更新数据
-	_, err = dao.TPromotionDns.Ctx(c).Where("id", req.Id).Data(updateData).Update()
+	_, err = dao.TPromotionDns.Ctx(c).Where(do.TPromotionDns{Id: req.Id}).Data(updateData).Update()
 	if err != nil {
 		global.MyLogger(c).Err(err).Msgf("更新数据失败，error: %v", err)
 		response.RespFail(c, "更新数据失败", nil)

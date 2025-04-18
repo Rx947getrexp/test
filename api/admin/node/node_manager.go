@@ -38,8 +38,11 @@ var debounceMutex sync.Mutex
 const debounceDuration = 5 * time.Minute
 
 const (
-	CountryStatusInactive = 2 // 下架
-	CountryStatusActive   = 1 // 上架（至少有一个正常节点）
+	CountryStatusActive   = 1 // 国家上架
+	CountryStatusInactive = 2 // 国家下架
+
+	NodeStatusActive   = 1 // 节点上架
+	NodeStatusInactive = 2 // 节点下架
 )
 
 func ReportNodeStatus(c *gin.Context) {
@@ -115,7 +118,7 @@ func ReportNodeStatus(c *gin.Context) {
 			response.RespFail(c, i18n.RetMsgOperateFailed, nil)
 			return
 		}
-		err = updateNodeStatus(c, req.Server, 1)
+		err = updateNodeStatus(c, req.Server, NodeStatusActive)
 		if err != nil {
 			global.Logger.Err(err).Msgf("更新节点状态失败，err:%v", err.Error())
 			response.RespFail(c, i18n.RetMsgOperateFailed, nil)
@@ -133,7 +136,7 @@ func ReportNodeStatus(c *gin.Context) {
 			response.RespOk(c, i18n.RetMsgSuccess, nil)
 			return
 		}
-		err = updateNodeStatus(c, req.Server, 2) //下架机器
+		err = updateNodeStatus(c, req.Server, NodeStatusInactive) //下架机器
 		if err != nil {
 			global.Logger.Err(err).Msgf("更新节点状态失败，err:%v", err.Error())
 			response.RespFail(c, i18n.RetMsgOperateFailed, nil)
@@ -164,7 +167,7 @@ func updateNodeStatus(c *gin.Context, dns string, status int) error {
 		global.Logger.Warn().Msgf("参数异常：dns[%s],status[%s]", dns, status)
 		return fmt.Errorf("参数异常：dns[%s],status[%s]", dns, status)
 	}
-	_, err := dao.TNode.Ctx(c).Where("server", dns).Data(do.TNode{
+	_, err := dao.TNode.Ctx(c).Where(do.TNode{Server: dns}).Data(do.TNode{
 		Status:    status,
 		UpdatedAt: gtime.Now(),
 	}).Update()
@@ -228,7 +231,7 @@ func updateCountryStatusByNode(c *gin.Context, nodeServer string) error {
 	}
 
 	// 实施更新（上下架）
-	_, err = dao.TServingCountry.Ctx(c).Where("name", country).Data(do.TServingCountry{
+	_, err = dao.TServingCountry.Ctx(c).Where(do.TServingCountry{Name: country}).Data(do.TServingCountry{
 		Status:    newStatus,
 		UpdatedAt: gtime.Now(),
 	}).Update()
