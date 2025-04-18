@@ -45,6 +45,7 @@ const (
 	NodeStatusInactive = 2 // 节点下架
 )
 
+// 根据上报的节点状态，自动上下架节点机器和对应国家
 func ReportNodeStatus(c *gin.Context) {
 
 	ip := c.ClientIP()
@@ -160,7 +161,7 @@ func checkSignature(secret, timestamp, nonce, payload, sig string) bool {
 	return expectedSig == sig
 }
 
-// 机器上下架
+// 节点机器上下架
 func updateNodeStatus(c *gin.Context, ip string, status int) error {
 	if ip == "" || status == 0 {
 		global.Logger.Warn().Msgf("参数异常：ip[%s],status[%s]", ip, status)
