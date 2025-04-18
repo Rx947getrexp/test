@@ -37,8 +37,7 @@ func AdminRoute(group *gin.RouterGroup) {
 	group.GET("get_channel_user_recharge_day_list", admin.GetChannelUserRecharge)
 	group.GET("get_channel_user_recharge_month_list", admin.GetChannelUserRechargeByMonth)
 	group.GET("get_user_op_log_list", report.GetUserOpLogList)
-	group.POST("report_node_status", node.ReportNodeStatus)          //上报节点状态
-	group.POST("report_node_status_test", node.TestReportNodeStatus) //上报节点状态调试
+	group.POST("report_node_status", node.ReportNodeStatus) //上报节点状态
 
 	group.GET("reset_cache_test", admin.ResetCache) //刷新缓存
 
