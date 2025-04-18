@@ -96,7 +96,6 @@ func ApiRoute(group *gin.RouterGroup) {
 		group.GET("get_server_config_without_rules", config.GetServerConfigWithoutRules) // 获取配置不带ip和域名池
 
 		// 支付相关
-
 		group.POST("create_order", order.CreateOrder)
 		group.POST("upload_payment_proof", order.UploadPaymentProof)
 		group.POST("confirm_order", order.ConfirmOrder)

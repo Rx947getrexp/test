@@ -4,6 +4,7 @@ import (
 	"go-speed/dao"
 	"go-speed/global"
 	"go-speed/i18n"
+	"go-speed/model/do"
 	"go-speed/model/response"
 
 	"github.com/gin-gonic/gin"
@@ -26,7 +27,7 @@ func PromotionShopDelete(c *gin.Context) {
 		return
 	}
 
-	_, err = dao.TAppStore.Ctx(c).Where("id = ?", req.Id).Delete()
+	_, err = dao.TAppStore.Ctx(c).Where(do.TAppStore{Id: req.Id}).Delete()
 	if err != nil {
 		global.MyLogger(c).Err(err).Msgf("delete failed，error: %v", err)
 		response.RespFail(c, "删除数据失败", nil)

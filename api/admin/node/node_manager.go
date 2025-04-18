@@ -37,6 +37,11 @@ var debounceMutex sync.Mutex
 
 const debounceDuration = 5 * time.Minute
 
+const (
+	CountryStatusInactive = 2 // 下架
+	CountryStatusActive   = 1 // 上架（至少有一个正常节点）
+)
+
 func ReportNodeStatus(c *gin.Context) {
 
 	ip := c.ClientIP()
@@ -177,14 +182,18 @@ func updateNodeStatus(c *gin.Context, dns string, status int) error {
 
 // 国家自动上下架
 func updateCountryStatusByNode(c *gin.Context, nodeServer string) error {
-	// 查出该节点的信息，拿到国家字段
-	node, err := dao.TNode.Ctx(c).Where("server", nodeServer).One()
-	if err != nil || node.IsEmpty() {
-		global.Logger.Err(err).Msgf("获取节点信息失败：%v", err)
-		return fmt.Errorf("节点不存在")
+	// 查询节点的国家字段
+	countryVal, err := dao.TNode.Ctx(c).
+		Fields("country").
+		Where(do.TNode{Server: nodeServer}).
+		Value()
+
+	if err != nil {
+		global.Logger.Err(err).Msgf("查询节点 [%s] 信息失败：%v", nodeServer, err)
+		return err
 	}
 
-	country := node["country"].String() // 获取country
+	country := strings.TrimSpace(countryVal.String())
 	if country == "" {
 		global.Logger.Warn().Msgf("节点 [%s] 获取国家失败", nodeServer)
 		return fmt.Errorf("节点 [%s] 获取国家失败", nodeServer)
@@ -192,8 +201,7 @@ func updateCountryStatusByNode(c *gin.Context, nodeServer string) error {
 
 	// 查出该国家下是否有“至少一个”状态正常的节点
 	count, err := dao.TNode.Ctx(c).
-		Where("country", country).
-		Where("status", 1).
+		Where(do.TNode{Status: 1, Country: country}).
 		Count()
 	if err != nil {
 		global.Logger.Err(err).Msgf("统计国家下节点状态失败：%v", err)
@@ -201,13 +209,16 @@ func updateCountryStatusByNode(c *gin.Context, nodeServer string) error {
 	}
 
 	// 更新国家状态
-	newStatus := 2 // 默认下架
+	newStatus := CountryStatusInactive // 默认下架
 	if count > 0 {
-		newStatus = 1 // 有至少一个正常节点
+		newStatus = CountryStatusActive // 有至少一个正常节点
 	}
 
 	// 先获取状态，看是不是要更新
-	current, err := dao.TServingCountry.Ctx(c).Fields("status").Where("name", country).Value()
+	current, err := dao.TServingCountry.Ctx(c).
+		Fields("status").
+		Where(do.TServingCountry{Name: country}).
+		Value()
 	if err != nil {
 		global.Logger.Err(err).Msgf("查询国家当前状态失败：%v", err)
 		return err
