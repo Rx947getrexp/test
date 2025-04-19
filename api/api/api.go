@@ -1815,7 +1815,7 @@ func GetPromotionDnsMapping(c *gin.Context) {
 	)
 
 	// 查询数据库
-	model := dao.TPromotionDns.Ctx(c).Where("status", 1)
+	model := dao.TPromotionDns.Ctx(c).Where(do.TPromotionDns{Status: 1})
 
 	// 获取总数
 	total, err = model.Count()
@@ -1859,7 +1859,7 @@ func GetPromotionShopMapping(c *gin.Context) {
 	)
 
 	// 查询数据库
-	model := dao.TAppStore.Ctx(c).Where("status", 1)
+	model := dao.TAppStore.Ctx(c).Where(do.TAppStore{Status: 1})
 
 	// 获取总数
 	total, err = model.Count()

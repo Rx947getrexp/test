@@ -353,7 +353,7 @@ func reportNodeStatus(dns string, status int) error {
 
 	signature := makeSignature(secretKey, timestamp, nonce, payload)
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("https://%s/go-admin/machine/report_node_status", getRandomDNS()), strings.NewReader(payload))
+	req, err := http.NewRequest("POST", fmt.Sprintf("https://%s/go-admin/report_node_status", getRandomDNS()), strings.NewReader(payload))
 	if err != nil {
 		global.Logger.Error().Msgf("构造上报请求失败: %s", err.Error())
 		return err

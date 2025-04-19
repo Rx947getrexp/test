@@ -226,12 +226,11 @@ func updateCountryStatusByNode(c *gin.Context, ip string) error {
 		Where(do.TServingCountry{Name: country}).
 		Limit(1).
 		Scan(&currentEntity)
-	current := currentEntity.Status
 	if err != nil {
 		global.Logger.Err(err).Msgf("查询国家当前状态失败：%v", err)
 		return err
 	}
-	if current == newStatus {
+	if currentEntity.Status == newStatus {
 		return nil // 无需更新
 	}
 
