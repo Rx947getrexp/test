@@ -1,9 +1,6 @@
 package node
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"go-speed/dao"
 	"go-speed/global"
@@ -12,6 +9,7 @@ import (
 	"go-speed/model/entity"
 	"go-speed/model/response"
 	"go-speed/service"
+	"go-speed/util"
 	"io"
 	"math"
 	"strconv"
@@ -50,7 +48,7 @@ const (
 func ReportNodeStatus(c *gin.Context) {
 
 	ip := c.ClientIP()
-	if ip != "185.22.154.21" {
+	if ip != "185.22.154.21" { //探测机器的IP
 		global.Logger.Warn().Msgf("非法请求IP:%v", ip)
 		response.RespFail(c, i18n.RetMsgOperateFailed, nil)
 		return
@@ -74,7 +72,7 @@ func ReportNodeStatus(c *gin.Context) {
 		return
 	}
 	// 校验签名
-	if !checkSignature(secretKey, timestamp, nonce, string(bodyBytes), signature) {
+	if !util.CheckSignature(secretKey, timestamp, nonce, string(bodyBytes), signature) {
 		global.Logger.Warn().Msgf("签名验证失败:%s", err.Error())
 		response.RespFail(c, i18n.RetMsgOperateFailed, nil)
 		return
@@ -151,15 +149,6 @@ func ReportNodeStatus(c *gin.Context) {
 	default:
 		response.RespFail(c, i18n.RetMsgOperateFailed, nil)
 	}
-}
-
-// 签名校验
-func checkSignature(secret, timestamp, nonce, payload, sig string) bool {
-	data := timestamp + nonce + payload
-	mac := hmac.New(sha256.New, []byte(secret))
-	mac.Write([]byte(data))
-	expectedSig := hex.EncodeToString(mac.Sum(nil))
-	return expectedSig == sig
 }
 
 // 节点机器上下架

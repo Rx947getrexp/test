@@ -2,9 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"go-speed/util"
@@ -342,7 +339,7 @@ func doDialNodeServer(dnsList []string) {
 // 机器上架下架
 func reportNodeStatus(dns string, status int) error {
 	timestamp := fmt.Sprintf("%d", time.Now().Unix())
-	nonce := randomString(12)
+	nonce := util.RandomNonceString(12)
 
 	payloadMap := map[string]interface{}{
 		"server": dns,
@@ -351,7 +348,7 @@ func reportNodeStatus(dns string, status int) error {
 	payloadBytes, _ := json.Marshal(payloadMap)
 	payload := string(payloadBytes)
 
-	signature := makeSignature(secretKey, timestamp, nonce, payload)
+	signature := util.MakeSignature(secretKey, timestamp, nonce, payload)
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("https://%s/go-admin/report_node_status", getRandomDNS()), strings.NewReader(payload))
 	if err != nil {
@@ -395,24 +392,6 @@ func reportNodeStatus(dns string, status int) error {
 	// 如果 code 为 1，表示上报成功
 	global.Logger.Info().Msgf("节点 %s 上报成功", dns)
 	return nil
-}
-
-// 生成签名
-func makeSignature(secret, timestamp, nonce, payload string) string {
-	data := timestamp + nonce + payload
-	mac := hmac.New(sha256.New, []byte(secret))
-	mac.Write([]byte(data))
-	return hex.EncodeToString(mac.Sum(nil))
-}
-
-// 随机字符串
-func randomString(length int) string {
-	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	b := make([]byte, length)
-	for i := range b {
-		b[i] = charset[rand.Intn(len(charset))]
-	}
-	return string(b)
 }
 
 // 获取随机的DNS
