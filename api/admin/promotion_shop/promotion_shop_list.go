@@ -13,20 +13,20 @@ import (
 )
 
 type PromotionShopListRequest struct {
-	Id        int64  `form:"id" json:"id" dc:"自增id"`
-	Type      string `form:"type" json:"type" dc:"商店类型，苹果：ios，安卓：android"`
-	Url       string `form:"url" json:"url" dc:"商店地址"`
-	Cover     string `form:"cover" json:"cover" dc:"商店图标"`
-	Status    int    `form:"status" json:"status" dc:"状态，1：正常，2：已软删"`
-	Page      int    `form:"page" json:"page" dc:"分页查询page, 从1开始"`
-	Size      int    `form:"size" json:"size" dc:"分页查询size, 最大1000"`
-	OrderBy   string `form:"order_by" json:"order_by" dc:"排序字段，eg: id|created_time"`
-	OrderType string `form:"order_type" json:"order_type" dc:"排序类型，eg: asc|desc"`
+	Id        *int64  `form:"id" json:"id" dc:"自增id"`
+	Type      *string `form:"type" json:"type" dc:"商店类型，苹果：ios，安卓：android"`
+	Url       *string `form:"url" json:"url" dc:"商店地址"`
+	Cover     *string `form:"cover" json:"cover" dc:"商店图标"`
+	Status    *int    `form:"status" json:"status" dc:"状态，1：正常，2：已软删"`
+	Page      int     `form:"page" json:"page" dc:"分页查询page, 从1开始"`
+	Size      int     `form:"size" json:"size" dc:"分页查询size, 最大1000"`
+	OrderBy   string  `form:"order_by" json:"order_by" dc:"排序字段，eg: id|created_time"`
+	OrderType string  `form:"order_type" json:"order_type" dc:"排序类型，eg: asc|desc"`
 }
 
 type PromotionShopListRes struct {
 	Id        int64  `form:"id" json:"id" dc:"自增id"`
-	TitleCn   string `form:"title_cn" json:"title" dc:"商店标题(中文)"`
+	TitleCn   string `form:"title_cn" json:"title_cn" dc:"商店标题(中文)"`
 	TitleEn   string `form:"title_en" json:"title_en" dc:"商店标题(英文)"`
 	TitleRu   string `form:"title_ru" json:"title_ru" dc:"商店标题(俄语)"`
 	Type      string `form:"type" json:"type" dc:"商店类型，苹果：ios，安卓：android"`
@@ -79,21 +79,24 @@ func PromotionShopList(c *gin.Context) {
 	model := dao.TAppStore.Ctx(c)
 
 	where := do.TAppStore{}
-	if req.Id != 0 {
+	if req.Id != nil {
 		where.Id = req.Id
 	}
-	if req.Type != "" {
+	if req.Type != nil {
 		where.Type = req.Type
 	}
-	if req.Url != "" {
+	if req.Url != nil {
 		where.Url = req.Url
 	}
-	if req.Cover != "" {
+	if req.Cover != nil {
 		where.Cover = req.Cover
 	}
-	if req.Status != 0 {
+	if req.Status != nil {
 		where.Status = req.Status
 	}
+
+	model = model.Where(where)
+
 	// 查询总记录数
 	total, err := model.Count()
 	if err != nil {

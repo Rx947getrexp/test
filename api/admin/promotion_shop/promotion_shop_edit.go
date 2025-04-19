@@ -4,6 +4,7 @@ import (
 	"go-speed/dao"
 	"go-speed/global"
 	"go-speed/i18n"
+	"go-speed/model/do"
 	"go-speed/model/response"
 	"go-speed/service"
 
@@ -12,15 +13,15 @@ import (
 )
 
 type PromotionShopEditRequest struct {
-	Id      int64  `form:"id" binding:"required" json:"id" dc:"自增id"`
-	TitleCn string `form:"title_cn" json:"title_cn" dc:"商店标题(中文)"`
-	TitleEn string `form:"title_en" json:"title_en" dc:"商店标题(英文)"`
-	TitleRu string `form:"title_ru" json:"title_ru" dc:"商店标题(俄语)"`
-	Type    string `form:"type" json:"type" dc:"商店类型，苹果：ios，安卓：android"`
-	Url     string `form:"url" json:"url" dc:"商店地址"`
-	Cover   string `form:"cover" json:"cover" dc:"商店图标"`
-	Status  int64  `form:"status" json:"status" dc:"状态，1：正常，2：已软删"`
-	Comment string `form:"comment" json:"comment" dc:"备注信息"`
+	Id      int64   `form:"id" binding:"required" json:"id" dc:"自增id"`
+	TitleCn *string `form:"title_cn" json:"title_cn" dc:"商店标题(中文)"`
+	TitleEn *string `form:"title_en" json:"title_en" dc:"商店标题(英文)"`
+	TitleRu *string `form:"title_ru" json:"title_ru" dc:"商店标题(俄语)"`
+	Type    *string `form:"type" json:"type" dc:"商店类型，苹果：ios，安卓：android"`
+	Url     *string `form:"url" json:"url" dc:"商店地址"`
+	Cover   *string `form:"cover" json:"cover" dc:"商店图标"`
+	Status  *int64  `form:"status" json:"status" dc:"状态，1：正常，2：已软删"`
+	Comment *string `form:"comment" json:"comment" dc:"备注信息"`
 }
 
 func PromotionShopEdit(c *gin.Context) {
@@ -47,38 +48,41 @@ func PromotionShopEdit(c *gin.Context) {
 	}
 
 	// 更新域名信息
-	updateData := make(map[string]interface{}) // 存储要更新的字段
-	time := gtime.Now()
-	updateData["updated_at"] = time        // 更新时间必须更新
-	updateData["author"] = adminUser.Uname // 更新此次操作人
 
-	if req.TitleCn != "" {
-		updateData["title_cn"] = req.TitleCn
+	time := gtime.Now()
+	// 存储要更新的字段
+	updateDo := do.TAppStore{
+		UpdatedAt: time,            // 更新时间必须更新
+		Author:    adminUser.Uname, // 更新此次操作人
 	}
-	if req.TitleEn != "" {
-		updateData["title_en"] = req.TitleEn
+
+	if req.TitleCn != nil {
+		updateDo.TitleCn = req.TitleCn
 	}
-	if req.TitleRu != "" {
-		updateData["title_ru"] = req.TitleRu
+	if req.TitleEn != nil {
+		updateDo.TitleEn = req.TitleEn
 	}
-	if req.Type != "" {
-		updateData["type"] = req.Type
+	if req.TitleRu != nil {
+		updateDo.TitleRu = req.TitleRu
 	}
-	if req.Url != "" {
-		updateData["url"] = req.Url
+	if req.Type != nil {
+		updateDo.Type = req.Type
 	}
-	if req.Cover != "" {
-		updateData["cover"] = req.Cover
+	if req.Url != nil {
+		updateDo.Url = req.Url
 	}
-	if req.Status != 0 {
-		updateData["status"] = req.Status
+	if req.Cover != nil {
+		updateDo.Cover = req.Cover
 	}
-	if req.Comment != "" {
-		updateData["comment"] = req.Comment
+	if req.Status != nil {
+		updateDo.Status = req.Status
+	}
+	if req.Comment != nil {
+		updateDo.Comment = req.Comment
 	}
 
 	// 更新数据
-	_, err = dao.TAppStore.Ctx(c).Where("id", req.Id).Data(updateData).Update()
+	_, err = dao.TAppStore.Ctx(c).Where(do.TAppStore{Id: req.Id}).Data(updateDo).Update()
 	if err != nil {
 		global.MyLogger(c).Err(err).Msgf("更新数据失败，error: %v", err)
 		response.RespFail(c, "更新数据失败", nil)

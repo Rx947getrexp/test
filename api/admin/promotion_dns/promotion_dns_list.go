@@ -13,18 +13,18 @@ import (
 )
 
 type PromotionDnsListRequest struct {
-	Id             int64  `form:"id" json:"id" dc:"机器id"`
-	Dns            string `form:"dns" json:"dns" dc:"机器域名"`
-	Ip             string `form:"ip" json:"ip" dc:"ip地址"`
-	Status         int    `form:"status" json:"status" dc:"状态，1：上架，2：下架"`
-	MacChannel     string `form:"mac_channel" json:"mac_channel" dc:"苹果电脑渠道"`
-	WinChannel     string `form:"win_channel" json:"win_channel" dc:"windows电脑渠道"`
-	AndroidChannel string `form:"android_channel" json:"android_channel" dc:"安卓渠道"`
-	Promoter       string `form:"promoter" json:"promoter" dc:"推广人员"`
-	Page           int    `form:"page" json:"page" dc:"分页查询page, 从1开始"`
-	Size           int    `form:"size" json:"size" dc:"分页查询size, 最大1000"`
-	OrderBy        string `form:"order_by" json:"order_by" dc:"排序字段，eg: id|created_time"`
-	OrderType      string `form:"order_type" json:"order_type" dc:"排序类型，eg: asc|desc"`
+	Id             int64   `form:"id" json:"id" dc:"机器id"`
+	Dns            *string `form:"dns" json:"dns" dc:"机器域名"`
+	Ip             *string `form:"ip" json:"ip" dc:"ip地址"`
+	Status         *int    `form:"status" json:"status" dc:"状态，1：上架，2：下架"`
+	MacChannel     *string `form:"mac_channel" json:"mac_channel" dc:"苹果电脑渠道"`
+	WinChannel     *string `form:"win_channel" json:"win_channel" dc:"windows电脑渠道"`
+	AndroidChannel *string `form:"android_channel" json:"android_channel" dc:"安卓渠道"`
+	Promoter       *string `form:"promoter" json:"promoter" dc:"推广人员"`
+	Page           int     `form:"page" json:"page" dc:"分页查询page, 从1开始"`
+	Size           int     `form:"size" json:"size" dc:"分页查询size, 最大1000"`
+	OrderBy        string  `form:"order_by" json:"order_by" dc:"排序字段，eg: id|created_time"`
+	OrderType      string  `form:"order_type" json:"order_type" dc:"排序类型，eg: asc|desc"`
 }
 
 type PromotionDnsListRes struct {
@@ -84,33 +84,35 @@ func PromotionDnsList(c *gin.Context) {
 
 	where := do.TPromotionDns{}
 
-	if req.Dns != "" {
+	if req.Dns != nil {
 		where.Dns = req.Dns
 	}
 
-	if req.Ip != "" {
+	if req.Ip != nil {
 		where.Ip = req.Ip
 	}
 
-	if req.Status > 0 {
+	if req.Status != nil {
 		where.Status = req.Status
 	}
 
-	if req.MacChannel != "" {
+	if req.MacChannel != nil {
 		where.MacChannel = req.MacChannel
 	}
 
-	if req.WinChannel != "" {
+	if req.WinChannel != nil {
 		where.WinChannel = req.WinChannel
 	}
 
-	if req.AndroidChannel != "" {
+	if req.AndroidChannel != nil {
 		where.AndroidChannel = req.AndroidChannel
 	}
 
-	if req.Promoter != "" {
+	if req.Promoter != nil {
 		where.Promoter = req.Promoter
 	}
+
+	model = model.Where(where)
 
 	// 查询总记录数
 	total, err := model.Count()

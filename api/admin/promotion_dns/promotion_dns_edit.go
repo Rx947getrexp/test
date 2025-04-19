@@ -13,15 +13,15 @@ import (
 )
 
 type PromotionDnsEditRequest struct {
-	Id             int64  `form:"id" binding:"required" json:"id" dc:"机器id"`
-	Dns            string `form:"dns" json:"dns" dc:"机器域名"`
-	Ip             string `form:"ip" json:"ip" dc:"ip地址"`
-	Status         int64  `form:"status" json:"status" dc:"状态"`
-	MacChannel     string `form:"mac_channel" json:"mac_channel" dc:"苹果电脑渠道"`
-	WinChannel     string `form:"win_channel" json:"win_channel" dc:"windows电脑渠道"`
-	AndroidChannel string `form:"android_channel" json:"android_channel" dc:"安卓渠道"`
-	Promoter       string `form:"promoter" json:"promoter" dc:"推广人员"`
-	Comment        string `form:"comment" json:"comment" dc:"备注信息"`
+	Id             int64   `form:"id" binding:"required" json:"id" dc:"机器id"`
+	Dns            *string `form:"dns" json:"dns" dc:"机器域名"`
+	Ip             *string `form:"ip" json:"ip" dc:"ip地址"`
+	Status         *int64  `form:"status" json:"status" dc:"状态"`
+	MacChannel     *string `form:"mac_channel" json:"mac_channel" dc:"苹果电脑渠道"`
+	WinChannel     *string `form:"win_channel" json:"win_channel" dc:"windows电脑渠道"`
+	AndroidChannel *string `form:"android_channel" json:"android_channel" dc:"安卓渠道"`
+	Promoter       *string `form:"promoter" json:"promoter" dc:"推广人员"`
+	Comment        *string `form:"comment" json:"comment" dc:"备注信息"`
 }
 
 func PromotionDnsEdit(c *gin.Context) {
@@ -48,45 +48,47 @@ func PromotionDnsEdit(c *gin.Context) {
 	}
 
 	// 更新域名信息
-	updateData := make(map[string]interface{}) // 存储要更新的字段
 	time := gtime.Now()
-	updateData["updated_at"] = time        // 更新时间必须更新
-	updateData["author"] = adminUser.Uname // 更新此次操作人
-
-	if req.Dns != "" {
-		updateData["dns"] = req.Dns
+	// 存储要更新的字段
+	updateDo := do.TPromotionDns{
+		UpdatedAt: time,
+		Author:    adminUser.Uname,
 	}
 
-	if req.Ip != "" {
-		updateData["ip"] = req.Ip
+	if req.Dns != nil {
+		updateDo.Dns = *req.Dns
 	}
 
-	if req.Status != 0 {
-		updateData["status"] = req.Status
+	if req.Ip != nil {
+		updateDo.Ip = *req.Ip
 	}
 
-	if req.MacChannel != "" {
-		updateData["mac_channel"] = req.MacChannel
+	if req.Status != nil {
+		updateDo.Status = *req.Status
 	}
 
-	if req.WinChannel != "" {
-		updateData["win_channel"] = req.WinChannel
+	if req.MacChannel != nil {
+		updateDo.MacChannel = *req.MacChannel
 	}
 
-	if req.AndroidChannel != "" {
-		updateData["android_channel"] = req.AndroidChannel
+	if req.WinChannel != nil {
+		updateDo.WinChannel = *req.WinChannel
 	}
 
-	if req.Promoter != "" {
-		updateData["promoter"] = req.Promoter
+	if req.AndroidChannel != nil {
+		updateDo.AndroidChannel = *req.AndroidChannel
 	}
 
-	if req.Comment != "" {
-		updateData["comment"] = req.Comment
+	if req.Promoter != nil {
+		updateDo.Promoter = *req.Promoter
+	}
+
+	if req.Comment != nil {
+		updateDo.Comment = *req.Comment
 	}
 
 	// 更新数据
-	_, err = dao.TPromotionDns.Ctx(c).Where(do.TPromotionDns{Id: req.Id}).Data(updateData).Update()
+	_, err = dao.TPromotionDns.Ctx(c).Where(do.TPromotionDns{Id: req.Id}).Data(updateDo).Update()
 	if err != nil {
 		global.MyLogger(c).Err(err).Msgf("更新数据失败，error: %v", err)
 		response.RespFail(c, "更新数据失败", nil)

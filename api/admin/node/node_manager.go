@@ -9,6 +9,7 @@ import (
 	"go-speed/global"
 	"go-speed/i18n"
 	"go-speed/model/do"
+	"go-speed/model/entity"
 	"go-speed/model/response"
 	"go-speed/service"
 	"io"
@@ -185,17 +186,21 @@ func updateNodeStatus(c *gin.Context, ip string, status int) error {
 
 // 国家自动上下架
 func updateCountryStatusByNode(c *gin.Context, ip string) error {
+	var (
+		countryEntities *entity.TNode
+		currentEntity   *entity.TServingCountry
+	)
 	// 查询节点的国家字段
-	countryVal, err := dao.TNode.Ctx(c).
-		Fields("country").
+	err := dao.TNode.Ctx(c).
 		Where(do.TNode{Ip: ip}).
-		Value()
+		Limit(1).
+		Scan(&countryEntities)
 	if err != nil {
 		global.Logger.Err(err).Msgf("查询节点 [%s] 信息失败：%v", ip, err)
 		return err
 	}
 
-	country := strings.TrimSpace(countryVal.String())
+	country := countryEntities.Country
 	if country == "" {
 		global.Logger.Warn().Msgf("节点 [%s] 获取国家失败", ip)
 		return fmt.Errorf("节点 [%s] 获取国家失败", ip)
@@ -217,16 +222,16 @@ func updateCountryStatusByNode(c *gin.Context, ip string) error {
 	}
 
 	// 先获取状态，看是不是要更新
-	current, err := dao.TServingCountry.Ctx(c).
-		Fields("status").
+	err = dao.TServingCountry.Ctx(c).
 		Where(do.TServingCountry{Name: country}).
-		Value()
-
+		Limit(1).
+		Scan(&currentEntity)
+	current := currentEntity.Status
 	if err != nil {
 		global.Logger.Err(err).Msgf("查询国家当前状态失败：%v", err)
 		return err
 	}
-	if current.Int() == newStatus {
+	if current == newStatus {
 		return nil // 无需更新
 	}
 
