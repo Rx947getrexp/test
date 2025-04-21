@@ -1,7 +1,9 @@
 package node
 
 import (
+	"context"
 	"fmt"
+	"go-speed/constant"
 	"go-speed/dao"
 	"go-speed/global"
 	"go-speed/i18n"
@@ -18,6 +20,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gogf/gf/v2/database/gdb"
 	"github.com/gogf/gf/v2/os/gtime"
 )
 
@@ -90,9 +93,13 @@ func ReportNodeStatus(c *gin.Context) {
 	// 通过dns获取节点IP
 	nodeIp, err := service.GetNodeIpByServer(c, req.Server)
 	if err != nil {
+		global.Logger.Err(err).Msgf("通过dns获取节点IP失败，err:%v", err.Error())
 		response.RespFail(c, i18n.RetMsgOperateFailed, nil)
 		return
 	}
+
+	nodeIp = strings.TrimSpace(nodeIp) //还真出现了存到库里的IP前后有空格，导致拼接ping url出现问题，导致ping报错。
+	global.Logger.Info().Msgf("节点查询结果成功，nodeIp： %s。", nodeIp)
 
 	// === 防抖逻辑 ===
 	debounceMutex.Lock()
@@ -154,22 +161,35 @@ func ReportNodeStatus(c *gin.Context) {
 // 节点机器上下架
 func updateNodeStatus(c *gin.Context, ip string, status int) error {
 	if ip == "" || status == 0 {
-		global.Logger.Warn().Msgf("参数异常：ip[%s],status[%s]", ip, status)
-		return fmt.Errorf("参数异常：ip[%s],status[%s]", ip, status)
+		global.Logger.Warn().Msgf("参数异常：ip[%s],status[%d]", ip, status)
+		return fmt.Errorf("参数异常：ip[%s],status[%d]", ip, status)
 	}
-	_, err := dao.TNode.Ctx(c).Where(do.TNode{Ip: ip}).Data(do.TNode{
-		Status:    status,
-		UpdatedAt: gtime.Now(),
-	}).Update()
+
+	global.Logger.Info().Msgf("更新节点 [%s] 状态为 [%d]", ip, status)
+	ctx := c
+	// 在事务中执行更新逻辑
+	err := dao.TNode.Ctx(c).Transaction(c, func(c context.Context, tx gdb.TX) error {
+		// 使用事务更新节点状态
+		_, err := dao.TNode.Ctx(c).Where(do.TNode{Ip: ip}).Data(do.TNode{
+			Status:    status,
+			UpdatedAt: gtime.Now(),
+		}).Update()
+		if err != nil {
+			global.MyLogger(ctx).Err(err).Msgf("事务中更新节点状态失败，err:%v", err)
+			return err
+		}
+		//更新国家状态
+		if err := updateCountryStatusByNode(ctx, ip); err != nil {
+			global.MyLogger(ctx).Err(err).Msgf("事务中更新国家状态失败，err:%v", err)
+			return err
+		}
+		return nil
+	})
 	if err != nil {
-		global.Logger.Err(err).Msgf("更新节点状态失败，err:%v", err.Error())
+		global.MyLogger(c).Err(err).Msgf("updateNodeStatus 更新节点【%s】失败。", ip)
 		return err
 	}
-	// === 更新国家状态 ===
-	if err := updateCountryStatusByNode(c, ip); err != nil {
-		global.Logger.Err(err).Msgf("更新国家状态失败，err:%v", err.Error())
-		// 不中断主逻辑，国家状态失败只做日志记录
-	}
+
 	return nil
 }
 
@@ -182,6 +202,7 @@ func updateCountryStatusByNode(c *gin.Context, ip string) error {
 	// 查询节点的国家字段
 	err := dao.TNode.Ctx(c).
 		Where(do.TNode{Ip: ip}).
+		Order(dao.TNode.Columns().UpdatedAt, constant.OrderTypeDesc).
 		Limit(1).
 		Scan(&countryEntities)
 	if err != nil {
@@ -189,7 +210,8 @@ func updateCountryStatusByNode(c *gin.Context, ip string) error {
 		return err
 	}
 
-	country := countryEntities.Country
+	country := countryEntities.CountryEn
+
 	if country == "" {
 		global.Logger.Warn().Msgf("节点 [%s] 获取国家失败", ip)
 		return fmt.Errorf("节点 [%s] 获取国家失败", ip)
@@ -197,7 +219,7 @@ func updateCountryStatusByNode(c *gin.Context, ip string) error {
 
 	// 查出该国家下是否有“至少一个”状态正常的节点
 	count, err := dao.TNode.Ctx(c).
-		Where(do.TNode{Status: NodeStatusActive, Country: country}).
+		Where(do.TNode{Status: NodeStatusActive, CountryEn: country}).
 		Count()
 	if err != nil {
 		global.Logger.Err(err).Msgf("统计国家下节点状态失败：%v", err)

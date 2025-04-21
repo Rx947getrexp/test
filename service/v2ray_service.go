@@ -165,10 +165,14 @@ func GetNodeIpByServer(c *gin.Context, server string) (nodeIp string, err error)
 	var result struct {
 		Ip string `json:"ip"`
 	}
-	err = dao.TNodeDns.Ctx(c).Where(do.TNodeDns{
-		Dns:    server,
-		Status: 1,
-	}).Limit(1).Scan(&result)
+	err = dao.TNodeDns.Ctx(c).
+		Where(do.TNodeDns{
+			Dns:    server,
+			Status: 1,
+		}).
+		Order(dao.TNodeDns.Columns().UpdatedAt, constant.OrderTypeDesc).
+		Limit(1).
+		Scan(&result)
 
 	if err != nil {
 		global.Logger.Error().Err(err).Msg("GetNodeIpByServer DB error")
