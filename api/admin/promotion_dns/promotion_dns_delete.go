@@ -17,13 +17,26 @@ type PromotionDnsDeleteRequest struct {
 func PromotionDnsDelete(c *gin.Context) {
 	// 定义局部变量
 	var (
-		err error
-		req = new(PromotionDnsDeleteRequest)
+		err    error
+		req    = new(PromotionDnsDeleteRequest)
+		entity *do.TPromotionDns
 	)
 
 	if err = c.ShouldBind(req); err != nil {
 		global.Logger.Err(err).Msg(err.Error())
 		response.ResFail(c, "绑定参数失败")
+		return
+	}
+
+	err = dao.TPromotionDns.Ctx(c).Where(do.TPromotionDns{Id: req.Id}).Scan(&entity)
+	if err != nil {
+		global.MyLogger(c).Err(err).Msgf("查询数据失败，error: %v", err)
+		response.RespFail(c, "查询数据失败", nil)
+		return
+	}
+	if entity == nil {
+		global.MyLogger(c).Error().Msgf("数据不存在，id: %d", req.Id)
+		response.RespFail(c, "数据不存在", nil)
 		return
 	}
 

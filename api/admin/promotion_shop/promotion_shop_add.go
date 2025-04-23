@@ -1,6 +1,7 @@
 package promotion_shop
 
 import (
+	"fmt"
 	"go-speed/dao"
 	"go-speed/global"
 	"go-speed/i18n"
@@ -13,12 +14,12 @@ import (
 )
 
 type PromotionShopAddRequest struct {
-	TitleCn string `form:"title_cn" json:"title_cn" dc:"商店标题(中文)"`
-	TitleEn string `form:"title_en" json:"title_en" dc:"商店标题(英文)"`
-	TitleRu string `form:"title_ru" json:"title_ru" dc:"商店标题(俄语)"`
-	Type    string `form:"type" json:"type" dc:"商店类型，苹果：ios，安卓：android"`
-	Url     string `form:"url" json:"url" dc:"商店地址"`
-	Cover   string `form:"cover" json:"cover" dc:"商店图标"`
+	TitleCn string `form:"title_cn" binding:"required" json:"title_cn" dc:"商店标题(中文)"`
+	TitleEn string `form:"title_en" binding:"required" json:"title_en" dc:"商店标题(英文)"`
+	TitleRu string `form:"title_ru" binding:"required" json:"title_ru" dc:"商店标题(俄语)"`
+	Type    string `form:"type" json:"type" dc:"商店类型，苹果：ios，安卓：android，华为：huawei..."`
+	Url     string `form:"url" binding:"required" json:"url" dc:"商店地址"`
+	Cover   string `form:"cover" binding:"required" json:"cover" dc:"商店图标"`
 	Comment string `form:"comment" json:"comment" dc:"备注信息"`
 }
 
@@ -30,8 +31,9 @@ const (
 func PromotionShopAdd(c *gin.Context) {
 	// 定义局部变量
 	var (
-		err error
-		req = new(PromotionShopAddRequest)
+		err    error
+		req    = new(PromotionShopAddRequest)
+		entity *do.TAppStore
 	)
 	if err = c.ShouldBind(req); err != nil {
 		global.Logger.Err(err).Msg(err.Error())
@@ -46,6 +48,19 @@ func PromotionShopAdd(c *gin.Context) {
 	if err != nil {
 		global.Logger.Err(err).Msg("用户不合法！")
 		response.RespFail(c, "用户不合法！", nil)
+		return
+	}
+
+	err = dao.TAppStore.Ctx(c).Where(do.TAppStore{Url: req.Url}).Scan(&entity)
+	if err != nil {
+		global.MyLogger(c).Err(err).Msgf("查询数据失败，error: %v", err)
+		response.RespFail(c, "查询数据失败", nil)
+		return
+	}
+	if entity != nil {
+		msg := fmt.Sprintf("商店url:%s 已存在，现在对应的商店中文名是: %s", req.Url, entity.TitleCn)
+		global.MyLogger(c).Warn().Msgf(msg)
+		response.RespFail(c, msg, nil)
 		return
 	}
 

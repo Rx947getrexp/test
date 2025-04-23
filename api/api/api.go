@@ -1809,44 +1809,42 @@ func InternalAuth() gin.HandlerFunc {
 // 官网接口，获取后台配置的推广人员与渠道映射关系
 func GetPromotionDnsMapping(c *gin.Context) {
 	var (
-		err      error
-		entities []entity.TPromotionDns
-		total    int
+		err    error
+		entity *entity.TPromotionDns
 	)
 
-	// 查询数据库
-	model := dao.TPromotionDns.Ctx(c).Where(do.TPromotionDns{Status: 1})
-
-	// 获取总数
-	total, err = model.Count()
-	if err != nil {
-		global.MyLogger(c).Err(err).Msgf("GetPromotionDnsMapping count failed. Error: %v", err)
-		response.RespFail(c, i18n.RetMsgDBErr, nil)
+	// 获取请求域名的主域名
+	// 如 www.yyy360.xyz -> yyy360.xyz
+	host := util.GetDomain(c.Request.Host)
+	if host == "" {
+		global.MyLogger(c).Err(err).Msgf("GetDomain failed. Error: %v", err)
+		response.RespFail(c, i18n.RetMsgOperateFailed, nil)
 		return
 	}
-
-	err = model.Scan(&entities)
+	// 查询数据库
+	err = dao.TPromotionDns.Ctx(c).
+		Where(do.TPromotionDns{
+			Dns:    host,
+			Status: 1,
+		}).
+		Limit(1).
+		Scan(&entity)
 	if err != nil {
 		global.MyLogger(c).Err(err).Msgf("GetPromotionDnsMapping DB failed. Error: %v", err)
 		response.RespFail(c, i18n.RetMsgDBErr, nil)
 		return
 	}
-
-	// 组装返回数据
-	items := make([]response.PromotionDnsRes, 0)
-	for _, entity := range entities {
-		items = append(items, response.PromotionDnsRes{
-			Dns:            entity.Dns,
-			WinChannel:     entity.WinChannel,
-			MacChannel:     entity.MacChannel,
-			AndroidChannel: entity.AndroidChannel,
-		})
+	// 如果数据为空，则返回默认数据
+	if entity == nil {
+		global.MyLogger(c).Warn().Msg("GetPromotionDnsMapping result is empty.")
+		response.RespOk(c, i18n.RetMsgOperateFailed, nil)
+		return
 	}
-
 	// 返回数据
-	response.RespOk(c, i18n.RetMsgSuccess, response.PromotionDnsResponse{
-		Total: total,
-		List:  items,
+	response.RespOk(c, i18n.RetMsgSuccess, response.PromotionDnsRes{
+		AndroidChannel: entity.AndroidChannel,
+		WinChannel:     entity.WinChannel,
+		MacChannel:     entity.MacChannel,
 	})
 }
 
@@ -1855,21 +1853,10 @@ func GetPromotionShopMapping(c *gin.Context) {
 	var (
 		err      error
 		entities []entity.TAppStore
-		total    int
 	)
 
 	// 查询数据库
-	model := dao.TAppStore.Ctx(c).Where(do.TAppStore{Status: 1})
-
-	// 获取总数
-	total, err = model.Count()
-	if err != nil {
-		global.MyLogger(c).Err(err).Msgf("GetPromotionShopMapping count failed. Error: %v", err)
-		response.RespFail(c, i18n.RetMsgDBErr, nil)
-		return
-	}
-
-	err = model.Scan(&entities)
+	err = dao.TAppStore.Ctx(c).Where(do.TAppStore{Status: 1}).Scan(&entities)
 	if err != nil {
 		global.MyLogger(c).Err(err).Msgf("GetPromotionShopMapping DB failed. Error: %v", err)
 		response.RespFail(c, i18n.RetMsgDBErr, nil)
@@ -1891,7 +1878,6 @@ func GetPromotionShopMapping(c *gin.Context) {
 
 	// 返回数据
 	response.RespOk(c, i18n.RetMsgSuccess, response.PromotionShopResponse{
-		Total: total,
-		List:  items,
+		List: items,
 	})
 }
