@@ -5,6 +5,7 @@ import (
 	"go-speed/global"
 	"go-speed/i18n"
 	"go-speed/model/do"
+	"go-speed/model/entity"
 	"go-speed/model/response"
 	"go-speed/service"
 
@@ -27,8 +28,9 @@ type PromotionDnsEditRequest struct {
 func PromotionDnsEdit(c *gin.Context) {
 	// 定义局部变量
 	var (
-		err error
-		req = new(PromotionDnsEditRequest)
+		err    error
+		req    = new(PromotionDnsEditRequest)
+		entity *entity.TPromotionDns
 	)
 
 	if err = c.ShouldBind(req); err != nil {
@@ -44,6 +46,18 @@ func PromotionDnsEdit(c *gin.Context) {
 	if err != nil {
 		global.Logger.Err(err).Msgf("Illegal user, err: %v", err)
 		response.RespFail(c, "用户不合法！", nil)
+		return
+	}
+
+	err = dao.TPromotionDns.Ctx(c).Where(do.TPromotionDns{Id: req.Id}).Scan(&entity)
+	if err != nil {
+		global.MyLogger(c).Err(err).Msgf("查询数据失败，error: %v", err)
+		response.RespFail(c, "查询数据失败", nil)
+		return
+	}
+	if entity == nil {
+		global.MyLogger(c).Error().Msgf("数据不存在，id: %d", req.Id)
+		response.RespFail(c, "数据不存在", nil)
 		return
 	}
 

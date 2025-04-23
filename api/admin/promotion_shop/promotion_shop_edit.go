@@ -5,6 +5,7 @@ import (
 	"go-speed/global"
 	"go-speed/i18n"
 	"go-speed/model/do"
+	"go-speed/model/entity"
 	"go-speed/model/response"
 	"go-speed/service"
 
@@ -27,8 +28,9 @@ type PromotionShopEditRequest struct {
 func PromotionShopEdit(c *gin.Context) {
 	// 定义局部变量
 	var (
-		err error
-		req = new(PromotionShopEditRequest)
+		err    error
+		req    = new(PromotionShopEditRequest)
+		entity *entity.TAppStore
 	)
 
 	if err = c.ShouldBind(req); err != nil {
@@ -47,8 +49,19 @@ func PromotionShopEdit(c *gin.Context) {
 		return
 	}
 
-	// 更新域名信息
+	err = dao.TAppStore.Ctx(c).Where(do.TAppStore{Id: req.Id}).Scan(&entity)
+	if err != nil {
+		global.MyLogger(c).Err(err).Msgf("查询数据失败，error: %v", err)
+		response.RespFail(c, "查询数据失败", nil)
+		return
+	}
+	if entity == nil {
+		global.MyLogger(c).Error().Msgf("数据不存在，id: %d", req.Id)
+		response.RespFail(c, "数据不存在", nil)
+		return
+	}
 
+	// 更新域名信息
 	time := gtime.Now()
 	// 存储要更新的字段
 	updateDo := do.TAppStore{
