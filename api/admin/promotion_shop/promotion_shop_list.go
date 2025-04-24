@@ -19,8 +19,8 @@ type PromotionShopListRequest struct {
 	Cover     *string `form:"cover" json:"cover" dc:"商店图标"`
 	Status    *int    `form:"status" json:"status" dc:"状态，1：正常，2：已软删"`
 	Page      int     `form:"page" json:"page" dc:"分页查询page, 从1开始"`
-	Size      int     `form:"size" json:"size" dc:"分页查询size, 最大1000"`
-	OrderBy   string  `form:"order_by" json:"order_by" dc:"排序字段，eg: id|created_time"`
+	Size      int     `form:"size" json:"size" dc:"分页查询size, 最大100"`
+	OrderBy   string  `form:"order_by" json:"order_by" dc:"排序字段，eg: id"`
 	OrderType string  `form:"order_type" json:"order_type" dc:"排序类型，eg: asc|desc"`
 }
 

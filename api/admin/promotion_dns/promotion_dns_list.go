@@ -22,8 +22,8 @@ type PromotionDnsListRequest struct {
 	AndroidChannel *string `form:"android_channel" json:"android_channel" dc:"安卓渠道"`
 	Promoter       *string `form:"promoter" json:"promoter" dc:"推广人员"`
 	Page           int     `form:"page" json:"page" dc:"分页查询page, 从1开始"`
-	Size           int     `form:"size" json:"size" dc:"分页查询size, 最大1000"`
-	OrderBy        string  `form:"order_by" json:"order_by" dc:"排序字段，eg: id|created_time"`
+	Size           int     `form:"size" json:"size" dc:"分页查询size, 最大100"`
+	OrderBy        string  `form:"order_by" json:"order_by" dc:"排序字段，eg: id"`
 	OrderType      string  `form:"order_type" json:"order_type" dc:"排序类型，eg: asc|desc"`
 }
 
