@@ -23,11 +23,6 @@ type PromotionShopAddRequest struct {
 	Comment string `form:"comment" json:"comment" dc:"备注信息"`
 }
 
-const (
-	StatusNormal  = 1 // 正常
-	StatusDeleted = 2 // 已软删 / 无效 / 删除状态
-)
-
 func PromotionShopAdd(c *gin.Context) {
 	// 定义局部变量
 	var (
@@ -74,7 +69,7 @@ func PromotionShopAdd(c *gin.Context) {
 		Type:      req.Type,
 		Url:       req.Url,
 		Cover:     req.Cover,
-		Status:    StatusNormal,
+		Status:    1,
 		Author:    adminUser.Uname,
 		Comment:   req.Comment,
 		CreatedAt: now,
