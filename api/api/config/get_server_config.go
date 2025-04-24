@@ -200,13 +200,6 @@ func chooseCountryForUser(ctx *gin.Context, userId uint64, countryName string) (
 		return
 	}
 
-	// 如果没有找到任何节点，则返回失败
-	if len(nodeEntities) == 0 {
-		global.MyLogger(ctx).Warn().Msg("未找到任何可用节点")
-		response.RespFail(ctx, i18n.RetMsgNoAvailableNode, nil)
-		return
-	}
-
 	// 遍历国家列表，找到最终选中的国家对象并赋值返回
 	for i, c := range countryEntities {
 		if c.Name == winCountry {
