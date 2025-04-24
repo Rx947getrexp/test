@@ -49,6 +49,12 @@ func PromotionShopEdit(c *gin.Context) {
 		return
 	}
 
+	// 对 req.Status 的合法值判断（1 或 2）
+	if req.Status != nil && *req.Status != 1 && *req.Status != 2 {
+		response.RespFail(c, "状态参数不合法，仅支持 1(上架) 或 2(下架)", nil)
+		return
+	}
+
 	err = dao.TAppStore.Ctx(c).Where(do.TAppStore{Id: req.Id}).Scan(&entity)
 	if err != nil {
 		global.MyLogger(c).Err(err).Msgf("查询数据失败，error: %v", err)
@@ -87,7 +93,7 @@ func PromotionShopEdit(c *gin.Context) {
 	if req.Cover != nil {
 		updateDo.Cover = req.Cover
 	}
-	if req.Status != nil {
+	if req.Status != nil && *req.Status != 0 {
 		updateDo.Status = req.Status
 	}
 	if req.Comment != nil {

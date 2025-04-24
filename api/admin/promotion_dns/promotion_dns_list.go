@@ -36,10 +36,10 @@ type PromotionDnsListRes struct {
 	WinChannel     string `form:"win_channel" json:"win_channel" dc:"windows电脑渠道"`
 	AndroidChannel string `form:"android_channel" json:"android_channel" dc:"安卓渠道"`
 	Promoter       string `form:"promoter" json:"promoter" dc:"推广人员"`
-	Comment        string `json:"comment" dc:"备注"`
-	Author         string `json:"author" dc:"作者"`
-	CreatedAt      string `json:"created_at" dc:"创建时间"`
-	UpdatedAt      string `json:"updated_at" dc:"更新时间"`
+	Comment        string `form:"comment" json:"comment" dc:"备注"`
+	Author         string `form:"author" json:"author" dc:"作者"`
+	CreatedAt      string `form:"created_at" json:"created_at" dc:"创建时间"`
+	UpdatedAt      string `form:"updated_at" json:"updated_at" dc:"更新时间"`
 }
 type PromotionDnsListResponse struct {
 	Total int                   `json:"total" dc:"数据总条数"`
@@ -65,9 +65,7 @@ func PromotionDnsList(c *gin.Context) {
 		req.Page = 1
 	}
 	size := req.Size
-	if size > constant.MaxPageSize {
-		size = constant.MaxPageSize
-	} else if size < 1 {
+	if size > 100 || size < 1 {
 		size = constant.MinPageSize
 	}
 

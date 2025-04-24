@@ -49,6 +49,12 @@ func PromotionDnsEdit(c *gin.Context) {
 		return
 	}
 
+	// 对 req.Status 的合法值判断（1 或 2）
+	if req.Status != nil && *req.Status != 1 && *req.Status != 2 {
+		response.RespFail(c, "状态参数不合法，仅支持 1(上架) 或 2(下架)", nil)
+		return
+	}
+
 	err = dao.TPromotionDns.Ctx(c).Where(do.TPromotionDns{Id: req.Id}).Scan(&entity)
 	if err != nil {
 		global.MyLogger(c).Err(err).Msgf("查询数据失败，error: %v", err)
@@ -69,27 +75,27 @@ func PromotionDnsEdit(c *gin.Context) {
 		Author:    adminUser.Uname,
 	}
 
-	if req.Dns != nil {
+	if req.Dns != nil && *req.Dns != "" {
 		updateDo.Dns = *req.Dns
 	}
 
-	if req.Ip != nil {
+	if req.Ip != nil && *req.Ip != "" {
 		updateDo.Ip = *req.Ip
 	}
 
-	if req.Status != nil {
+	if req.Status != nil && *req.Status != 0 {
 		updateDo.Status = *req.Status
 	}
 
-	if req.MacChannel != nil {
+	if req.MacChannel != nil && *req.MacChannel != "" {
 		updateDo.MacChannel = *req.MacChannel
 	}
 
-	if req.WinChannel != nil {
+	if req.WinChannel != nil && *req.WinChannel != "" {
 		updateDo.WinChannel = *req.WinChannel
 	}
 
-	if req.AndroidChannel != nil {
+	if req.AndroidChannel != nil && *req.AndroidChannel != "" {
 		updateDo.AndroidChannel = *req.AndroidChannel
 	}
 

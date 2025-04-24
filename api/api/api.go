@@ -1834,7 +1834,7 @@ func GetPromotionDnsMapping(c *gin.Context) {
 		response.RespFail(c, i18n.RetMsgDBErr, nil)
 		return
 	}
-	// 如果数据为空，则返回默认数据
+	// 如果数据为空，则返回错误
 	if entity == nil {
 		global.MyLogger(c).Warn().Msg("GetPromotionDnsMapping result is empty.")
 		response.RespOk(c, i18n.RetMsgOperateFailed, nil)

@@ -33,9 +33,9 @@ type PromotionShopListRes struct {
 	Url       string `form:"url" json:"url" dc:"商店地址"`
 	Cover     string `form:"cover" json:"cover" dc:"商店图标"`
 	Status    int    `form:"status" json:"status" dc:"状态，1：正常，2：已软删"`
-	Comment   string `json:"comment" dc:"备注"`
-	CreatedAt string `json:"created_at" dc:"创建时间"`
-	UpdatedAt string `json:"updated_at" dc:"更新时间"`
+	Comment   string `form:"comment" json:"comment" dc:"备注"`
+	CreatedAt string `form:"created_at" json:"created_at" dc:"创建时间"`
+	UpdatedAt string `form:"updated_at" json:"updated_at" dc:"更新时间"`
 }
 type PromotionShopListResponse struct {
 	Total int                    `json:"total" dc:"数据总条数"`
@@ -61,9 +61,7 @@ func PromotionShopList(c *gin.Context) {
 		req.Page = 1
 	}
 	size := req.Size
-	if size > constant.MaxPageSize {
-		size = constant.MaxPageSize
-	} else if size < 1 {
+	if size > 100 || size < 1 {
 		size = constant.MinPageSize
 	}
 

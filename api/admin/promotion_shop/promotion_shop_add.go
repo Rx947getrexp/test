@@ -66,7 +66,7 @@ func PromotionShopAdd(c *gin.Context) {
 
 	// 获取当前时间
 	now := gtime.Now()
-	// 插入新的域名机器记录，并获取插入数据的ID
+	// 插入新的商店记录，并获取插入数据的ID
 	lastInsertId, err := dao.TAppStore.Ctx(c).Data(do.TAppStore{
 		TitleCn:   req.TitleCn,
 		TitleEn:   req.TitleEn,
