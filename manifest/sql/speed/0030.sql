@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS `speed`.`t_promotion_dns` (
 -- app商店管理
 CREATE TABLE IF NOT EXISTS `speed`.`t_app_store` (
   `id` BIGINT(20) NOT NULL AUTO_INCREMENT COMMENT '自增id',
-  `title_cn` VARCHAR() DEFAULT NULL COMMENT '商店名称(中文)',
+  `title_cn` VARCHAR(64) DEFAULT NULL COMMENT '商店名称(中文)',
   `title_en` VARCHAR(64) DEFAULT NULL COMMENT '商店名称(英文)',
   `title_ru` VARCHAR(64) DEFAULT NULL COMMENT '商店名称(俄语)',
   `type` VARCHAR(64) DEFAULT NULL COMMENT '商店类型，ios(苹果)，android(安卓)...',
