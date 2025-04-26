@@ -1805,3 +1805,79 @@ func InternalAuth() gin.HandlerFunc {
 		}
 	}
 }
+
+// 官网接口，获取后台配置的推广人员与渠道映射关系
+func GetPromotionDnsMapping(c *gin.Context) {
+	var (
+		err    error
+		entity *entity.TPromotionDns
+	)
+
+	// 获取请求域名的主域名
+	// 如 www.yyy360.xyz -> yyy360.xyz
+	host := util.GetDomain(c.Request.Host)
+	if host == "" {
+		global.MyLogger(c).Err(err).Msgf("GetDomain failed. Error: %v", err)
+		response.RespFail(c, i18n.RetMsgOperateFailed, nil)
+		return
+	}
+	// 查询数据库
+	err = dao.TPromotionDns.Ctx(c).
+		Where(do.TPromotionDns{
+			Dns:    host,
+			Status: 1,
+		}).
+		Limit(1).
+		Scan(&entity)
+	if err != nil {
+		global.MyLogger(c).Err(err).Msgf("GetPromotionDnsMapping DB failed. Error: %v", err)
+		response.RespFail(c, i18n.RetMsgDBErr, nil)
+		return
+	}
+	// 如果数据为空，则返回错误
+	if entity == nil {
+		global.MyLogger(c).Warn().Msg("GetPromotionDnsMapping result is empty.")
+		response.RespOk(c, i18n.RetMsgOperateFailed, nil)
+		return
+	}
+	// 返回数据
+	response.RespOk(c, i18n.RetMsgSuccess, response.PromotionDnsRes{
+		AndroidChannel: entity.AndroidChannel,
+		WinChannel:     entity.WinChannel,
+		MacChannel:     entity.MacChannel,
+	})
+}
+
+// 官网接口，下载页面的各个商店的推广链接
+func GetPromotionShopMapping(c *gin.Context) {
+	var (
+		err      error
+		entities []entity.TAppStore
+	)
+
+	// 查询数据库
+	err = dao.TAppStore.Ctx(c).Where(do.TAppStore{Status: 1}).Scan(&entities)
+	if err != nil {
+		global.MyLogger(c).Err(err).Msgf("GetPromotionShopMapping DB failed. Error: %v", err)
+		response.RespFail(c, i18n.RetMsgDBErr, nil)
+		return
+	}
+
+	// 组装返回数据
+	items := make([]response.PromotionShopRes, 0)
+	for _, entity := range entities {
+		items = append(items, response.PromotionShopRes{
+			Type:    entity.Type,
+			Url:     entity.Url,
+			TitleCn: entity.TitleCn,
+			TitleEn: entity.TitleEn,
+			TitleRu: entity.TitleRu,
+			Cover:   entity.Cover,
+		})
+	}
+
+	// 返回数据
+	response.RespOk(c, i18n.RetMsgSuccess, response.PromotionShopResponse{
+		List: items,
+	})
+}

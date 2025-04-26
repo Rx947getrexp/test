@@ -51,7 +51,8 @@ func ApiRoute(group *gin.RouterGroup) {
 	group.POST("pay_notify", order.PayNotify)
 	group.POST("goods_list", goods.GoodsList)
 	group.POST("payment_channel_list", order.PaymentChannelList)
-
+	group.GET("promoter_channel_mapping", api.GetPromotionDnsMapping) //官网接口，获取后台配置的推广人员与渠道映射关系
+	group.GET("promoter_shop_mapping", api.GetPromotionShopMapping)   //官网接口，下载页面的各个商店的推广链接
 	//签名验证
 	switchStateGroup := group.Group("switch")
 	switchStateGroup.Use(api.Verify)
@@ -95,7 +96,6 @@ func ApiRoute(group *gin.RouterGroup) {
 		group.GET("get_server_config_without_rules", config.GetServerConfigWithoutRules) // 获取配置不带ip和域名池
 
 		// 支付相关
-
 		group.POST("create_order", order.CreateOrder)
 		group.POST("upload_payment_proof", order.UploadPaymentProof)
 		group.POST("confirm_order", order.ConfirmOrder)

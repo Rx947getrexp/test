@@ -1,10 +1,13 @@
 package util
 
 import (
-	"github.com/bwmarrin/snowflake"
-	"github.com/google/uuid"
+	"net"
 	"reflect"
 	"strings"
+
+	"github.com/bwmarrin/snowflake"
+	"github.com/google/uuid"
+	"golang.org/x/net/publicsuffix"
 )
 
 func GenSnowflake(node int64) (int64, error) {
@@ -62,4 +65,30 @@ OutModelLoop:
 			newModel.FieldByName(mapOldIndex.Name).Set(reflect.ValueOf(oldVal))
 		}
 	}
+}
+
+// 获取主域名
+func GetDomain(host string) string {
+	if host == "" {
+		return ""
+	}
+	// 去掉端口
+	if h, _, err := net.SplitHostPort(host); err == nil {
+		host = h
+	}
+
+	// 如果是 IPv4 或 IPv6，直接返回
+	if ip := net.ParseIP(host); ip != nil {
+		return ip.String()
+	}
+
+	host = strings.ToLower(host)
+	host = strings.TrimPrefix(host, "www.")
+
+	// 使用 publicsuffix 提取主域名
+	domain, err := publicsuffix.EffectiveTLDPlusOne(host)
+	if err != nil {
+		return ""
+	}
+	return domain
 }

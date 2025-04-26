@@ -3,8 +3,6 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	statscmd "github.com/xtls/xray-core/app/stats/command"
 	"go-speed/constant"
 	"go-speed/global"
 	"go-speed/model"
@@ -12,8 +10,11 @@ import (
 	"go-speed/model/request"
 	"go-speed/model/response"
 	"go-speed/util"
-	"google.golang.org/grpc"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	statscmd "github.com/xtls/xray-core/app/stats/command"
+	"google.golang.org/grpc"
 )
 
 func InsertUserUuid(user *model.TUser, nodeId int64) (bool, error) {
