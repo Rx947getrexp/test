@@ -104,3 +104,7 @@ type ServerStateSwitchingRequest struct {
 	Ip     string `form:"Ip" json:"Ip"`
 	Status string `form:"status" json:"status"` //1-开启；2-关闭
 }
+
+type GetPromotionDnsMappingRequest struct {
+	Dns string `form:"dns" json:"dns"`
+}
