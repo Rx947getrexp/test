@@ -1853,8 +1853,6 @@ func GetPromotionDnsMapping(c *gin.Context) {
 			AndroidChannel: entity.AndroidChannel,
 			WinChannel:     entity.WinChannel,
 			MacChannel:     entity.MacChannel,
-			CreatedAt:      entity.CreatedAt.String(),
-			UpdatedAt:      entity.UpdatedAt.String(),
 		})
 	}
 	// 返回数据

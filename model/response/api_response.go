@@ -55,8 +55,6 @@ type PromotionDnsRes struct {
 	AndroidChannel string `json:"android_channel" dc:"安卓渠道"`
 	WinChannel     string `json:"win_channel" dc:"windows电脑渠道"`
 	MacChannel     string `json:"mac_channel" dc:"苹果电脑渠道"`
-	CreatedAt      string `json:"created_at" dc:"创建时间"`
-	UpdatedAt      string `json:"updated_at" dc:"更新时间"`
 }
 
 type PromotionDnsResponse struct {
