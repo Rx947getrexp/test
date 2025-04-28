@@ -1809,42 +1809,55 @@ func InternalAuth() gin.HandlerFunc {
 // 官网接口，获取后台配置的推广人员与渠道映射关系
 func GetPromotionDnsMapping(c *gin.Context) {
 	var (
-		err    error
-		entity *entity.TPromotionDns
+		err      error
+		entities []entity.TPromotionDns
 	)
-
-	// 获取请求域名的主域名
-	// 如 www.yyy360.xyz -> yyy360.xyz
-	host := util.GetDomain(c.Request.Host)
-	if host == "" {
-		global.MyLogger(c).Err(err).Msgf("GetDomain failed. Error: %v", err)
-		response.RespFail(c, i18n.RetMsgOperateFailed, nil)
+	global.MyLogger(c).Info().Msg("GetPromotionDnsMapping start.")
+	defer global.MyLogger(c).Info().Msg("GetPromotionDnsMapping end.")
+	// 获取请求参数
+	req := new(request.GetPromotionDnsMappingRequest)
+	if err := c.ShouldBind(req); err != nil {
+		global.MyLogger(c).Err(err).Msgf("绑定参数失败, clientId: %s", getClientId(c))
+		response.RespFail(c, i18n.RetMsgParamParseErr, nil)
 		return
 	}
+
+	whereDo := do.TPromotionDns{
+		Status: 1,
+	}
+	// 获取请求域名的主域名
+	// 如 www.yyy360.xyz -> yyy360.xyz
+	if req.Dns != "" {
+		whereDo.Dns = util.GetDomain(req.Dns)
+		global.MyLogger(c).Info().Msgf("GetPromotionDnsMapping host is %s.", whereDo.Dns)
+	}
+
 	// 查询数据库
 	err = dao.TPromotionDns.Ctx(c).
-		Where(do.TPromotionDns{
-			Dns:    host,
-			Status: 1,
-		}).
-		Limit(1).
-		Scan(&entity)
+		Where(whereDo).
+		Scan(&entities)
 	if err != nil {
 		global.MyLogger(c).Err(err).Msgf("GetPromotionDnsMapping DB failed. Error: %v", err)
 		response.RespFail(c, i18n.RetMsgDBErr, nil)
 		return
 	}
 	// 如果数据为空，则返回错误
-	if entity == nil {
+	if entities == nil {
 		global.MyLogger(c).Warn().Msg("GetPromotionDnsMapping result is empty.")
 		response.RespOk(c, i18n.RetMsgOperateFailed, nil)
 		return
 	}
+	items := make([]response.PromotionDnsRes, 0)
+	for _, entity := range entities {
+		items = append(items, response.PromotionDnsRes{
+			AndroidChannel: entity.AndroidChannel,
+			WinChannel:     entity.WinChannel,
+			MacChannel:     entity.MacChannel,
+		})
+	}
 	// 返回数据
-	response.RespOk(c, i18n.RetMsgSuccess, response.PromotionDnsRes{
-		AndroidChannel: entity.AndroidChannel,
-		WinChannel:     entity.WinChannel,
-		MacChannel:     entity.MacChannel,
+	response.RespOk(c, i18n.RetMsgSuccess, response.PromotionDnsResponse{
+		List: items,
 	})
 }
 

@@ -57,6 +57,10 @@ type PromotionDnsRes struct {
 	MacChannel     string `json:"mac_channel" dc:"苹果电脑渠道"`
 }
 
+type PromotionDnsResponse struct {
+	List []PromotionDnsRes `json:"list" dc:"dns列表"`
+}
+
 type PromotionShopRes struct {
 	TitleCn string `form:"title_cn" json:"title" dc:"商店标题(中文)"`
 	TitleEn string `form:"title_en" json:"title_en" dc:"商店标题(英文)"`
