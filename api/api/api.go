@@ -1817,7 +1817,7 @@ func GetPromotionDnsMapping(c *gin.Context) {
 	// 如 www.yyy360.xyz -> yyy360.xyz
 	host := util.GetDomain(c.Request.Host)
 	if host == "" {
-		global.MyLogger(c).Err(err).Msgf("GetDomain failed. Error: %v", err)
+		global.MyLogger(c).Err(fmt.Errorf("GetDomain failed.")).Msg("GetDomain failed.")
 		response.RespFail(c, i18n.RetMsgOperateFailed, nil)
 		return
 	}
