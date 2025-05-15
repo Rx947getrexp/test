@@ -1839,3 +1839,92 @@ func InternalAuth() gin.HandlerFunc {
 		}
 	}
 }
+
+// 官网接口，获取后台配置的推广人员与渠道映射关系
+func GetPromotionDnsMapping(c *gin.Context) {
+	var (
+		err      error
+		entities []entity.TPromotionDns
+	)
+	global.MyLogger(c).Info().Msg("GetPromotionDnsMapping start.")
+	defer global.MyLogger(c).Info().Msg("GetPromotionDnsMapping end.")
+	// 获取请求参数
+	req := new(request.GetPromotionDnsMappingRequest)
+	if err := c.ShouldBind(req); err != nil {
+		global.MyLogger(c).Err(err).Msgf("绑定参数失败, clientId: %s", getClientId(c))
+		response.RespFail(c, i18n.RetMsgParamParseErr, nil)
+		return
+	}
+
+	whereDo := do.TPromotionDns{
+		Status: 1,
+	}
+	// 获取请求域名的主域名
+	// 如 www.yyy360.xyz -> yyy360.xyz
+	if req.Dns != "" {
+		whereDo.Dns = util.GetDomain(req.Dns)
+		global.MyLogger(c).Info().Msgf("GetPromotionDnsMapping host is %s.", whereDo.Dns)
+	}
+
+	// 查询数据库
+	err = dao.TPromotionDns.Ctx(c).
+		Where(whereDo).
+		Scan(&entities)
+	if err != nil {
+		global.MyLogger(c).Err(err).Msgf("GetPromotionDnsMapping DB failed. Error: %v", err)
+		response.RespFail(c, i18n.RetMsgDBErr, nil)
+		return
+	}
+	// 如果数据为空，则返回错误
+	if entities == nil {
+		global.MyLogger(c).Warn().Msg("GetPromotionDnsMapping result is empty.")
+		response.RespOk(c, i18n.RetMsgOperateFailed, nil)
+		return
+	}
+	items := make([]response.PromotionDnsRes, 0)
+	for _, entity := range entities {
+		items = append(items, response.PromotionDnsRes{
+			AndroidChannel: entity.AndroidChannel,
+			WinChannel:     entity.WinChannel,
+			MacChannel:     entity.MacChannel,
+		})
+	}
+	// 返回数据
+	response.RespOk(c, i18n.RetMsgSuccess, response.PromotionDnsResponse{
+		List: items,
+	})
+}
+
+// 官网接口，下载页面的各个商店的推广链接
+func GetPromotionShopMapping(c *gin.Context) {
+	var (
+		err      error
+		entities []entity.TAppStore
+	)
+
+	// 查询数据库
+	err = dao.TAppStore.Ctx(c).Where(do.TAppStore{Status: 1}).Scan(&entities)
+	if err != nil {
+		global.MyLogger(c).Err(err).Msgf("GetPromotionShopMapping DB failed. Error: %v", err)
+		response.RespFail(c, i18n.RetMsgDBErr, nil)
+		return
+	}
+
+	// 组装返回数据
+	items := make([]response.PromotionShopRes, 0)
+	for _, entity := range entities {
+		items = append(items, response.PromotionShopRes{
+			Type:    entity.Type,
+			Url:     entity.Url,
+			TitleCn: entity.TitleCn,
+			TitleEn: entity.TitleEn,
+			TitleRu: entity.TitleRu,
+			Cover:   entity.Cover,
+		})
+	}
+
+	// 返回数据
+	response.RespOk(c, i18n.RetMsgSuccess, response.PromotionShopResponse{
+		List: items,
+	})
+}

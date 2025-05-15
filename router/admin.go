@@ -10,6 +10,8 @@ import (
 	"go-speed/api/admin/order"
 	"go-speed/api/admin/payment_channel"
 	"go-speed/api/admin/promotion"
+	"go-speed/api/admin/promotion_dns"
+	"go-speed/api/admin/promotion_shop"
 	"go-speed/api/admin/report"
 	"go-speed/api/admin/vip"
 
@@ -191,8 +193,8 @@ func AdminRoute(group *gin.RouterGroup) {
 		machineGroup.GET("list", node.NodeList)    // 查询机器列表
 		machineGroup.POST("add", node.NodeCreate)  // 添加机器
 		machineGroup.POST("edit", node.NodeModify) // 修改机器信息
-		//支付通道管理
 
+		//支付通道管理
 		paymentChannelGroup := group.Group("payment_channel")
 		paymentChannelGroup.POST("list", payment_channel.PaymentChannelList)
 		paymentChannelGroup.POST("edit", payment_channel.PaymentChannelModify)
@@ -211,6 +213,20 @@ func AdminRoute(group *gin.RouterGroup) {
 		promotionGroup.POST("add_promotion", promotion.AddPromotion)
 		promotionGroup.POST("edit_promotion", promotion.EditPromotion)
 		promotionGroup.POST("delete_promotion", promotion.DeletePromotion)
+
+		// 推广域名管理
+		promotionDnsGroup := group.Group("promotion_dns")
+		promotionDnsGroup.GET("list", promotion_dns.PromotionDnsList)
+		promotionDnsGroup.POST("add", promotion_dns.PromotionDnsAdd)
+		promotionDnsGroup.POST("edit", promotion_dns.PromotionDnsEdit)
+		promotionDnsGroup.POST("del", promotion_dns.PromotionDnsDelete)
+
+		// 推广商店地址管理
+		promotionShopGroup := group.Group("promotion_shop")
+		promotionShopGroup.GET("list", promotion_shop.PromotionShopList)
+		promotionShopGroup.POST("add", promotion_shop.PromotionShopAdd)
+		promotionShopGroup.POST("edit", promotion_shop.PromotionShopEdit)
+		promotionShopGroup.POST("del", promotion_shop.PromotionShopDelete)
 
 		// 广告系统
 		advertisementGroup := group.Group("advertisement")

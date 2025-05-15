@@ -7,6 +7,7 @@ const (
 	OtherFileType  = "other"
 
 	MaxPageSize = 1000
+	MinPageSize = 20
 )
 
 const (

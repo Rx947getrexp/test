@@ -29,7 +29,7 @@ func UserRecovery(c *gin.Context, userInfo *entity.TUser) {
 	expiredPlusThirtyDays := userInfo.ExpiredTime + int64(maxExpiredTime)
 	isExpiredMoreThanThirtyDays := nowUnix > expiredPlusThirtyDays
 	// 活动结束目标时间
-	targetTime := gtime.NewFromStr("2025-03-01 00:00:00")
+	targetTime := gtime.NewFromStr("2026-03-01 00:00:00")
 
 	// 如果用户ExpiredTime过期已经超过maxExpiredTime天，开始赠送时长
 	if isExpiredMoreThanThirtyDays && userInfo.Id > 0 && now.Before(targetTime) {

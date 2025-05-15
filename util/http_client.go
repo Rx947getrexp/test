@@ -58,6 +58,7 @@ func HttpClientPostV2(url string, headerParam map[string]string, bodyParam inter
 		return err
 	}
 	body := bytes.NewReader(paramBytes)
+
 	httpReq, err := http.NewRequest("POST", url, body)
 	if err != nil {
 		global.Logger.Err(err).Msg("创建http请求失败")

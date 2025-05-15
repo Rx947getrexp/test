@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"go-speed/api/api/common"
 	"go-speed/config"
 	"go-speed/constant"
@@ -17,6 +16,8 @@ import (
 	"go-speed/service"
 	"go-speed/util"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 type GetServerConfigReq struct {
@@ -204,6 +205,8 @@ func chooseCountryForUser(ctx *gin.Context, userId uint64, countryName string) (
 		response.RespFail(ctx, i18n.RetMsgDBErr, nil)
 		return
 	}
+
+	// 遍历国家列表，找到最终选中的国家对象并赋值返回
 	for i, c := range countryEntities {
 		if c.Name == winCountry {
 			winServingCountry = countryEntities[i]

@@ -54,6 +54,8 @@ func ApiRoute(group *gin.RouterGroup) {
 	group.POST("payment_channel_list", order.PaymentChannelList)
 	group.POST("app_version", app.AppVersion)
 
+	group.GET("promoter_channel_mapping", api.GetPromotionDnsMapping) //官网接口，获取后台配置的推广人员与渠道映射关系
+	group.GET("promoter_shop_mapping", api.GetPromotionShopMapping)   //官网接口，下载页面的各个商店的推广链接
 	//签名验证
 	switchStateGroup := group.Group("switch")
 	switchStateGroup.Use(api.Verify)
