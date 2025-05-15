@@ -125,7 +125,7 @@ func GetUserTraffic(ctx *gin.Context, email, ip string) (items []response.UserTr
 		//All:   true,
 		Reset: false,
 		Emails: []string{
-			email,
+			util.GetUserV2rayConfigEmail(email),
 		},
 	}
 	res := new(response.Response)

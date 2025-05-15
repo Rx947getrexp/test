@@ -19,4 +19,7 @@ const (
 	PayChannelRussPayBankCard = "russpay-bankcard"
 	PayChannelRussPaySBP      = "russpay-sbp"
 	PayChannelRussPaySBER     = "russpay-sber"
+
+	PayChannelRussNewPayCard = "russ-new-pay-card"
+	PayChannelRussNewPaySBP  = "russ-new-pay-sbp"
 )

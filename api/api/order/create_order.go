@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go-speed/api/api/common"
 	"go-speed/util/pay/freekassa"
+	russ_pay "go-speed/util/pay/russ-pay"
 	"go-speed/util/pay/russpay"
 	"math/rand"
 	"strconv"
@@ -34,10 +35,11 @@ const (
 )
 
 type CreateOrderReq struct {
-	ChannelId   string `form:"channel_id" json:"channel_id" binding:"required" dc:"支付渠道ID"`
-	GoodsId     int64  `form:"goods_id" json:"goods_id" binding:"required" dc:"套餐ID"`
-	DeviceType  string `form:"device_type" json:"device_type" dc:"客户端设备系统os"`
-	RedirectURL string `form:"redirect_url" json:"redirect_url" dc:"支付页面完成以后，跳转到的结果页地址"`
+	ChannelId         string `form:"channel_id" json:"channel_id" binding:"required" dc:"支付渠道ID"`
+	GoodsId           int64  `form:"goods_id" json:"goods_id" binding:"required" dc:"套餐ID"`
+	DeviceType        string `form:"device_type" json:"device_type" dc:"客户端设备系统os"`
+	RedirectURL       string `form:"redirect_url" json:"redirect_url" dc:"支付页面完成以后，跳转到的结果页地址"`
+	RedirectURLFailed string `form:"redirect_url_failed" json:"redirect_url_failed" dc:"支付失败跳转URL"`
 }
 
 type CreateOrderRes struct {
@@ -239,6 +241,24 @@ func CreateOrder(ctx *gin.Context) {
 		payOrderUpdate.ReturnStatus = constant.ReturnStatusSuccess
 		payOrderUpdate.StatusMes = resp.PayUrl
 		payOrderUpdate.OrderData = resp.BillingNumber
+	case constant.PayChannelRussNewPaySBP, constant.PayChannelRussNewPayCard:
+		resp, err := russ_pay.CreateOrder(ctx, russ_pay.CreateOrderReq{
+			ChannelId:       req.ChannelId,
+			MerchantOrderID: res.OrderNo,
+			Amount:          amountString,
+			SuccessURL:      req.RedirectURL,
+			FailedURL:       req.RedirectURLFailed,
+		})
+		if err != nil && resp == nil {
+			global.MyLogger(ctx).Err(err).Msgf("russ-new-pay CreateOrder failed")
+			response.RespFail(ctx, i18n.RetMsgCreatePayOrderFailed, nil)
+			return
+		}
+		res.Status = constant.ReturnStatusSuccess
+		res.OrderUrl = resp.URL
+		payOrderUpdate.ReturnStatus = constant.ReturnStatusSuccess
+		payOrderUpdate.StatusMes = resp.URL
+		payOrderUpdate.OrderData = resp.OrderID
 
 	default:
 		err = fmt.Errorf("ChannelId %s 无效", req.ChannelId)
@@ -586,6 +606,7 @@ func genPayAmount(goodsEntity *entity.TGoods, paymentEntity *entity.TPaymentChan
 		constant.PayChannelFreekassa_12, constant.PayChannelFreekassa_36,
 		constant.PayChannelFreekassa_43, constant.PayChannelFreekassa_44,
 		constant.PayChannelApplePay,
+		constant.PayChannelRussNewPayCard, constant.PayChannelRussNewPaySBP,
 		constant.PayChannelRussPayBankCard, constant.PayChannelRussPaySBP, constant.PayChannelRussPaySBER:
 		return goodsEntity.PriceRub, paymentEntity.Commission, fmt.Sprintf("%.2f", goodsEntity.PriceRub), CurrencyRUB, nil
 

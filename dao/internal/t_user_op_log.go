@@ -35,6 +35,7 @@ type TUserOpLogColumns struct {
 	HttpCode     string // HTTP状态码
 	TraceId      string // TraceId
 	UserId       string // 用户uid
+	AppName      string // app_name
 }
 
 // tUserOpLogColumns holds the columns for table t_user_op_log.
@@ -54,6 +55,7 @@ var tUserOpLogColumns = TUserOpLogColumns{
 	HttpCode:     "http_code",
 	TraceId:      "trace_id",
 	UserId:       "user_id",
+	AppName:      "app_name",
 }
 
 // NewTUserOpLogDao creates and returns a new DAO object for table data access.

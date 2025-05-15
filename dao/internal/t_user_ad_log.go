@@ -32,6 +32,7 @@ type TUserAdLogColumns struct {
 	Result     string //
 	ReportTime string // 提交时间
 	CreatedAt  string // 记录创建时间
+	AppName    string // app_name
 }
 
 // tUserAdLogColumns holds the columns for table t_user_ad_log.
@@ -48,6 +49,7 @@ var tUserAdLogColumns = TUserAdLogColumns{
 	Result:     "result",
 	ReportTime: "report_time",
 	CreatedAt:  "created_at",
+	AppName:    "app_name",
 }
 
 // NewTUserAdLogDao creates and returns a new DAO object for table data access.

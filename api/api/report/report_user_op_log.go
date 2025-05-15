@@ -64,6 +64,7 @@ func ReportUserOpLog(ctx *gin.Context) {
 		Version:      req.Version,
 		CreateTime:   req.CreateTime,
 		CreatedAt:    gtime.Now(),
+		AppName:      global.GetAppVersion(ctx),
 	}).InsertAndGetId()
 	if err != nil {
 		global.MyLogger(ctx).Err(err).Msgf("insert op log failed")

@@ -1,6 +1,6 @@
 .PHONY: linux
 linux:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-job main.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-job -trimpath main.go
 
 .PHONY: mac
 mac:

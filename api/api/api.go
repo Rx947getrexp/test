@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/gogf/gf/v2/database/gdb"
 	"go-speed/api"
 	"go-speed/api/api/common"
 	v2rayConfig "go-speed/api/api/config"
@@ -405,6 +406,25 @@ func UserInfo(c *gin.Context) {
 		response.RespFail(c, i18n.RetMsgAuthFailed, nil, response.CodeTokenExpired)
 		return
 	}
+
+	var items []entity.TAppDns
+	e := dao.TAppDns.Ctx(c).
+		Where(do.TAppDns{Status: 1, Level: 1}).
+		Cache(gdb.CacheOption{Duration: 10 * time.Minute}).Scan(&items)
+	if e != nil {
+		global.MyLogger(c).Err(e).Msgf(">>>>> Get TAppDns failed: %+v", e.Error())
+	}
+
+	var dnsList []string
+	for _, i := range items {
+		dnsList = append(dnsList, i.Dns)
+	}
+	var dns string
+	if len(dnsList) > 0 {
+		rand.Seed(time.Now().UnixNano())
+		dns = dnsList[rand.Intn(len(dnsList))]
+	}
+
 	res := response.UserInfoResponse{
 		Id:          user.Id,
 		Uname:       user.Uname,
@@ -412,6 +432,9 @@ func UserInfo(c *gin.Context) {
 		MemberType:  user.Level,
 		ExpiredTime: user.ExpiredTime,
 		SurplusFlow: 0,
+		SpecialFlag: geo.IsNeedDisablePaymentFeature(c, user.Email),
+		DNS:         dns,
+		Timestamp:   time.Now().Unix(),
 	}
 	response.RespOk(c, i18n.RetMsgSuccess, res)
 }
@@ -757,6 +780,17 @@ func ReceiveFree(c *gin.Context) {
 	}
 
 	if status == 1 {
+		var affected int64
+		affected, err = dao.TUser.Ctx(c).Where(do.TUser{Id: user.Id, Email: user.Email}).
+			Data(do.TUser{Kicked: 0}).
+			UpdateAndGetAffected()
+		if err != nil {
+			global.MyLogger(c).Err(err).Msgf("update user Kicked flag failed, email: %s", user.Email)
+			response.RespFail(c, i18n.RetMsgOperateFailed, nil)
+			return
+		}
+		global.MyLogger(c).Debug().Msgf("update user Kicked flag, affected: %d", affected)
+
 		gift := &model.TGift{
 			UserId:    user.Id,
 			OpId:      fmt.Sprint(id),
@@ -1215,8 +1249,8 @@ func Connect(c *gin.Context) {
 		//return
 		req.Tag = "1"
 	}
-	req.Uuid = user.V2rayUuid
-	req.Email = user.Email
+	req.Uuid = util.GetUserV2rayConfigUUID(user.V2rayUuid)
+	req.Email = util.GetUserV2rayConfigEmail(user.Email)
 	req.Level = fmt.Sprintf("%d", user.Level)
 
 	service.UpdateLoginInfo(c, user.Id)

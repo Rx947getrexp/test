@@ -1,6 +1,6 @@
 .PHONY: linux
 linux:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-upload main.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o go-upload -trimpath main.go
 
 .PHONY: mac
 mac:

@@ -9,6 +9,7 @@ const (
 	HeaderKeyClaims        = "claims"
 	HeaderKeyDeviceType    = "xx-device-type"
 	HeaderKeyClientVersion = "XXX-Client-Version"
+	HeaderKeyAppVersion    = "App-Version"
 )
 
 var HeaderKeys = []string{

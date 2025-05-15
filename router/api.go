@@ -5,6 +5,7 @@ import (
 	"go-speed/api/admin/official_docs"
 	"go-speed/api/api"
 	"go-speed/api/api/ad"
+	"go-speed/api/api/app"
 	"go-speed/api/api/config"
 	"go-speed/api/api/country"
 	"go-speed/api/api/device"
@@ -51,6 +52,8 @@ func ApiRoute(group *gin.RouterGroup) {
 	group.POST("pay_notify", order.PayNotify)
 	group.POST("goods_list", goods.GoodsList)
 	group.POST("payment_channel_list", order.PaymentChannelList)
+	group.POST("app_version", app.AppVersion)
+
 	group.GET("promoter_channel_mapping", api.GetPromotionDnsMapping) //官网接口，获取后台配置的推广人员与渠道映射关系
 	group.GET("promoter_shop_mapping", api.GetPromotionShopMapping)   //官网接口，下载页面的各个商店的推广链接
 	//签名验证
@@ -61,6 +64,7 @@ func ApiRoute(group *gin.RouterGroup) {
 	}
 	group.GET("pay_notify", order.PayNotify)
 	group.POST("russpay_callback", order.RussPayCallback)
+	group.POST("russpay_callback_new", order.RussPayNewCallback)
 	group.POST("get_official_docs", official_docs.OfficialDocsList)
 	group.POST("get_official_docs_by_id", official_docs.OfficialDocById)
 	group.Use(api.JWTAuth())

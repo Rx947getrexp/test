@@ -51,8 +51,8 @@ func addConfig(userName, nodeIP string) {
 
 	nodeAddSubRequest := &request.NodeAddSubRequest{}
 	nodeAddSubRequest.Tag = "1"
-	nodeAddSubRequest.Uuid = user.V2RayUuid
-	nodeAddSubRequest.Email = user.Email
+	nodeAddSubRequest.Uuid = util.GetUserV2rayConfigUUID(user.V2RayUuid)
+	nodeAddSubRequest.Email = util.GetUserV2rayConfigEmail(user.Email)
 	nodeAddSubRequest.Level = fmt.Sprintf("%d", user.Level)
 
 	timestamp := fmt.Sprint(time.Now().Unix())

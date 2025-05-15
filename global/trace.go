@@ -23,6 +23,10 @@ func GetClientId(c *gin.Context) string {
 	return strings.TrimSpace(c.GetHeader(constant.HeaderKeyClientId))
 }
 
+func GetAppVersion(c *gin.Context) string {
+	return strings.TrimSpace(c.GetHeader(constant.HeaderKeyAppVersion))
+}
+
 func GetClientIdKV(c *gin.Context) string {
 	return fmt.Sprintf(`{"%s":"%s"}"`, constant.HeaderKeyClientId, c.GetHeader(constant.HeaderKeyClientId))
 }
