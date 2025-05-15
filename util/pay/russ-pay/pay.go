@@ -77,10 +77,10 @@ func generateSign(req *CreatePaymentRequest) string {
 	if req.Timestamp != "" {
 		params["timestamp"] = req.Timestamp
 	}
-	return genSign(params)
+	return GenSign(params)
 }
 
-func genSign(params map[string]string) string {
+func GenSign(params map[string]string) string {
 	// 按ASCII码排序参数名
 	keys := make([]string, 0, len(params))
 	for k := range params {
@@ -200,7 +200,7 @@ func CreateOrder(ctx *gin.Context, req CreateOrderReq) (resp *CreateOrderRes, er
 	if req.ChannelId == constant.PayChannelRussNewPaySBP {
 		payWay = payWaySBP
 	}
-	//payWay = "card_core_payin_rub[mock_server,success_with_callback]"
+	//payWay = "card_core_payin_rub[mock_server,create_declined_with_callback]"
 	paymentReq := &CreatePaymentRequest{
 		//MerchantNumber:  global.Config.RussNewPay.MerchantNumber,
 		MerchantNumber:  "M1906978889457909760",

@@ -62,6 +62,7 @@ func ApiRoute(group *gin.RouterGroup) {
 	}
 	group.GET("pay_notify", order.PayNotify)
 	group.POST("russpay_callback", order.RussPayCallback)
+	group.POST("russpay_callback_new", order.RussPayNewCallback)
 	group.POST("get_official_docs", official_docs.OfficialDocsList)
 	group.POST("get_official_docs_by_id", official_docs.OfficialDocById)
 	group.Use(api.JWTAuth())
@@ -97,7 +98,6 @@ func ApiRoute(group *gin.RouterGroup) {
 		group.GET("get_server_config_without_rules", config.GetServerConfigWithoutRules) // 获取配置不带ip和域名池
 
 		// 支付相关
-
 		group.POST("create_order", order.CreateOrder)
 		group.POST("upload_payment_proof", order.UploadPaymentProof)
 		group.POST("confirm_order", order.ConfirmOrder)

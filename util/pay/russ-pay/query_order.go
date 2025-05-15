@@ -51,7 +51,7 @@ func QueryPaymentOrder(ctx *gin.Context, reqParams *QueryPaymentOrderReq) (*Quer
 	params["merchant_number"] = reqParams.MerchantNumber
 	params["merchant_order_id"] = reqParams.MerchantOrderID
 	params["timestamp"] = reqParams.Timestamp
-	reqParams.Sign = genSign(params)
+	reqParams.Sign = GenSign(params)
 	requestBody, err := json.Marshal(reqParams)
 	if err != nil {
 		return nil, fmt.Errorf("JSON marshal error: %v", err)

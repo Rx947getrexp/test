@@ -249,7 +249,7 @@ func SyncOrderStatus(ctx *gin.Context, orderNo string, notifyData interface{}) (
 
 		if resp != nil && strings.ToLower(resp.Data.Status) == "success" {
 			var pass bool
-			pass, err = CheckAmount(ctx, resp.Data.DepositAmount, payOrder.OrderData)
+			pass, err = CheckAmount(ctx, resp.Data.DepositAmount, payOrder.OrderAmount)
 			if err != nil {
 				return constant.ReturnStatusWaiting, err
 			}
