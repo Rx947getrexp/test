@@ -1,6 +1,6 @@
 module go-speed
 
-go 1.24
+go 1.24.0
 
 toolchain go1.24.1
 
@@ -29,7 +29,7 @@ require (
 	github.com/xtls/xray-core v1.250306.0
 	golang.org/x/crypto v0.36.0
 	golang.org/x/exp v0.0.0-20240531132922-fd00a4e0eefc
-	golang.org/x/net v0.37.0
+	golang.org/x/net v0.38.0
 	golang.org/x/text v0.23.0
 	google.golang.org/grpc v1.71.0
 	xorm.io/xorm v1.3.2
@@ -91,7 +91,7 @@ require (
 	github.com/pires/go-proxyproto v0.8.0 // indirect
 	github.com/quic-go/quic-go v0.50.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
-	github.com/refraction-networking/utls v1.6.7 // indirect
+	github.com/refraction-networking/utls v1.7.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/sagernet/sing v0.5.1 // indirect
