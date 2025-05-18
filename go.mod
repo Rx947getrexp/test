@@ -29,7 +29,7 @@ require (
 	github.com/xtls/xray-core v1.250306.0
 	golang.org/x/crypto v0.36.0
 	golang.org/x/exp v0.0.0-20240531132922-fd00a4e0eefc
-	golang.org/x/net v0.37.0
+	golang.org/x/net v0.38.0
 	golang.org/x/text v0.23.0
 	google.golang.org/grpc v1.71.0
 	xorm.io/xorm v1.3.2
